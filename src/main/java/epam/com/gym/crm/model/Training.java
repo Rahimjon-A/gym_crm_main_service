@@ -11,8 +11,7 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Training {
-    private Long id;
+public class Training extends BaseEntity {
     private Long traineeId;
     private Long trainerId;
     private String trainingName;
