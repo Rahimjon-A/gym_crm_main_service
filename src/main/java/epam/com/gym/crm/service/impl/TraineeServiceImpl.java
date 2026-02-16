@@ -17,13 +17,10 @@ import java.util.Optional;
 @Service
 public class TraineeServiceImpl implements TraineeService {
     private static final Logger LOG = LoggerFactory.getLogger(TraineeServiceImpl.class);
-    private TraineeDAO traineeDao;
-    private CredentialsUtil credentialsUtil;
 
     @Autowired
-    public void setTraineeDao(TraineeDAO traineeDao) {
-        this.traineeDao = traineeDao;
-    }
+    private TraineeDAO traineeDao;
+    private CredentialsUtil credentialsUtil;
 
     @Autowired
     public void setCredentialsUtil(CredentialsUtil credentialsUtil) {
@@ -39,6 +36,7 @@ public class TraineeServiceImpl implements TraineeService {
         trainee.setLastName(dto.getLastName());
         trainee.setDateOfBirth(dto.getDateOfBirth());
         trainee.setAddress(dto.getAddress());
+        trainee.setActive(true);
 
         String username = credentialsUtil.generateUsername(dto.getFirstName(), dto.getLastName());
         String password = credentialsUtil.generatePassword();
@@ -47,7 +45,7 @@ public class TraineeServiceImpl implements TraineeService {
         trainee.setPassword(password);
 
         Trainee saved = traineeDao.save(trainee);
-        LOG.info("Trainee created id={} username={}", saved.getUserId(), saved.getUsername());
+        LOG.info("Trainee created id={} username={}", saved.getId(), saved.getUsername());
         return saved;
     }
 

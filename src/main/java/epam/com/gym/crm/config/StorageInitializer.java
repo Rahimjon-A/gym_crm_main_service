@@ -71,14 +71,14 @@ public class StorageInitializer implements BeanPostProcessor {
             for (String line : lines) {
                 String[] data = line.split(",");
                 Trainer trainer = new Trainer();
-                trainer.setUserId(Long.parseLong(data[0]));
+                trainer.setId(Long.parseLong(data[0]));
                 trainer.setFirstName(data[1]);
                 trainer.setLastName(data[2]);
                 trainer.setUsername(data[3]);
                 trainer.setPassword(data[4]);
                 trainer.setSpecialization(TrainingType.valueOf(data[5]));
                 
-                map.put(trainer.getUserId(), trainer);
+                map.put(trainer.getId(), trainer);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load trainer data", e);
@@ -92,7 +92,7 @@ public class StorageInitializer implements BeanPostProcessor {
                 String[] data = line.split(",");
 
                 Trainee trainee = new Trainee();
-                trainee.setUserId(Long.parseLong(data[0]));
+                trainee.setId(Long.parseLong(data[0]));
                 trainee.setFirstName(data[1]);
                 trainee.setLastName(data[2]);
                 trainee.setUsername(data[3]);
@@ -100,7 +100,7 @@ public class StorageInitializer implements BeanPostProcessor {
                 trainee.setDateOfBirth(LocalDate.parse(data[5]));
                 trainee.setAddress(data[6]);
 
-                map.put(trainee.getUserId(), trainee);
+                map.put(trainee.getId(), trainee);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load trainee data", e);
@@ -113,7 +113,7 @@ public class StorageInitializer implements BeanPostProcessor {
             for (String line : lines) {
                 String[] data = line.split(",");
                 Training training = new Training();
-                training.setTrainingId(Long.parseLong(data[0]));
+                training.setId(Long.parseLong(data[0]));
                 training.setTraineeId(Long.parseLong(data[1]));
                 training.setTrainerId(Long.parseLong(data[2]));
                 training.setTrainingName(data[3]);
@@ -121,7 +121,7 @@ public class StorageInitializer implements BeanPostProcessor {
                 training.setTrainingDate(LocalDate.parse(data[5]));
                 training.setTrainingDuration(Double.parseDouble(data[6]));
 
-                map.put(training.getTrainingId(), training);
+                map.put(training.getId(), training);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load trainer data", e);

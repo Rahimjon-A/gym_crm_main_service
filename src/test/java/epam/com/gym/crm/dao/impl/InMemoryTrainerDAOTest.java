@@ -27,32 +27,32 @@ class InMemoryTrainerDAOTest {
 
         Trainer saved = dao.save(trainer);
 
-        assertNotNull(saved.getUserId());
-        assertEquals(1L, saved.getUserId());
+        assertNotNull(saved.getId());
+        assertEquals(1L, saved.getId());
         assertEquals(1, storage.size());
     }
 
     @Test
     void save_shouldKeepExistingIdWhenTrainerHasId() {
         Trainer trainer = new Trainer();
-        trainer.setUserId(50L);
+        trainer.setId(50L);
 
         Trainer saved = dao.save(trainer);
 
-        assertEquals(50L, saved.getUserId());
+        assertEquals(50L, saved.getId());
         assertEquals(1, storage.size());
     }
 
     @Test
     void findById_shouldReturnTrainerWhenExists() {
         Trainer trainer = new Trainer();
-        trainer.setUserId(1L);
+        trainer.setId(1L);
         storage.put(1L, trainer);
 
         Optional<Trainer> result = dao.findById(1L);
 
         assertTrue(result.isPresent());
-        assertEquals(1L, result.get().getUserId());
+        assertEquals(1L, result.get().getId());
     }
 
     @Test
@@ -104,6 +104,6 @@ class InMemoryTrainerDAOTest {
         Trainer trainer = new Trainer();
         Trainer saved = newDao.save(trainer);
 
-        assertEquals(11L, saved.getUserId());
+        assertEquals(11L, saved.getId());
     }
 }

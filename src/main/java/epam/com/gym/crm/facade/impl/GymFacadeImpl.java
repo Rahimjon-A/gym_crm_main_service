@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Component
 public class GymFacadeImpl implements GymFacade {
-    private static final Logger log = LoggerFactory.getLogger(GymFacadeImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GymFacadeImpl.class);
     private final TrainerService trainerService;
     private final TraineeService traineeService;
     private final TrainingService trainingService;
@@ -34,13 +34,13 @@ public class GymFacadeImpl implements GymFacade {
 
     @Override
     public Trainer createTrainer(TrainerDTO dto) {
-        log.info("Facade: createTrainer {} {}", dto.getFirstName(), dto.getLastName());
+        LOG.info("Facade: createTrainer {} {}", dto.getFirstName(), dto.getLastName());
         return trainerService.create(dto);
     }
 
     @Override
     public Trainer updateTrainer(Long userId, TrainerDTO dto) {
-        log.info("Facade: updateTrainer id={}", userId);
+        LOG.info("Facade: updateTrainer id={}", userId);
         return trainerService.update(userId, dto);
     }
 
@@ -59,13 +59,13 @@ public class GymFacadeImpl implements GymFacade {
 
     @Override
     public Trainee createTrainee(TraineeDTO dto) {
-        log.info("Facade: createTrainee {} {}", dto.getFirstName(), dto.getLastName());
+        LOG.info("Facade: createTrainee {} {}", dto.getFirstName(), dto.getLastName());
         return traineeService.create(dto);
     }
 
     @Override
     public Trainee updateTrainee(Long userId, TraineeDTO dto) {
-        log.info("Facade: updateTrainee id={}", userId);
+        LOG.info("Facade: updateTrainee id={}", userId);
         return traineeService.update(userId, dto);
     }
 
@@ -81,7 +81,7 @@ public class GymFacadeImpl implements GymFacade {
 
     @Override
     public void deleteTrainee(Long userId) {
-        log.info("Facade: deleteTrainee id={}", userId);
+        LOG.info("Facade: deleteTrainee id={}", userId);
         traineeService.delete(userId);
     }
 
@@ -90,7 +90,7 @@ public class GymFacadeImpl implements GymFacade {
 
     @Override
     public Training createTraining(TrainingDTO dto) {
-        log.info("Facade: createTraining '{}' trainee={} trainer={}", dto.getTrainingName(), dto.getTraineeId(), dto.getTrainerId());
+        LOG.info("Facade: createTraining '{}' trainee={} trainer={}", dto.getTrainingName(), dto.getTraineeId(), dto.getTrainerId());
         return trainingService.create(dto);
     }
 

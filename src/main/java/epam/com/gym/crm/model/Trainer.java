@@ -10,6 +10,5 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Trainer extends User {
-    private Long userId;
     private TrainingType specialization;
 }

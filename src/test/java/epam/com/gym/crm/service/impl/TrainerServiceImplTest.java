@@ -40,7 +40,7 @@ class TrainerServiceImplTest {
         trainerDTO.setSpecialization(TrainingType.GYM);
 
         trainer = new Trainer();
-        trainer.setUserId(1L);
+        trainer.setId(1L);
         trainer.setFirstName("John");
         trainer.setLastName("Smith");
         trainer.setSpecialization(TrainingType.GYM);
@@ -113,7 +113,7 @@ class TrainerServiceImplTest {
         Optional<Trainer> result = trainerService.findById(1L);
 
         assertTrue(result.isPresent());
-        assertEquals(1L, result.get().getUserId());
+        assertEquals(1L, result.get().getId());
     }
 
     @Test

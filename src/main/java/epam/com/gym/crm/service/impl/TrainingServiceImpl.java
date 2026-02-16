@@ -18,24 +18,13 @@ import java.util.Optional;
 @Service
 public class TrainingServiceImpl implements TrainingService {
     private static final Logger LOG = LoggerFactory.getLogger(TrainingServiceImpl.class);
+
+    @Autowired
     private TrainingDAO trainingDao;
+    @Autowired
     private TrainerDAO trainerDao;
+    @Autowired
     private TraineeDAO traineeDao;
-
-    @Autowired
-    public void setTrainingDao(TrainingDAO trainingDao) {
-        this.trainingDao = trainingDao;
-    }
-
-    @Autowired
-    public void setTrainerDao(TrainerDAO trainerDao) {
-        this.trainerDao = trainerDao;
-    }
-
-    @Autowired
-    public void setTraineeDao(TraineeDAO traineeDao) {
-        this.traineeDao = traineeDao;
-    }
 
     @Override
     public Training create(TrainingDTO dto) {
@@ -58,7 +47,7 @@ public class TrainingServiceImpl implements TrainingService {
         t.setTrainingDuration(dto.getTrainingDuration());
 
         Training saved = trainingDao.save(t);
-        LOG.info("Training created id={}", saved.getTrainingId());
+        LOG.info("Training created id={}", saved.getId());
         return saved;
     }
 

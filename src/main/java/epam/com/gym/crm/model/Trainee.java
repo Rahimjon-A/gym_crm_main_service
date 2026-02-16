@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Trainee extends User {
-    private Long userId;
     private LocalDate dateOfBirth;
     private String address;
 }

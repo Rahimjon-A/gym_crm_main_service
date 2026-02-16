@@ -9,10 +9,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class User extends BaseEntity {
-    private String firstName;
-    private String lastName;
-    private String username;
-    private String password;
-    private boolean isActive;
+public abstract class BaseEntity {
+    protected Long id;
 }

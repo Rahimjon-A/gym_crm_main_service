@@ -44,7 +44,7 @@ class GymFacadeImplTest {
     void createTrainer_shouldDelegateToService_andReturnResult() {
         TrainerDTO dto = new TrainerDTO("John", "Smith", TrainingType.CARDIO);
         Trainer trainer = new Trainer();
-        trainer.setUserId(1L);
+        trainer.setId(1L);
 
         when(trainerService.create(dto)).thenReturn(trainer);
 
@@ -58,20 +58,20 @@ class GymFacadeImplTest {
     void updateTrainer_shouldDelegateCorrectly() {
         TrainerDTO dto = new TrainerDTO("New", "Name", TrainingType.YOGA);
         Trainer updated = new Trainer();
-        updated.setUserId(5L);
+        updated.setId(5L);
 
         when(trainerService.update(5L, dto)).thenReturn(updated);
 
         Trainer result = facade.updateTrainer(5L, dto);
 
-        assertThat(result.getUserId()).isEqualTo(5L);
+        assertThat(result.getId()).isEqualTo(5L);
         verify(trainerService).update(5L, dto);
     }
 
     @Test
     void getTrainerById_shouldReturnOptionalFromService() {
         Trainer trainer = new Trainer();
-        trainer.setUserId(10L);
+        trainer.setId(10L);
 
         when(trainerService.findById(10L)).thenReturn(Optional.of(trainer));
 
@@ -97,39 +97,48 @@ class GymFacadeImplTest {
 
     @Test
     void createTrainee_shouldDelegateToService() {
-        TraineeDTO dto = new TraineeDTO("Alice", "Brown",
-                LocalDate.of(2000,1,1), "NY");
+        TraineeDTO dto = new TraineeDTO();
+        dto.setFirstName("Alice");
+        dto.setLastName( "Brown");
+        dto.setDateOfBirth(LocalDate.of(2000,1,1));
+        dto.setAddress("NY");
 
         Trainee trainee = new Trainee();
-        trainee.setUserId(3L);
+        trainee.setId(3L);
 
         when(traineeService.create(dto)).thenReturn(trainee);
 
         Trainee result = facade.createTrainee(dto);
 
-        assertThat(result.getUserId()).isEqualTo(3L);
+        assertThat(result.getId()).isEqualTo(3L);
         verify(traineeService).create(dto);
     }
 
     @Test
     void updateTrainee_shouldDelegateCorrectly() {
-        TraineeDTO traineeDTO = new TraineeDTO("John", "Doe", LocalDate.of(2010, 5, 25), "Tashkent");
+        TraineeDTO traineeDTO = new TraineeDTO();
+        traineeDTO.setFirstName("John");
+        traineeDTO.setLastName( "Doe");
+        traineeDTO.setDateOfBirth( LocalDate.of(2010, 5, 25));
+        traineeDTO.setAddress("Tashkent");
         Trainee trainee = new Trainee();
-        trainee.setUserId(5L);
+        trainee.setId(5L);
 
         when(traineeService.update(5L, traineeDTO)).thenReturn(trainee);
 
         Trainee result = facade.updateTrainee(5L, traineeDTO);
 
-        assertThat(result.getUserId()).isEqualTo(5L);
+        assertThat(result.getId()).isEqualTo(5L);
         verify(traineeService).update(5L, traineeDTO);
     }
 
     @Test
     void updateTrainee_shouldHandleNotFound() {
-        TraineeDTO traineeDTO = new TraineeDTO("John", "Doe",
-                LocalDate.of(2010, 5, 25),
-                "Tashkent");
+        TraineeDTO traineeDTO = new TraineeDTO();
+        traineeDTO.setFirstName("John");
+        traineeDTO.setLastName( "Doe");
+        traineeDTO.setDateOfBirth( LocalDate.of(2010, 5, 25));
+        traineeDTO.setAddress("Tashkent");
         Long nonExistentId = 999L;
 
         when(traineeService.update(nonExistentId, traineeDTO))
@@ -143,7 +152,7 @@ class GymFacadeImplTest {
     @Test
     void getTraineeById_shouldReturnOptionalFromService() {
         Trainee trainee = new Trainee();
-        trainee.setUserId(10L);
+        trainee.setId(10L);
 
         when(traineeService.findById(10L)).thenReturn(Optional.of(trainee));
 
@@ -186,20 +195,20 @@ class GymFacadeImplTest {
         );
 
         Training training = new Training();
-        training.setTrainingId(100L);
+        training.setId(100L);
 
         when(trainingService.create(dto)).thenReturn(training);
 
         Training result = facade.createTraining(dto);
 
-        assertThat(result.getTrainingId()).isEqualTo(100L);
+        assertThat(result.getId()).isEqualTo(100L);
         verify(trainingService).create(dto);
     }
 
     @Test
     void getTrainingById_shouldReturnOptionalFromService() {
         Training training = new Training();
-        training.setTrainingId(10L);
+        training.setId(10L);
 
         when(trainingService.findById(10L)).thenReturn(Optional.of(training));
 

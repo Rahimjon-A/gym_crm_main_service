@@ -49,7 +49,7 @@ class TrainingServiceImplTest {
         dto.setTrainingDuration(60.0);
 
         training = new Training();
-        training.setTrainingId(10L);
+        training.setId(10L);
         training.setTrainerId(1L);
         training.setTraineeId(2L);
         training.setTrainingName("Morning Cardio");
@@ -102,7 +102,7 @@ class TrainingServiceImplTest {
         Optional<Training> result = trainingService.findById(10L);
 
         assertTrue(result.isPresent());
-        assertEquals(10L, result.get().getTrainingId());
+        assertEquals(10L, result.get().getId());
     }
 
     @Test

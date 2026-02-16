@@ -17,13 +17,10 @@ import java.util.Optional;
 @Service
 public class TrainerServiceImpl implements TrainerService {
     private static final Logger LOG = LoggerFactory.getLogger(TrainerServiceImpl.class);
-    private TrainerDAO trainerDao;
-    private CredentialsUtil credentialsUtil;
 
     @Autowired
-    public void setTrainerDao(TrainerDAO trainerDao) {
-        this.trainerDao = trainerDao;
-    }
+    private TrainerDAO trainerDao;
+    private CredentialsUtil credentialsUtil;
 
     @Autowired
     public void setCredentialsUtil(CredentialsUtil credentialsUtil) {
@@ -38,6 +35,7 @@ public class TrainerServiceImpl implements TrainerService {
         trainer.setFirstName(dto.getFirstName());
         trainer.setLastName(dto.getLastName());
         trainer.setSpecialization(dto.getSpecialization());
+        trainer.setActive(true);
 
         String username = credentialsUtil.generateUsername(dto.getFirstName(), dto.getLastName());
         String password = credentialsUtil.generatePassword();
@@ -46,7 +44,7 @@ public class TrainerServiceImpl implements TrainerService {
         trainer.setPassword(password);
 
         Trainer saved = trainerDao.save(trainer);
-        LOG.info("Trainer created id={} username={}", saved.getUserId(), saved.getUsername());
+        LOG.info("Trainer created id={} username={}", saved.getId(), saved.getUsername());
         return saved;
     }
 

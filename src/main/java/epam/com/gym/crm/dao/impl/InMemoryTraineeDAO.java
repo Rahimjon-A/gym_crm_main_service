@@ -26,10 +26,10 @@ public class InMemoryTraineeDAO implements TraineeDAO {
 
     @Override
     public Trainee save(Trainee trainee) {
-        if (trainee.getUserId() == null) {
-            trainee.setUserId(idSeq.getAndIncrement());
+        if (trainee.getId() == null) {
+            trainee.setId(idSeq.getAndIncrement());
         }
-        storage.put(trainee.getUserId(), trainee);
+        storage.put(trainee.getId(), trainee);
         return trainee;
     }
 

@@ -26,10 +26,10 @@ public class InMemoryTrainerDAO implements TrainerDAO {
 
     @Override
     public Trainer save(Trainer trainer) {
-        if (trainer.getUserId() == null) {
-            trainer.setUserId(idSeq.getAndIncrement());
+        if (trainer.getId() == null) {
+            trainer.setId(idSeq.getAndIncrement());
         }
-        storage.put(trainer.getUserId(), trainer);
+        storage.put(trainer.getId(), trainer);
         return trainer;
     }
 

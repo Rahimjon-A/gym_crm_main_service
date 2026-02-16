@@ -42,7 +42,7 @@ class TraineeServiceImplTest {
         dto.setAddress("NY");
 
         trainee = new Trainee();
-        trainee.setUserId(1L);
+        trainee.setId(1L);
         trainee.setFirstName("John");
         trainee.setLastName("Doe");
         trainee.setDateOfBirth(dto.getDateOfBirth());
@@ -136,7 +136,7 @@ class TraineeServiceImplTest {
         Optional<Trainee> result = traineeService.findById(1L);
 
         assertTrue(result.isPresent());
-        assertEquals(1L, result.get().getUserId());
+        assertEquals(1L, result.get().getId());
     }
 
     @Test

@@ -1,17 +1,21 @@
 package epam.com.gym.crm.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
-@AllArgsConstructor
-public class TraineeDTO {
-    private String firstName;
-    private String lastName;
+public class TraineeDTO extends BaseUserDTO {
     private LocalDate dateOfBirth;
     private String address;
+
+    public TraineeDTO(String firstName, String lastName, LocalDate dateOfBirth, String address) {
+        super(firstName, lastName);
+        this.dateOfBirth = dateOfBirth;
+        this.address = address;
+    }
 }

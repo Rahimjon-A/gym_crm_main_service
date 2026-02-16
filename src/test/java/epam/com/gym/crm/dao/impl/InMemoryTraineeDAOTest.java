@@ -28,33 +28,33 @@ class InMemoryTraineeDAOTest {
 
         Trainee saved = dao.save(trainee);
 
-        assertNotNull(saved.getUserId());
-        assertEquals(1L, saved.getUserId());
+        assertNotNull(saved.getId());
+        assertEquals(1L, saved.getId());
         assertEquals(1, storage.size());
     }
 
     @Test
     void save_shouldNotChangeIdWhenExistingTrainee() {
         Trainee trainee = new Trainee();
-        trainee.setUserId(100L);
+        trainee.setId(100L);
         trainee.setFirstName("Mike");
 
         Trainee saved = dao.save(trainee);
 
-        assertEquals(100L, saved.getUserId());
+        assertEquals(100L, saved.getId());
         assertEquals(1, storage.size());
     }
 
     @Test
     void findById_shouldReturnTraineeWhenExists() {
         Trainee trainee = new Trainee();
-        trainee.setUserId(1L);
+        trainee.setId(1L);
         storage.put(1L, trainee);
 
         Optional<Trainee> result = dao.findById(1L);
 
         assertTrue(result.isPresent());
-        assertEquals(1L, result.get().getUserId());
+        assertEquals(1L, result.get().getId());
     }
 
     @Test
@@ -106,6 +106,6 @@ class InMemoryTraineeDAOTest {
         Trainee trainee = new Trainee();
         Trainee saved = newDao.save(trainee);
 
-        assertEquals(11L, saved.getUserId());
+        assertEquals(11L, saved.getId());
     }
 }

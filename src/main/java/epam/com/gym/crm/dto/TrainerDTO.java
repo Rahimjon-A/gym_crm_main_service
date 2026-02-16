@@ -1,15 +1,16 @@
 package epam.com.gym.crm.dto;
 
 import epam.com.gym.crm.model.TrainingType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class TrainerDTO {
-    private String firstName;
-    private String lastName;
+public class TrainerDTO extends BaseUserDTO {
     private TrainingType specialization;
+
+    public TrainerDTO(String firstName, String lastName, TrainingType specialization) {
+        super(firstName, lastName);
+        this.specialization = specialization;
+    }
 }
