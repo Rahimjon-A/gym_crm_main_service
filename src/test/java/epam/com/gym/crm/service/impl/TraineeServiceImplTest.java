@@ -4,7 +4,7 @@ import epam.com.gym.crm.dao.TraineeDAO;
 import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.util.CredentialsUtil;
+import epam.com.gym.crm.service.CredentialService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ class TraineeServiceImplTest {
     private TraineeDAO traineeDao;
 
     @Mock
-    private CredentialsUtil credentialsUtil;
+    private CredentialService credentialService;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
@@ -53,9 +53,9 @@ class TraineeServiceImplTest {
 
     @Test
     void create_shouldGenerateCredentialsAndSave() {
-        when(credentialsUtil.generateUsername("John", "Doe"))
+        when(credentialService.generateUsername("John", "Doe"))
                 .thenReturn("John.Doe");
-        when(credentialsUtil.generatePassword())
+        when(credentialService.generatePassword())
                 .thenReturn("1234567890");
         when(traineeDao.save(any(Trainee.class)))
                 .thenReturn(trainee);
@@ -64,16 +64,16 @@ class TraineeServiceImplTest {
 
         assertNotNull(result);
         assertEquals("John.Doe", result.getUsername());
-        verify(credentialsUtil).generateUsername("John", "Doe");
-        verify(credentialsUtil).generatePassword();
+        verify(credentialService).generateUsername("John", "Doe");
+        verify(credentialService).generatePassword();
         verify(traineeDao).save(any(Trainee.class));
     }
 
     @Test
     void create_shouldPropagateExceptionIfDaoFails() {
-        when(credentialsUtil.generateUsername(any(), any()))
+        when(credentialService.generateUsername(any(), any()))
                 .thenReturn("John.Doe");
-        when(credentialsUtil.generatePassword())
+        when(credentialService.generatePassword())
                 .thenReturn("1234567890");
         when(traineeDao.save(any()))
                 .thenThrow(new RuntimeException("DB error"));
@@ -95,7 +95,7 @@ class TraineeServiceImplTest {
         Trainee result = traineeService.update(1L, updateDto);
 
         assertEquals("LA", result.getAddress());
-        verify(credentialsUtil, never()).generateUsername(any(), any());
+        verify(credentialService, never()).generateUsername(any(), any());
         verify(traineeDao).save(trainee);
     }
 
@@ -107,7 +107,7 @@ class TraineeServiceImplTest {
         TraineeDTO updateDto = new TraineeDTO();
         updateDto.setFirstName("Mike");
 
-        when(credentialsUtil.generateUsername("Mike", "Doe"))
+        when(credentialService.generateUsername("Mike", "Doe"))
                 .thenReturn("Mike.Doe");
         when(traineeDao.save(any()))
                 .thenReturn(trainee);
@@ -115,7 +115,7 @@ class TraineeServiceImplTest {
         Trainee result = traineeService.update(1L, updateDto);
 
         assertEquals("Mike", result.getFirstName());
-        verify(credentialsUtil).generateUsername("Mike", "Doe");
+        verify(credentialService).generateUsername("Mike", "Doe");
         verify(traineeDao).save(trainee);
     }
 

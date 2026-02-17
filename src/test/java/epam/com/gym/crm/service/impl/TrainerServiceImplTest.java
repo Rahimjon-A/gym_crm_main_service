@@ -5,7 +5,7 @@ import epam.com.gym.crm.dto.TrainerDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.TrainingType;
-import epam.com.gym.crm.util.CredentialsUtil;
+import epam.com.gym.crm.service.CredentialService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +24,7 @@ class TrainerServiceImplTest {
     private TrainerDAO trainerDao;
 
     @Mock
-    private CredentialsUtil credentialsUtil;
+    private CredentialService credentialService;
 
     @InjectMocks
     private TrainerServiceImpl trainerService;
@@ -50,9 +50,9 @@ class TrainerServiceImplTest {
 
     @Test
     void create_shouldCreateTrainerSuccessfully() {
-        when(credentialsUtil.generateUsername("John", "Smith"))
+        when(credentialService.generateUsername("John", "Smith"))
                 .thenReturn("John.Smith");
-        when(credentialsUtil.generatePassword())
+        when(credentialService.generatePassword())
                 .thenReturn("1234567890");
         when(trainerDao.save(any(Trainer.class)))
                 .thenReturn(trainer);
@@ -66,9 +66,9 @@ class TrainerServiceImplTest {
 
     @Test
     void create_shouldFailWhenDaoThrowsException() {
-        when(credentialsUtil.generateUsername(any(), any()))
+        when(credentialService.generateUsername(any(), any()))
                 .thenReturn("John.Smith");
-        when(credentialsUtil.generatePassword())
+        when(credentialService.generatePassword())
                 .thenReturn("1234567890");
         when(trainerDao.save(any()))
                 .thenThrow(new RuntimeException("DB error"));
@@ -87,7 +87,7 @@ class TrainerServiceImplTest {
         TrainerDTO updateDTO = new TrainerDTO();
         updateDTO.setFirstName("Mike");
 
-        when(credentialsUtil.generateUsername("Mike", "Smith"))
+        when(credentialService.generateUsername("Mike", "Smith"))
                 .thenReturn("Mike.Smith");
 
         Trainer result = trainerService.update(1L, updateDTO);
