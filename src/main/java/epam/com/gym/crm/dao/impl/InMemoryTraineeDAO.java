@@ -37,4 +37,9 @@ public class InMemoryTraineeDAO implements TraineeDAO {
     public void delete(Long id) {
         storage.delete(id);
     }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return storage.existsByUsername(username);
+    }
 }

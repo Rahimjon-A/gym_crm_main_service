@@ -4,8 +4,8 @@ import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dto.TrainerDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.service.CredentialService;
 import epam.com.gym.crm.service.TrainerService;
-import epam.com.gym.crm.util.CredentialsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +20,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Autowired
     private TrainerDAO trainerDao;
-    private CredentialsUtil credentialsUtil;
-
-    @Autowired
-    public void setCredentialsUtil(CredentialsUtil credentialsUtil) {
-        this.credentialsUtil = credentialsUtil;
-    }
+    private CredentialService credentialService;
 
     @Override
     public Trainer create(TrainerDTO dto) {
@@ -37,8 +32,8 @@ public class TrainerServiceImpl implements TrainerService {
         trainer.setSpecialization(dto.getSpecialization());
         trainer.setActive(true);
 
-        String username = credentialsUtil.generateUsername(dto.getFirstName(), dto.getLastName());
-        String password = credentialsUtil.generatePassword();
+        String username = credentialService.generateUsername(dto.getFirstName(), dto.getLastName());
+        String password = credentialService.generatePassword();
 
         trainer.setUsername(username);
         trainer.setPassword(password);
@@ -68,7 +63,7 @@ public class TrainerServiceImpl implements TrainerService {
         }
 
         if (nameChanged) {
-            String newUsername = credentialsUtil.generateUsername(existing.getFirstName(), existing.getLastName());
+            String newUsername = credentialService.generateUsername(existing.getFirstName(), existing.getLastName());
             existing.setUsername(newUsername);
             LOG.info("Trainer {} username updated to {}", userId, newUsername);
         }
@@ -84,5 +79,11 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public List<Trainer> findAll() {
         return trainerDao.findAll();
+    }
+
+
+    @Autowired
+    public void setCredentialService(CredentialService credentialService) {
+        this.credentialService = credentialService;
     }
 }

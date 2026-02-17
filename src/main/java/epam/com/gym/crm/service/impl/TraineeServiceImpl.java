@@ -4,8 +4,8 @@ import epam.com.gym.crm.dao.TraineeDAO;
 import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.service.CredentialService;
 import epam.com.gym.crm.service.TraineeService;
-import epam.com.gym.crm.util.CredentialsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +20,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Autowired
     private TraineeDAO traineeDao;
-    private CredentialsUtil credentialsUtil;
-
-    @Autowired
-    public void setCredentialsUtil(CredentialsUtil credentialsUtil) {
-        this.credentialsUtil = credentialsUtil;
-    }
+    private CredentialService credentialService;
 
     @Override
     public Trainee create(TraineeDTO dto) {
@@ -38,8 +33,8 @@ public class TraineeServiceImpl implements TraineeService {
         trainee.setAddress(dto.getAddress());
         trainee.setActive(true);
 
-        String username = credentialsUtil.generateUsername(dto.getFirstName(), dto.getLastName());
-        String password = credentialsUtil.generatePassword();
+        String username = credentialService.generateUsername(dto.getFirstName(), dto.getLastName());
+        String password = credentialService.generatePassword();
 
         trainee.setUsername(username);
         trainee.setPassword(password);
@@ -72,7 +67,7 @@ public class TraineeServiceImpl implements TraineeService {
         }
 
         if (nameChanged) {
-            String newUsername = credentialsUtil.generateUsername(existing.getFirstName(), existing.getLastName());
+            String newUsername = credentialService.generateUsername(existing.getFirstName(), existing.getLastName());
             existing.setUsername(newUsername);
             LOG.info("Trainee {} username updated to {}", userId, newUsername);
         }
@@ -97,5 +92,10 @@ public class TraineeServiceImpl implements TraineeService {
             throw new EntityNotFoundException("Trainee not found: " + userId);
         }
         traineeDao.delete(userId);
+    }
+
+    @Autowired
+    public void setCredentialService(CredentialService credentialService) {
+        this.credentialService = credentialService;
     }
 }

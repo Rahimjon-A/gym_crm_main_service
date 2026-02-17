@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class GenericInMemoryStorage<T extends BaseEntity> implements InMemoryStorage<T> {
-    private final ConcurrentHashMap<Long, T> storage = new ConcurrentHashMap<>();
+    protected final ConcurrentHashMap<Long, T> storage = new ConcurrentHashMap<>();
     private final AtomicLong idSeq = new AtomicLong(1);
 
     @Override

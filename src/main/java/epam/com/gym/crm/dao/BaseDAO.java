@@ -1,15 +1,11 @@
-package epam.com.gym.crm.storage;
+package epam.com.gym.crm.dao;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface InMemoryStorage<T> {
-
-    T save(T entity);
-
+public interface BaseDAO<T> {
+    T save(T t);
     Optional<T> findById(Long id);
-
     List<T> findAll();
-
     void delete(Long id);
 }
