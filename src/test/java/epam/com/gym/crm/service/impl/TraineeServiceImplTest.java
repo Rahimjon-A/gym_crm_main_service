@@ -1,6 +1,6 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TraineeDAO;
+import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 class TraineeServiceImplTest {
 
     @Mock
-    private TraineeDAO traineeDao;
+    private UserDAO<Trainee> traineeDao;
 
     @Mock
     private CredentialService credentialService;
@@ -53,17 +53,15 @@ class TraineeServiceImplTest {
 
     @Test
     void create_shouldGenerateCredentialsAndSave() {
-        when(credentialService.generateUsername("John", "Doe"))
-                .thenReturn("John.Doe");
-        when(credentialService.generatePassword())
-                .thenReturn("1234567890");
-        when(traineeDao.save(any(Trainee.class)))
-                .thenReturn(trainee);
+        when(credentialService.generateUsername("John", "Doe")).thenReturn("John.Doe");
+        when(credentialService.generatePassword()).thenReturn("1234567890");
+        when(traineeDao.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Trainee result = traineeService.create(dto);
 
         assertNotNull(result);
         assertEquals("John.Doe", result.getUsername());
+        assertEquals("1234567890", result.getPassword());
         verify(credentialService).generateUsername("John", "Doe");
         verify(credentialService).generatePassword();
         verify(traineeDao).save(any(Trainee.class));
@@ -71,23 +69,17 @@ class TraineeServiceImplTest {
 
     @Test
     void create_shouldPropagateExceptionIfDaoFails() {
-        when(credentialService.generateUsername(any(), any()))
-                .thenReturn("John.Doe");
-        when(credentialService.generatePassword())
-                .thenReturn("1234567890");
-        when(traineeDao.save(any()))
-                .thenThrow(new RuntimeException("DB error"));
+        when(credentialService.generateUsername(any(), any())).thenReturn("John.Doe");
+        when(credentialService.generatePassword()).thenReturn("1234567890");
+        when(traineeDao.save(any())).thenThrow(new RuntimeException("DB error"));
 
-        assertThrows(RuntimeException.class,
-                () -> traineeService.create(dto));
+        assertThrows(RuntimeException.class, () -> traineeService.create(dto));
     }
 
     @Test
     void update_shouldUpdateNonNameFieldsWithoutChangingUsername() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.of(trainee));
-        when(traineeDao.save(any()))
-                .thenReturn(trainee);
+        when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
+        when(traineeDao.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         TraineeDTO updateDto = new TraineeDTO();
         updateDto.setAddress("LA");
@@ -95,43 +87,38 @@ class TraineeServiceImplTest {
         Trainee result = traineeService.update(1L, updateDto);
 
         assertEquals("LA", result.getAddress());
+        assertEquals("John.Doe", result.getUsername());
         verify(credentialService, never()).generateUsername(any(), any());
-        verify(traineeDao).save(trainee);
+        verify(traineeDao).update(trainee);
     }
 
     @Test
     void update_shouldChangeUsernameWhenNameChanges() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.of(trainee));
+        when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
+        when(traineeDao.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(credentialService.generateUsername("Mike", "Doe")).thenReturn("Mike.Doe");
 
         TraineeDTO updateDto = new TraineeDTO();
         updateDto.setFirstName("Mike");
 
-        when(credentialService.generateUsername("Mike", "Doe"))
-                .thenReturn("Mike.Doe");
-        when(traineeDao.save(any()))
-                .thenReturn(trainee);
-
         Trainee result = traineeService.update(1L, updateDto);
 
         assertEquals("Mike", result.getFirstName());
+        assertEquals("Mike.Doe", result.getUsername());
         verify(credentialService).generateUsername("Mike", "Doe");
-        verify(traineeDao).save(trainee);
+        verify(traineeDao).update(trainee);
     }
 
     @Test
     void update_shouldThrowExceptionWhenTraineeNotFound() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.empty());
+        when(traineeDao.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> traineeService.update(1L, dto));
+        assertThrows(EntityNotFoundException.class, () -> traineeService.update(1L, dto));
     }
 
     @Test
     void findById_shouldReturnTrainee() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.of(trainee));
+        when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
 
         Optional<Trainee> result = traineeService.findById(1L);
 
@@ -141,8 +128,7 @@ class TraineeServiceImplTest {
 
     @Test
     void findById_shouldReturnEmptyWhenNotFound() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.empty());
+        when(traineeDao.findById(1L)).thenReturn(Optional.empty());
 
         Optional<Trainee> result = traineeService.findById(1L);
 
@@ -151,8 +137,7 @@ class TraineeServiceImplTest {
 
     @Test
     void findAll_shouldReturnList() {
-        when(traineeDao.findAll())
-                .thenReturn(List.of(trainee));
+        when(traineeDao.findAll()).thenReturn(List.of(trainee));
 
         List<Trainee> result = traineeService.findAll();
 
@@ -161,8 +146,7 @@ class TraineeServiceImplTest {
 
     @Test
     void findAll_shouldReturnEmptyList() {
-        when(traineeDao.findAll())
-                .thenReturn(Collections.emptyList());
+        when(traineeDao.findAll()).thenReturn(Collections.emptyList());
 
         List<Trainee> result = traineeService.findAll();
 
@@ -171,8 +155,7 @@ class TraineeServiceImplTest {
 
     @Test
     void delete_shouldRemoveTraineeWhenExists() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.of(trainee));
+        when(traineeDao.findById(1L)).thenReturn(Optional.of(trainee));
 
         traineeService.delete(1L);
 
@@ -181,10 +164,8 @@ class TraineeServiceImplTest {
 
     @Test
     void delete_shouldThrowExceptionWhenNotFound() {
-        when(traineeDao.findById(1L))
-                .thenReturn(Optional.empty());
+        when(traineeDao.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> traineeService.delete(1L));
+        assertThrows(EntityNotFoundException.class, () -> traineeService.delete(1L));
     }
 }

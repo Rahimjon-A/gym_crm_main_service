@@ -1,6 +1,7 @@
-package epam.com.gym.crm.storage;
+package epam.com.gym.crm.storage.impl;
 
 import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.storage.GenericInMemoryStorage;
 import epam.com.gym.crm.util.CsvParserUtil;
 import epam.com.gym.crm.util.FileReaderUtil;
 import jakarta.annotation.PostConstruct;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class TrainerStorage extends UserStorage<Trainer> {
+public class TrainerStorage extends GenericInMemoryStorage<Trainer> {
     private static final Logger LOG = LoggerFactory.getLogger(TrainerStorage.class);
 
     @Value("${storage.trainer.path}")
@@ -25,5 +26,10 @@ public class TrainerStorage extends UserStorage<Trainer> {
         LOG.debug("Read {} lines from {}", lines.size(), trainerPath);
         CsvParserUtil.parseTrainers(lines).forEach(this::save);
         LOG.info("TrainerStorage initialized, {} records saved", findAll().size());
+    }
+
+    public boolean existsByUsername(String username) {
+        return this.findAll().stream()
+                .anyMatch(t -> t.getUsername() != null && t.getUsername().equalsIgnoreCase(username));
     }
 }

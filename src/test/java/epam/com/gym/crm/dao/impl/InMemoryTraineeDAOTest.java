@@ -1,7 +1,7 @@
 package epam.com.gym.crm.dao.impl;
 
 import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.storage.TraineeStorage;
+import epam.com.gym.crm.storage.impl.TraineeStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +13,12 @@ import static org.mockito.Mockito.*;
 
 class InMemoryTraineeDAOTest {
 
-    private InMemoryTraineeDAO dao;
+    private TraineeDaoImpl dao;
     private TraineeStorage storage;
 
     @BeforeEach
     void setUp() {
-        dao = new InMemoryTraineeDAO();
+        dao = new TraineeDaoImpl();
         storage = mock(TraineeStorage.class);
         dao.setStorage(storage);
     }

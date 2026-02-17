@@ -1,31 +1,37 @@
 package epam.com.gym.crm.dao.impl;
 
-import epam.com.gym.crm.dao.TrainerDAO;
-import epam.com.gym.crm.model.Trainer;
-import epam.com.gym.crm.storage.TrainerStorage;
+import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.storage.impl.TraineeStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public class InMemoryTrainerDAO implements TrainerDAO {
 
-    private TrainerStorage storage;
+@Repository
+public class TraineeDaoImpl implements UserDAO<Trainee> {
+
+    private TraineeStorage storage;
 
     @Override
-    public Trainer save(Trainer trainer) {
-        return storage.save(trainer);
+    public Trainee save(Trainee trainee) {
+        return storage.save(trainee);
     }
 
     @Override
-    public Optional<Trainer> findById(Long id) {
+    public Trainee update(Trainee trainee) {
+        return storage.update(trainee);
+    }
+
+    @Override
+    public Optional<Trainee> findById(Long id) {
         return storage.findById(id);
     }
 
     @Override
-    public List<Trainer> findAll() {
+    public List<Trainee> findAll() {
         return storage.findAll();
     }
 
@@ -40,7 +46,7 @@ public class InMemoryTrainerDAO implements TrainerDAO {
     }
 
     @Autowired
-    public void setStorage(TrainerStorage storage) {
+    public void setStorage(TraineeStorage storage) {
         this.storage = storage;
     }
 }

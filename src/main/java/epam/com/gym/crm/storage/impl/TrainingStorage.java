@@ -1,6 +1,7 @@
-package epam.com.gym.crm.storage;
+package epam.com.gym.crm.storage.impl;
 
 import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.storage.GenericInMemoryStorage;
 import epam.com.gym.crm.util.CsvParserUtil;
 import epam.com.gym.crm.util.FileReaderUtil;
 import jakarta.annotation.PostConstruct;
@@ -26,5 +27,4 @@ public class TrainingStorage extends GenericInMemoryStorage<Training> {
         CsvParserUtil.parseTrainings(lines).forEach(this::save);
         LOG.info("TrainingStorage initialized, {} records saved", findAll().size());
     }
-
 }

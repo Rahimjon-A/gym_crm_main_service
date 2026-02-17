@@ -1,4 +1,4 @@
-package epam.com.gym.crm.storage;
+package epam.com.gym.crm.storage.impl;
 
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.util.CsvParserUtil;
@@ -32,15 +32,15 @@ class TrainingStorageTest {
              MockedStatic<CsvParserUtil> csvParserMock = Mockito.mockStatic(CsvParserUtil.class)) {
 
             List<String> csvLines = Arrays.asList(
-                    "1,1,2,LegDay,YOGA,2026-02-17,60.0",
-                    "2,2,1,Cardio,CARDIO,2026-02-18,45.0"
+                    "1,2,LegDay,YOGA,2026-02-17,60.0",
+                    "2,1,Cardio,CARDIO,2026-02-18,45.0"
             );
 
             fileReaderMock.when(() -> FileReaderUtil.readFromCsv(fakePath))
                     .thenReturn(csvLines);
 
-            Training tr1 = new Training(); tr1.setId(1L);
-            Training tr2 = new Training(); tr2.setId(2L);
+            Training tr1 = new Training();
+            Training tr2 = new Training();
 
             csvParserMock.when(() -> CsvParserUtil.parseTrainings(csvLines))
                     .thenReturn(Arrays.asList(tr1, tr2));

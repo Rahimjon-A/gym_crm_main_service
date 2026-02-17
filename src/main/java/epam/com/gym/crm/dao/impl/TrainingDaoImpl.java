@@ -1,8 +1,8 @@
 package epam.com.gym.crm.dao.impl;
 
-import epam.com.gym.crm.dao.TrainingDAO;
+import epam.com.gym.crm.dao.BaseDAO;
 import epam.com.gym.crm.model.Training;
-import epam.com.gym.crm.storage.TrainingStorage;
+import epam.com.gym.crm.storage.impl.TrainingStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -10,13 +10,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class InMemoryTrainingDAO implements TrainingDAO {
+public class TrainingDaoImpl implements BaseDAO<Training> {
 
     private TrainingStorage storage;
 
     @Override
     public Training save(Training training) {
         return storage.save(training);
+    }
+
+    @Override
+    public Training update(Training training) {
+        return storage.update(training);
     }
 
     @Override

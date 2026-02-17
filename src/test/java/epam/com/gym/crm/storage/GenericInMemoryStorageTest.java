@@ -10,18 +10,22 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class GenericInMemoryStorageTest {
+
     private GenericInMemoryStorage<TestEntity> storage;
 
     @BeforeEach
     void setUp() {
-        storage = new GenericInMemoryStorage<>();
+        storage = new TestStorage();
+    }
+
+    static class TestStorage extends GenericInMemoryStorage<TestEntity> {
     }
 
     static class TestEntity extends BaseEntity {
     }
 
     @Test
-    void save_shouldAssignIdWhenNewEntity() {
+    void create_shouldAssignIdWhenNewEntity() {
         TestEntity entity = new TestEntity();
 
         TestEntity saved = storage.save(entity);
@@ -31,14 +35,41 @@ class GenericInMemoryStorageTest {
     }
 
     @Test
-    void save_shouldKeepExistingId() {
+    void create_shouldThrowExceptionIfIdAlreadySet() {
         TestEntity entity = new TestEntity();
         entity.setId(100L);
 
-        TestEntity saved = storage.save(entity);
+        assertThrows(IllegalArgumentException.class,
+                () -> storage.save(entity),
+                "Creating an entity with pre-set ID should throw");
+    }
 
-        assertEquals(100L, saved.getId());
-        assertEquals(saved, storage.findById(100L).orElse(null));
+    @Test
+    void update_shouldModifyExistingEntity() {
+        TestEntity entity = new TestEntity();
+        storage.save(entity);
+
+        TestEntity updated = storage.update(entity);
+
+        assertEquals(entity.getId(), updated.getId());
+    }
+
+    @Test
+    void update_shouldThrowIfIdNull() {
+        TestEntity entity = new TestEntity();
+        assertThrows(IllegalArgumentException.class,
+                () -> storage.update(entity),
+                "Updating an entity without ID should throw");
+    }
+
+    @Test
+    void update_shouldThrowIfEntityNotFound() {
+        TestEntity entity = new TestEntity();
+        entity.setId(999L);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> storage.update(entity),
+                "Updating a non-existing entity should throw");
     }
 
     @Test
@@ -76,12 +107,12 @@ class GenericInMemoryStorageTest {
 
     @Test
     void delete_shouldDoNothingIfIdNotExist() {
-        storage.delete(999L); // no exception should be thrown
+        storage.delete(999L);
         assertTrue(storage.findAll().isEmpty());
     }
 
     @Test
-    void save_shouldIncrementIdCorrectly() {
+    void create_shouldIncrementIdCorrectly() {
         TestEntity e1 = new TestEntity();
         TestEntity e2 = new TestEntity();
 

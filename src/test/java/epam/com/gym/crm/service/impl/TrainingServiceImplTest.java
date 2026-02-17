@@ -1,17 +1,17 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TraineeDAO;
-import epam.com.gym.crm.dao.TrainerDAO;
-import epam.com.gym.crm.dao.TrainingDAO;
+import epam.com.gym.crm.dao.BaseDAO;
+import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dto.TrainingDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
@@ -24,19 +24,18 @@ import static org.mockito.Mockito.*;
 class TrainingServiceImplTest {
 
     @Mock
-    private TrainingDAO trainingDao;
+    private BaseDAO<Training> trainingDao;
 
     @Mock
-    private TrainerDAO trainerDao;
+    private UserDAO<Trainer> trainerDao;
 
     @Mock
-    private TraineeDAO traineeDao;
+    private UserDAO<Trainee> traineeDao;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
     private TrainingDTO dto;
-    private Training training;
 
     @BeforeEach
     void setup() {
@@ -47,27 +46,25 @@ class TrainingServiceImplTest {
         dto.setTrainingType(TrainingType.CARDIO);
         dto.setTrainingDate(LocalDate.now());
         dto.setTrainingDuration(60.0);
-
-        training = new Training();
-        training.setId(10L);
-        training.setTrainerId(1L);
-        training.setTraineeId(2L);
-        training.setTrainingName("Morning Cardio");
-        training.setTrainingType(TrainingType.CARDIO);
-        training.setTrainingDate(dto.getTrainingDate());
-        training.setTrainingDuration(60.);
     }
 
     @Test
     void create_shouldSaveTrainingWhenTrainerAndTraineeExist() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.of(mock()));
-        when(traineeDao.findById(2L)).thenReturn(Optional.of(mock()));
-        when(trainingDao.save(any(Training.class))).thenReturn(training);
+        when(trainerDao.findById(1L)).thenReturn(Optional.of(mock(Trainer.class)));
+        when(traineeDao.findById(2L)).thenReturn(Optional.of(mock(Trainee.class)));
+        when(trainingDao.save(any(Training.class))).thenAnswer(invocation -> {
+            Training t = invocation.getArgument(0);
+            t.setId(10L);
+            return t;
+        });
 
         Training result = trainingService.create(dto);
 
         assertNotNull(result);
         assertEquals("Morning Cardio", result.getTrainingName());
+        assertEquals(1L, result.getTrainerId());
+        assertEquals(2L, result.getTraineeId());
+        assertEquals(60.0, result.getTrainingDuration());
         verify(trainerDao).findById(1L);
         verify(traineeDao).findById(2L);
         verify(trainingDao).save(any(Training.class));
@@ -77,8 +74,7 @@ class TrainingServiceImplTest {
     void create_shouldThrowExceptionWhenTrainerNotFound() {
         when(trainerDao.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> trainingService.create(dto));
+        assertThrows(EntityNotFoundException.class, () -> trainingService.create(dto));
 
         verify(traineeDao, never()).findById(any());
         verify(trainingDao, never()).save(any());
@@ -86,17 +82,18 @@ class TrainingServiceImplTest {
 
     @Test
     void create_shouldThrowExceptionWhenTraineeNotFound() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.of(mock()));
+        when(trainerDao.findById(1L)).thenReturn(Optional.of(mock(Trainer.class)));
         when(traineeDao.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> trainingService.create(dto));
+        assertThrows(EntityNotFoundException.class, () -> trainingService.create(dto));
 
         verify(trainingDao, never()).save(any());
     }
 
     @Test
     void findById_shouldReturnTrainingWhenExists() {
+        Training training = new Training();
+        training.setId(10L);
         when(trainingDao.findById(10L)).thenReturn(Optional.of(training));
 
         Optional<Training> result = trainingService.findById(10L);
@@ -114,9 +111,10 @@ class TrainingServiceImplTest {
         assertTrue(result.isEmpty());
     }
 
-
     @Test
     void findAll_shouldReturnList() {
+        Training training = new Training();
+        training.setId(10L);
         when(trainingDao.findAll()).thenReturn(List.of(training));
 
         List<Training> result = trainingService.findAll();

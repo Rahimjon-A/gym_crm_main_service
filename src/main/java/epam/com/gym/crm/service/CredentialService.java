@@ -1,6 +1,8 @@
 package epam.com.gym.crm.service;
 
-import epam.com.gym.crm.repository.UsernameRepository;
+import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.security.PasswordGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +14,9 @@ public class CredentialService {
     private static final Logger LOG = LoggerFactory.getLogger(CredentialService.class);
     private static final String SEPARATOR = ".";
     private PasswordGenerator passwordGenerator;
-    private UsernameRepository usernameRepository;
+
+    private UserDAO<Trainer> trainerDAO;
+    private UserDAO<Trainee> traineeDAO;
 
     public String generatePassword() {
         LOG.debug("Generating random password");
@@ -35,7 +39,7 @@ public class CredentialService {
         String candidate = base;
         int counter = 1;
 
-        while (usernameRepository.exists(candidate)) {
+        while (isUsernameTaken(candidate)) {
             candidate = base + counter;
             counter++;
         }
@@ -44,13 +48,24 @@ public class CredentialService {
         return candidate;
     }
 
+    public boolean isUsernameTaken(String username) {
+        if (username == null) return false;
+
+        return traineeDAO.existsByUsername(username) || trainerDAO.existsByUsername(username);
+    }
+
     @Autowired
     public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
         this.passwordGenerator = passwordGenerator;
     }
 
     @Autowired
-    public void setUsernameRepository(UsernameRepository usernameRepository) {
-        this.usernameRepository = usernameRepository;
+    public void setTrainerDAO(UserDAO<Trainer> trainerDAO) {
+        this.trainerDAO = trainerDAO;
+    }
+
+    @Autowired
+    public void setTraineeDAO(UserDAO<Trainee> traineeDAO) {
+        this.traineeDAO = traineeDAO;
     }
 }

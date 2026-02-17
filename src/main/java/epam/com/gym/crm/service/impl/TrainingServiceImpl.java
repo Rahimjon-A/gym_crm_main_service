@@ -1,10 +1,11 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TraineeDAO;
-import epam.com.gym.crm.dao.TrainerDAO;
-import epam.com.gym.crm.dao.TrainingDAO;
+import epam.com.gym.crm.dao.BaseDAO;
+import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dto.TrainingDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.service.TrainingService;
 import org.slf4j.Logger;
@@ -20,11 +21,11 @@ public class TrainingServiceImpl implements TrainingService {
     private static final Logger LOG = LoggerFactory.getLogger(TrainingServiceImpl.class);
 
     @Autowired
-    private TrainingDAO trainingDao;
+    private BaseDAO<Training> trainingDao;
     @Autowired
-    private TrainerDAO trainerDao;
+    private UserDAO<Trainer> trainerDao;
     @Autowired
-    private TraineeDAO traineeDao;
+    private UserDAO<Trainee> traineeDao;
 
     @Override
     public Training create(TrainingDTO dto) {

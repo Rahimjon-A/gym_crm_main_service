@@ -1,6 +1,6 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TrainerDAO;
+import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dto.TrainerDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainer;
@@ -19,7 +19,7 @@ public class TrainerServiceImpl implements TrainerService {
     private static final Logger LOG = LoggerFactory.getLogger(TrainerServiceImpl.class);
 
     @Autowired
-    private TrainerDAO trainerDao;
+    private UserDAO<Trainer> trainerDao;
     private CredentialService credentialService;
 
     @Override
@@ -68,7 +68,7 @@ public class TrainerServiceImpl implements TrainerService {
             LOG.info("Trainer {} username updated to {}", userId, newUsername);
         }
 
-        return trainerDao.save(existing);
+        return trainerDao.update(existing);
     }
 
     @Override

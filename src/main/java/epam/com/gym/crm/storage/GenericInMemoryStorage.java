@@ -8,14 +8,29 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class GenericInMemoryStorage<T extends BaseEntity> implements InMemoryStorage<T> {
-    protected final ConcurrentHashMap<Long, T> storage = new ConcurrentHashMap<>();
+public abstract class GenericInMemoryStorage<T extends BaseEntity> implements InMemoryStorage<T> {
+    private final ConcurrentHashMap<Long, T> storage = new ConcurrentHashMap<>();
     private final AtomicLong idSeq = new AtomicLong(1);
 
     @Override
     public T save(T entity) {
+        if (entity.getId() != null) {
+            throw new IllegalArgumentException("New entity cannot already have id");
+        }
+
+        entity.setId(idSeq.getAndIncrement());
+        storage.put(entity.getId(), entity);
+        return entity;
+    }
+
+    @Override
+    public T update(T entity) {
         if (entity.getId() == null) {
-            entity.setId(idSeq.getAndIncrement());
+            throw new IllegalArgumentException("Cannot update entity without id");
+        }
+
+        if (!storage.containsKey(entity.getId())) {
+            throw new IllegalArgumentException("Entity not found for update");
         }
 
         storage.put(entity.getId(), entity);

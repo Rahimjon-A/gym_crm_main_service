@@ -227,5 +227,4 @@ class GymFacadeImplTest {
         assertThat(allTrainings).isEmpty();
         verify(trainingService).findAll();
     }
-
 }
