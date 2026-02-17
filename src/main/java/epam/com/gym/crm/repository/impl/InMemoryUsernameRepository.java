@@ -17,7 +17,6 @@ public class InMemoryUsernameRepository implements UsernameRepository {
                 || traineeDAO.existsByUsername(username);
     }
 
-
     @Autowired
     public void setTrainerDAO(TrainerDAO trainerDAO) {
         this.trainerDAO = trainerDAO;

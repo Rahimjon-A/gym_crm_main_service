@@ -3,6 +3,7 @@ package epam.com.gym.crm.dao.impl;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.storage.TrainerStorage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,11 +12,7 @@ import java.util.Optional;
 @Repository
 public class InMemoryTrainerDAO implements TrainerDAO {
 
-    private final TrainerStorage storage;
-
-    public InMemoryTrainerDAO(TrainerStorage storage) {
-        this.storage = storage;
-    }
+    private TrainerStorage storage;
 
     @Override
     public Trainer save(Trainer trainer) {
@@ -40,5 +37,10 @@ public class InMemoryTrainerDAO implements TrainerDAO {
     @Override
     public boolean existsByUsername(String username) {
         return storage.existsByUsername(username);
+    }
+
+    @Autowired
+    public void setStorage(TrainerStorage storage) {
+        this.storage = storage;
     }
 }
