@@ -26,12 +26,12 @@ class InMemoryTraineeDAOTest {
     @Test
     void save_shouldDelegateToStorage() {
         Trainee trainee = new Trainee();
-        when(storage.save(trainee)).thenReturn(trainee);
+        when(storage.create(trainee)).thenReturn(trainee);
 
-        Trainee result = dao.save(trainee);
+        Trainee result = dao.create(trainee);
 
         assertEquals(trainee, result);
-        verify(storage, times(1)).save(trainee);
+        verify(storage, times(1)).create(trainee);
     }
 
     @Test

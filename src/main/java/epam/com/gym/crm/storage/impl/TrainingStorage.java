@@ -24,7 +24,7 @@ public class TrainingStorage extends GenericInMemoryStorage<Training> {
         LOG.info("Initializing TrainingStorage from {}...", trainingPath);
         List<String> lines = FileReaderUtil.readFromCsv(trainingPath);
         LOG.debug("Read {} lines from {}", lines.size(), trainingPath);
-        CsvParserUtil.parseTrainings(lines).forEach(this::save);
+        CsvParserUtil.parseTrainings(lines).forEach(this::create);
         LOG.info("TrainingStorage initialized, {} records saved", findAll().size());
     }
 }

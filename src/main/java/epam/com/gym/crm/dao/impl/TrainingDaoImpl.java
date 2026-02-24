@@ -15,8 +15,8 @@ public class TrainingDaoImpl implements BaseDAO<Training> {
     private TrainingStorage storage;
 
     @Override
-    public Training save(Training training) {
-        return storage.save(training);
+    public Training create(Training training) {
+        return storage.create(training);
     }
 
     @Override

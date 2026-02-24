@@ -13,7 +13,7 @@ public abstract class GenericInMemoryStorage<T extends BaseEntity> implements In
     private final AtomicLong idSeq = new AtomicLong(1);
 
     @Override
-    public T save(T entity) {
+    public T create(T entity) {
         if (entity.getId() != null) {
             throw new IllegalArgumentException("New entity cannot already have id");
         }

@@ -16,8 +16,8 @@ public class TraineeDaoImpl implements UserDAO<Trainee> {
     private TraineeStorage storage;
 
     @Override
-    public Trainee save(Trainee trainee) {
-        return storage.save(trainee);
+    public Trainee create(Trainee trainee) {
+        return storage.create(trainee);
     }
 
     @Override

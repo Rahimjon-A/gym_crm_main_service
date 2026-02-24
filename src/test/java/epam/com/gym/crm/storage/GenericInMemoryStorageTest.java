@@ -28,7 +28,7 @@ class GenericInMemoryStorageTest {
     void create_shouldAssignIdWhenNewEntity() {
         TestEntity entity = new TestEntity();
 
-        TestEntity saved = storage.save(entity);
+        TestEntity saved = storage.create(entity);
 
         assertNotNull(saved.getId(), "ID should be assigned");
         assertEquals(saved, storage.findById(saved.getId()).orElse(null));
@@ -40,14 +40,14 @@ class GenericInMemoryStorageTest {
         entity.setId(100L);
 
         assertThrows(IllegalArgumentException.class,
-                () -> storage.save(entity),
+                () -> storage.create(entity),
                 "Creating an entity with pre-set ID should throw");
     }
 
     @Test
     void update_shouldModifyExistingEntity() {
         TestEntity entity = new TestEntity();
-        storage.save(entity);
+        storage.create(entity);
 
         TestEntity updated = storage.update(entity);
 
@@ -83,8 +83,8 @@ class GenericInMemoryStorageTest {
         TestEntity e1 = new TestEntity();
         TestEntity e2 = new TestEntity();
 
-        storage.save(e1);
-        storage.save(e2);
+        storage.create(e1);
+        storage.create(e2);
 
         List<TestEntity> all = storage.findAll();
 
@@ -96,7 +96,7 @@ class GenericInMemoryStorageTest {
     @Test
     void delete_shouldRemoveEntityById() {
         TestEntity entity = new TestEntity();
-        storage.save(entity);
+        storage.create(entity);
         Long id = entity.getId();
 
         storage.delete(id);
@@ -116,8 +116,8 @@ class GenericInMemoryStorageTest {
         TestEntity e1 = new TestEntity();
         TestEntity e2 = new TestEntity();
 
-        storage.save(e1);
-        storage.save(e2);
+        storage.create(e1);
+        storage.create(e2);
 
         assertEquals(e1.getId() + 1, e2.getId());
     }

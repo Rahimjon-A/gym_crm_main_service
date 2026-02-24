@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public interface InMemoryStorage<T> {
 
-    T save(T entity);
+    T create(T entity);
 
     T update(T entity);
 

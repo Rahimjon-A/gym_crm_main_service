@@ -15,8 +15,8 @@ public class TrainerDaoImpl implements UserDAO<Trainer> {
     private TrainerStorage storage;
 
     @Override
-    public Trainer save(Trainer trainer) {
-        return storage.save(trainer);
+    public Trainer create(Trainer trainer) {
+        return storage.create(trainer);
     }
 
     @Override

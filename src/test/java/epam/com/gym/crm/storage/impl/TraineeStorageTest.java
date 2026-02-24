@@ -58,7 +58,7 @@ class TraineeStorageTest {
     void existsByUsername_shouldReturnTrueIfExists() {
         Trainee trainee = new Trainee();
         trainee.setUsername("john.doe");
-        storage.save(trainee);
+        storage.create(trainee);
 
         assertTrue(storage.existsByUsername("john.doe"));
         assertTrue(storage.existsByUsername("JOHN.DOE"));

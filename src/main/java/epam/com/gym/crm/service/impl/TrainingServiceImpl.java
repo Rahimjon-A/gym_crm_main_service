@@ -47,7 +47,7 @@ public class TrainingServiceImpl implements TrainingService {
         t.setTrainingDate(dto.getTrainingDate());
         t.setTrainingDuration(dto.getTrainingDuration());
 
-        Training saved = trainingDao.save(t);
+        Training saved = trainingDao.create(t);
         LOG.info("Training created id={}", saved.getId());
         return saved;
     }

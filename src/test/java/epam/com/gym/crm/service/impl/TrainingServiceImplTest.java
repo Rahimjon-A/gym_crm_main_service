@@ -52,7 +52,7 @@ class TrainingServiceImplTest {
     void create_shouldSaveTrainingWhenTrainerAndTraineeExist() {
         when(trainerDao.findById(1L)).thenReturn(Optional.of(mock(Trainer.class)));
         when(traineeDao.findById(2L)).thenReturn(Optional.of(mock(Trainee.class)));
-        when(trainingDao.save(any(Training.class))).thenAnswer(invocation -> {
+        when(trainingDao.create(any(Training.class))).thenAnswer(invocation -> {
             Training t = invocation.getArgument(0);
             t.setId(10L);
             return t;
@@ -67,7 +67,7 @@ class TrainingServiceImplTest {
         assertEquals(60.0, result.getTrainingDuration());
         verify(trainerDao).findById(1L);
         verify(traineeDao).findById(2L);
-        verify(trainingDao).save(any(Training.class));
+        verify(trainingDao).create(any(Training.class));
     }
 
     @Test
@@ -77,7 +77,7 @@ class TrainingServiceImplTest {
         assertThrows(EntityNotFoundException.class, () -> trainingService.create(dto));
 
         verify(traineeDao, never()).findById(any());
-        verify(trainingDao, never()).save(any());
+        verify(trainingDao, never()).create(any());
     }
 
     @Test
@@ -87,7 +87,7 @@ class TrainingServiceImplTest {
 
         assertThrows(EntityNotFoundException.class, () -> trainingService.create(dto));
 
-        verify(trainingDao, never()).save(any());
+        verify(trainingDao, never()).create(any());
     }
 
     @Test

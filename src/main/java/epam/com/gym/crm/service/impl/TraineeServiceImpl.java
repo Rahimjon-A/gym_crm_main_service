@@ -39,7 +39,7 @@ public class TraineeServiceImpl implements TraineeService {
         trainee.setUsername(username);
         trainee.setPassword(password);
 
-        Trainee saved = traineeDao.save(trainee);
+        Trainee saved = traineeDao.create(trainee);
         LOG.info("Trainee created id={} username={}", saved.getId(), saved.getUsername());
         return saved;
     }

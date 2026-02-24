@@ -52,7 +52,7 @@ class TrainerServiceImplTest {
     void create_shouldCreateTrainerSuccessfully() {
         when(credentialService.generateUsername("John", "Smith")).thenReturn("John.Smith");
         when(credentialService.generatePassword()).thenReturn("1234567890");
-        when(trainerDao.save(any(Trainer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(trainerDao.create(any(Trainer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Trainer result = trainerService.create(trainerDTO);
 
@@ -61,14 +61,14 @@ class TrainerServiceImplTest {
         assertEquals("1234567890", result.getPassword());
         verify(credentialService).generateUsername("John", "Smith");
         verify(credentialService).generatePassword();
-        verify(trainerDao).save(any(Trainer.class));
+        verify(trainerDao).create(any(Trainer.class));
     }
 
     @Test
     void create_shouldFailWhenDaoThrowsException() {
         when(credentialService.generateUsername(any(), any())).thenReturn("John.Smith");
         when(credentialService.generatePassword()).thenReturn("1234567890");
-        when(trainerDao.save(any())).thenThrow(new RuntimeException("DB error"));
+        when(trainerDao.create(any())).thenThrow(new RuntimeException("DB error"));
 
         assertThrows(RuntimeException.class, () -> trainerService.create(trainerDTO));
     }

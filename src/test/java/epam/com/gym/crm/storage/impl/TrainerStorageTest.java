@@ -58,7 +58,7 @@ class TrainerStorageTest {
     void existsByUsername_shouldReturnTrueIfExists() {
         Trainer trainer = new Trainer();
         trainer.setUsername("trainer.one");
-        storage.save(trainer);
+        storage.create(trainer);
 
         assertTrue(storage.existsByUsername("trainer.one"));
         assertTrue(storage.existsByUsername("TRAINER.ONE"));

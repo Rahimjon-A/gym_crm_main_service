@@ -55,7 +55,7 @@ class TraineeServiceImplTest {
     void create_shouldGenerateCredentialsAndSave() {
         when(credentialService.generateUsername("John", "Doe")).thenReturn("John.Doe");
         when(credentialService.generatePassword()).thenReturn("1234567890");
-        when(traineeDao.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(traineeDao.create(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Trainee result = traineeService.create(dto);
 
@@ -64,14 +64,14 @@ class TraineeServiceImplTest {
         assertEquals("1234567890", result.getPassword());
         verify(credentialService).generateUsername("John", "Doe");
         verify(credentialService).generatePassword();
-        verify(traineeDao).save(any(Trainee.class));
+        verify(traineeDao).create(any(Trainee.class));
     }
 
     @Test
     void create_shouldPropagateExceptionIfDaoFails() {
         when(credentialService.generateUsername(any(), any())).thenReturn("John.Doe");
         when(credentialService.generatePassword()).thenReturn("1234567890");
-        when(traineeDao.save(any())).thenThrow(new RuntimeException("DB error"));
+        when(traineeDao.create(any())).thenThrow(new RuntimeException("DB error"));
 
         assertThrows(RuntimeException.class, () -> traineeService.create(dto));
     }
