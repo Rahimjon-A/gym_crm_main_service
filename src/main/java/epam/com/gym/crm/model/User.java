@@ -1,18 +1,29 @@
 package epam.com.gym.crm.model;
 
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "users")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public abstract class User extends BaseEntity {
+public class User extends BaseEntity {
+
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(nullable = false)
     private String password;
-    private boolean isActive;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
 }

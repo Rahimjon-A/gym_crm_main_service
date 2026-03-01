@@ -1,11 +1,12 @@
 package epam.com.gym.crm.service;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.security.PasswordGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -14,66 +15,56 @@ class CredentialServiceTest {
 
     private CredentialService credentialService;
     private PasswordGenerator passwordGenerator;
-    private UserDAO<Trainer> trainerDAO;
-    private UserDAO<Trainee> traineeDAO;
+    private UserDAO userDAO;
 
     @BeforeEach
     void setUp() {
         credentialService = new CredentialService();
 
         passwordGenerator = mock(PasswordGenerator.class);
-        trainerDAO = mock(UserDAO.class);
-        traineeDAO = mock(UserDAO.class);
+        userDAO = mock(UserDAO.class);
 
         credentialService.setPasswordGenerator(passwordGenerator);
-        credentialService.setTrainerDAO(trainerDAO);
-        credentialService.setTraineeDAO(traineeDAO);
+        credentialService.setUserDAO(userDAO);
     }
 
     @Test
     void generatePassword_shouldDelegateToPasswordGenerator() {
-        when(passwordGenerator.generate()).thenReturn("abc123");
+        when(passwordGenerator.generate()).thenReturn("abc1234567");
 
         String password = credentialService.generatePassword();
 
-        assertEquals("abc123", password);
+        assertEquals("abc1234567", password);
         verify(passwordGenerator, times(1)).generate();
     }
 
     @Test
     void generateUsername_shouldReturnBaseUsername_whenNotTaken() {
-        when(trainerDAO.existsByUsername("john.doe")).thenReturn(false);
-        when(traineeDAO.existsByUsername("john.doe")).thenReturn(false);
+        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.empty());
 
         String username = credentialService.generateUsername("John", "Doe");
 
         assertEquals("john.doe", username);
-        verify(trainerDAO).existsByUsername("john.doe");
-        verify(traineeDAO).existsByUsername("john.doe");
+        verify(userDAO, times(1)).findByUsername("john.doe");
     }
 
     @Test
     void generateUsername_shouldAppendCounter_whenUsernameTaken() {
-        when(trainerDAO.existsByUsername("john.doe")).thenReturn(true);
-        when(traineeDAO.existsByUsername("john.doe")).thenReturn(false);
-        when(trainerDAO.existsByUsername("john.doe1")).thenReturn(false);
-        when(traineeDAO.existsByUsername("john.doe1")).thenReturn(false);
+        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(new User()));
+        when(userDAO.findByUsername("john.doe1")).thenReturn(Optional.empty());
 
         String username = credentialService.generateUsername("John", "Doe");
 
         assertEquals("john.doe1", username);
+        verify(userDAO, times(1)).findByUsername("john.doe");
+        verify(userDAO, times(1)).findByUsername("john.doe1");
     }
 
     @Test
     void generateUsername_shouldIncrementCounterMultipleTimes() {
-        when(trainerDAO.existsByUsername("john.doe")).thenReturn(true);
-        when(traineeDAO.existsByUsername("john.doe")).thenReturn(false);
-
-        when(trainerDAO.existsByUsername("john.doe1")).thenReturn(true);
-        when(traineeDAO.existsByUsername("john.doe1")).thenReturn(false);
-
-        when(trainerDAO.existsByUsername("john.doe2")).thenReturn(false);
-        when(traineeDAO.existsByUsername("john.doe2")).thenReturn(false);
+        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(new User()));
+        when(userDAO.findByUsername("john.doe1")).thenReturn(Optional.of(new User()));
+        when(userDAO.findByUsername("john.doe2")).thenReturn(Optional.empty());
 
         String username = credentialService.generateUsername("John", "Doe");
 
@@ -94,8 +85,7 @@ class CredentialServiceTest {
 
     @Test
     void generateUsername_shouldTrimAndLowercaseInput() {
-        when(trainerDAO.existsByUsername("john.doe")).thenReturn(false);
-        when(traineeDAO.existsByUsername("john.doe")).thenReturn(false);
+        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.empty());
 
         String username = credentialService.generateUsername("  JOHN  ", "  DOE ");
 
@@ -104,17 +94,21 @@ class CredentialServiceTest {
 
     @Test
     void isUsernameTaken_shouldReturnTrue_ifTaken() {
-        when(trainerDAO.existsByUsername("john.doe")).thenReturn(true);
-        when(traineeDAO.existsByUsername("john.doe")).thenReturn(false);
+        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(new User()));
 
         assertTrue(credentialService.isUsernameTaken("john.doe"));
     }
 
     @Test
     void isUsernameTaken_shouldReturnFalse_ifNotTaken() {
-        when(trainerDAO.existsByUsername("john.doe")).thenReturn(false);
-        when(traineeDAO.existsByUsername("john.doe")).thenReturn(false);
+        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.empty());
 
         assertFalse(credentialService.isUsernameTaken("john.doe"));
+    }
+
+    @Test
+    void isUsernameTaken_shouldReturnFalse_ifUsernameIsNull() {
+        assertFalse(credentialService.isUsernameTaken(null));
+        verifyNoInteractions(userDAO);
     }
 }

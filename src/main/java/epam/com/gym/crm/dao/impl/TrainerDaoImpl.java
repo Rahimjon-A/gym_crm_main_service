@@ -1,51 +1,26 @@
 package epam.com.gym.crm.dao.impl;
 
-import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.model.Trainer;
-import epam.com.gym.crm.storage.impl.TrainerStorage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Repository
-public class TrainerDaoImpl implements UserDAO<Trainer> {
+public class TrainerDaoImpl extends AbstractBaseDAO<Trainer> implements TrainerDAO {
 
-    private TrainerStorage storage;
-
-    @Override
-    public Trainer create(Trainer trainer) {
-        return storage.create(trainer);
+    public TrainerDaoImpl() {
+        super(Trainer.class);
     }
 
     @Override
-    public Trainer update(Trainer trainer) {
-        return storage.update(trainer);
-    }
-
-    @Override
-    public Optional<Trainer> findById(Long id) {
-        return storage.findById(id);
-    }
-
-    @Override
-    public List<Trainer> findAll() {
-        return storage.findAll();
-    }
-
-    @Override
-    public void delete(Long id) {
-        storage.delete(id);
-    }
-
-    @Override
-    public boolean existsByUsername(String username) {
-        return storage.existsByUsername(username);
-    }
-
-    @Autowired
-    public void setStorage(TrainerStorage storage) {
-        this.storage = storage;
+    public Optional<Trainer> findByUsername(String username) {
+        log.info("Finding Trainer by username: {}", username);
+        return getEntityManager().createQuery("SELECT t FROM Trainer t JOIN t.user u WHERE u.username = :username", Trainer.class)
+                .setParameter("username", username)
+                .getResultStream()
+                .findFirst();
     }
 }

@@ -1,83 +1,154 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.dao.TraineeDAO;
+import epam.com.gym.crm.dao.TrainerDAO;
+import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.service.CredentialService;
 import epam.com.gym.crm.service.TraineeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Service
+@Slf4j
 public class TraineeServiceImpl implements TraineeService {
-    private static final Logger LOG = LoggerFactory.getLogger(TraineeServiceImpl.class);
-
     @Autowired
-    private UserDAO<Trainee> traineeDao;
+    private TraineeDAO traineeDao;
+    @Autowired
+    private TrainingDAO trainingDao;
+    @Autowired
+    private TrainerDAO trainerDao;
     private CredentialService credentialService;
 
-    @Override
-    public Trainee create(TraineeDTO dto) {
-        LOG.info("Creating trainee: {} {}", dto.getFirstName(), dto.getLastName());
-
-        Trainee trainee = new Trainee();
-        trainee.setFirstName(dto.getFirstName());
-        trainee.setLastName(dto.getLastName());
-        trainee.setDateOfBirth(dto.getDateOfBirth());
-        trainee.setAddress(dto.getAddress());
-        trainee.setActive(true);
-
-        String username = credentialService.generateUsername(dto.getFirstName(), dto.getLastName());
-        String password = credentialService.generatePassword();
-
-        trainee.setUsername(username);
-        trainee.setPassword(password);
-
-        Trainee saved = traineeDao.create(trainee);
-        LOG.info("Trainee created id={} username={}", saved.getId(), saved.getUsername());
-        return saved;
+    @Autowired
+    public void setCredentialService(CredentialService credentialService) {
+        this.credentialService = credentialService;
     }
 
     @Override
-    public Trainee update(Long userId, TraineeDTO dto) {
-        LOG.info("Updating trainee id={}", userId);
-        Trainee existing = traineeDao.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + userId));
+    @Transactional
+    public Trainee create(TraineeDTO dto) {
+        validate(dto);
+        log.info("Creating profile for: {} {}", dto.getFirstName(), dto.getLastName());
 
-        boolean nameChanged = false;
-        if (dto.getFirstName() != null && !dto.getFirstName().equals(existing.getFirstName())) {
-            existing.setFirstName(dto.getFirstName());
-            nameChanged = true;
-        }
-        if (dto.getLastName() != null && !dto.getLastName().equals(existing.getLastName())) {
-            existing.setLastName(dto.getLastName());
-            nameChanged = true;
-        }
-        if (dto.getDateOfBirth() != null) {
-            existing.setDateOfBirth(dto.getDateOfBirth());
-        }
+        User user = new User();
+        user.setFirstName(dto.getFirstName().trim());
+        user.setLastName(dto.getLastName().trim());
+        user.setIsActive(true);
+        user.setUsername(credentialService.generateUsername(dto.getFirstName(), dto.getLastName()));
+        user.setPassword(credentialService.generatePassword());
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(user);
+        trainee.setDateOfBirth(dto.getDateOfBirth());
+
         if (dto.getAddress() != null) {
-            existing.setAddress(dto.getAddress());
+            trainee.setAddress(dto.getAddress().trim());
         }
 
-        if (nameChanged) {
-            String newUsername = credentialService.generateUsername(existing.getFirstName(), existing.getLastName());
-            existing.setUsername(newUsername);
-            LOG.info("Trainee {} username updated to {}", userId, newUsername);
+        return traineeDao.create(trainee);
+    }
+
+    @Override
+    @Transactional
+    public Trainee update(Long traineeId, TraineeDTO dto) {
+        validate(dto);
+        log.info("Updating profile for id: {}", traineeId);
+
+        Trainee existing = findById(traineeId);
+        User user = existing.getUser();
+
+        user.setFirstName(dto.getFirstName().trim());
+        user.setLastName(dto.getLastName().trim());
+        existing.setDateOfBirth(dto.getDateOfBirth());
+
+        if (dto.getAddress() != null) {
+            existing.setAddress(dto.getAddress().trim());
         }
+
 
         return traineeDao.update(existing);
     }
 
     @Override
-    public Optional<Trainee> findById(Long userId) {
-        return traineeDao.findById(userId);
+    @Transactional
+    public Trainee updateTraineeTrainings(Long traineeId, Map<Long, Long> trainingAndTrainerIds) {
+        log.info("Updating trainee (id={}) trainings assignments: {}", traineeId, trainingAndTrainerIds);
+
+        if (traineeId == null) {
+            throw new IllegalArgumentException("Trainee id is required");
+        }
+        if (trainingAndTrainerIds == null || trainingAndTrainerIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one training->trainer mapping is required");
+        }
+
+        Trainee trainee = findById(traineeId);
+
+        for (Map.Entry<Long, Long> entry : trainingAndTrainerIds.entrySet()) {
+            Long trainingId = entry.getKey();
+            Long trainerId = entry.getValue();
+
+            if (trainingId == null || trainerId == null) {
+                throw new IllegalArgumentException("Training id and trainer id must not be null");
+            }
+
+            Training training = trainingDao.findById(trainingId)
+                    .orElseThrow(() -> new EntityNotFoundException("Training not found id: " + trainingId));
+
+            if (!training.getTrainee().getId().equals(traineeId)) {
+                throw new IllegalArgumentException(
+                        "Training id " + trainingId + " does not belong to trainee id " + traineeId);
+            }
+
+            Trainer trainer = trainerDao.findById(trainerId)
+                    .orElseThrow(() -> new EntityNotFoundException("Trainer not found id: " + trainerId));
+
+            if (!Boolean.TRUE.equals(trainer.getUser().getIsActive())) {
+                throw new IllegalStateException("Trainer id " + trainerId + " is not active");
+            }
+
+            training.setTrainer(trainer);
+            trainingDao.update(training);
+            log.info("Assigned trainer id {} to training id {}", trainerId, trainingId);
+        }
+
+        return traineeDao.findById(traineeId)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found after update: " + traineeId));
+    }
+
+    @Override
+    public Trainee findByUsername(String username) {
+        return traineeDao.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + username));
+    }
+
+    @Override
+    @Transactional
+    public void deleteByUsername(String username) {
+        log.info("Hard deleting trainee: {}", username);
+        Trainee trainee = findByUsername(username);
+        traineeDao.delete(trainee.getId());
+    }
+
+    @Override
+    public List<Trainer> getUnassignedTrainers(String traineeUsername) {
+        return traineeDao.getUnassignedTrainers(traineeUsername);
+    }
+
+    @Override
+    public Trainee findById(Long userId) {
+        return traineeDao.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found id: " + userId));
     }
 
     @Override
@@ -85,17 +156,18 @@ public class TraineeServiceImpl implements TraineeService {
         return traineeDao.findAll();
     }
 
-    @Override
-    public void delete(Long userId) {
-        LOG.info("Deleting trainee id={}", userId);
-        if (traineeDao.findById(userId).isEmpty()) {
-            throw new EntityNotFoundException("Trainee not found: " + userId);
+    private void validate(TraineeDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Trainee data must not be null");
         }
-        traineeDao.delete(userId);
-    }
-
-    @Autowired
-    public void setCredentialService(CredentialService credentialService) {
-        this.credentialService = credentialService;
+        if (dto.getFirstName() == null || dto.getFirstName().isBlank()) {
+            throw new IllegalArgumentException("First name is mandatory");
+        }
+        if (dto.getLastName() == null || dto.getLastName().isBlank()) {
+            throw new IllegalArgumentException("Last name is mandatory");
+        }
+        if (dto.getDateOfBirth() != null && dto.getDateOfBirth().after(new java.util.Date())) {
+            throw new IllegalArgumentException("Date of birth must be in the past");
+        }
     }
 }

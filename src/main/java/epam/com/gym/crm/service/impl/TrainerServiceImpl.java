@@ -1,79 +1,100 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.dao.TrainerDAO;
+import epam.com.gym.crm.dao.TrainingTypeDAO;
 import epam.com.gym.crm.dto.TrainerDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.model.TrainingType;
+import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.service.CredentialService;
 import epam.com.gym.crm.service.TrainerService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 @Service
+@Slf4j
 public class TrainerServiceImpl implements TrainerService {
-    private static final Logger LOG = LoggerFactory.getLogger(TrainerServiceImpl.class);
-
     @Autowired
-    private UserDAO<Trainer> trainerDao;
+    private TrainerDAO trainerDao;
+    @Autowired
+    private TrainingTypeDAO trainingTypeDAO;
     private CredentialService credentialService;
 
+    @Autowired
+    public void setCredentialService(CredentialService credentialService) {
+        this.credentialService = credentialService;
+    }
+
     @Override
+    @Transactional
     public Trainer create(TrainerDTO dto) {
-        LOG.info("Creating trainer: {} {}", dto.getFirstName(), dto.getLastName());
+        validate(dto);
+
+        log.info("Creating trainer profile for: {} {}", dto.getFirstName(), dto.getLastName());
+
+        User user = new User();
+        user.setFirstName(dto.getFirstName().trim());
+        user.setLastName(dto.getLastName().trim());
+        user.setIsActive(true);
+
+        user.setUsername(credentialService.generateUsername(dto.getFirstName(), dto.getLastName()));
+        user.setPassword(credentialService.generatePassword());
 
         Trainer trainer = new Trainer();
-        trainer.setFirstName(dto.getFirstName());
-        trainer.setLastName(dto.getLastName());
-        trainer.setSpecialization(dto.getSpecialization());
-        trainer.setActive(true);
+        trainer.setUser(user);
 
-        String username = credentialService.generateUsername(dto.getFirstName(), dto.getLastName());
-        String password = credentialService.generatePassword();
-
-        trainer.setUsername(username);
-        trainer.setPassword(password);
+        TrainingType tt = trainingTypeDAO.findById(dto.getSpecializationId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid specialization id: " + dto.getSpecializationId()));
+        trainer.setSpecialization(tt);
 
         Trainer saved = trainerDao.create(trainer);
-        LOG.info("Trainer created id={} username={}", saved.getId(), saved.getUsername());
+        log.info("Trainer created with username: {}", saved.getUser().getUsername());
         return saved;
     }
 
     @Override
-    public Trainer update(Long userId, TrainerDTO dto) {
-        LOG.info("Updating trainer id={}", userId);
-        Trainer existing = trainerDao.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + userId));
+    @Transactional
+    public Trainer update(Long trainerId, TrainerDTO dto) {
+        validate(dto);
+        log.info("Updating trainer id={}", trainerId);
 
-        boolean nameChanged = false;
-        if (dto.getFirstName() != null && !dto.getFirstName().equals(existing.getFirstName())) {
-            existing.setFirstName(dto.getFirstName());
-            nameChanged = true;
+        Trainer existing = findById(trainerId);
+
+        User user = existing.getUser();
+
+        if (!dto.getFirstName().equals(user.getFirstName())) {
+            user.setFirstName(dto.getFirstName().trim());
         }
-        if (dto.getLastName() != null && !dto.getLastName().equals(existing.getLastName())) {
-            existing.setLastName(dto.getLastName());
-            nameChanged = true;
-        }
-        if (dto.getSpecialization() != null) {
-            existing.setSpecialization(dto.getSpecialization());
+        if (!dto.getLastName().equals(user.getLastName())) {
+            user.setLastName(dto.getLastName().trim());
         }
 
-        if (nameChanged) {
-            String newUsername = credentialService.generateUsername(existing.getFirstName(), existing.getLastName());
-            existing.setUsername(newUsername);
-            LOG.info("Trainer {} username updated to {}", userId, newUsername);
+        if (!Objects.equals(dto.getSpecializationId(), existing.getSpecialization().getId())) {
+            TrainingType tt = trainingTypeDAO.findById(dto.getSpecializationId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid specialization id: " + dto.getSpecializationId()));
+            existing.setSpecialization(tt);
         }
 
         return trainerDao.update(existing);
     }
 
     @Override
-    public Optional<Trainer> findById(Long userId) {
-        return trainerDao.findById(userId);
+    @Transactional(readOnly = true)
+    public Trainer findById(Long id) {
+        return trainerDao.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found id: " + id));
+    }
+
+    @Override
+    public Trainer findByUsername(String username) {
+        return trainerDao.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + username));
     }
 
     @Override
@@ -81,9 +102,16 @@ public class TrainerServiceImpl implements TrainerService {
         return trainerDao.findAll();
     }
 
-
-    @Autowired
-    public void setCredentialService(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    private void validate(TrainerDTO dto) {
+        if (dto == null) throw new IllegalArgumentException("Trainer data is required");
+        if (dto.getFirstName() != null && dto.getFirstName().isBlank()) {
+            throw new IllegalArgumentException("First name cannot be blank");
+        }
+        if (dto.getLastName() != null && dto.getLastName().isBlank()) {
+            throw new IllegalArgumentException("Last name cannot be blank");
+        }
+        if(dto.getSpecializationId() == null) {
+            throw new IllegalArgumentException("Specialization cannot be null");
+        }
     }
 }
