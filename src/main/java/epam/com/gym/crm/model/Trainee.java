@@ -13,11 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Trainee extends BaseEntity {
-
-    @OneToOne(optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+public class Trainee extends User {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "date_of_birth")

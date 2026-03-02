@@ -1,8 +1,8 @@
 package epam.com.gym.crm.aspect;
 
+import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.AuthService;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,15 +25,12 @@ class AuthAspectTest {
     @InjectMocks
     private AuthAspect authAspect;
 
-    @BeforeEach
-    void setUp() {
-        authAspect.setAuthService(authService);
-    }
-
     @Test
     void enforceAuthentication_shouldProceed_whenCredentialsAreValid() throws Throwable {
-        Object[] validArgs = {"john.doe", "password123", "someOtherArg"};
-        when(joinPoint.getArgs()).thenReturn(validArgs);
+        Credentials creds = new Credentials("john.doe", "password123");
+        Object[] args = {creds, "someOtherArg"};
+
+        when(joinPoint.getArgs()).thenReturn(args);
         when(joinPoint.proceed()).thenReturn(new Object());
 
         assertDoesNotThrow(() -> authAspect.enforceAuthentication(joinPoint));
@@ -43,35 +40,39 @@ class AuthAspectTest {
     }
 
     @Test
-    void enforceAuthentication_shouldThrowException_whenArgsAreLessThanTwo() {
-        Object[] invalidArgs = {"justUsername"};
-        when(joinPoint.getArgs()).thenReturn(invalidArgs);
+    void enforceAuthentication_shouldThrowException_whenCredentialsMissing() {
+        Object[] args = {"justAString", 123L};
+        when(joinPoint.getArgs()).thenReturn(args);
 
         assertThrows(SecurityException.class, () -> authAspect.enforceAuthentication(joinPoint));
-        
+
         verifyNoInteractions(authService);
     }
 
     @Test
-    void enforceAuthentication_shouldThrowException_whenArgsAreNotStrings() {
-        Object[] invalidArgs = {123L, true};
-        when(joinPoint.getArgs()).thenReturn(invalidArgs);
+    void enforceAuthentication_shouldFindCredentials_evenIfNotFirstArg() throws Throwable {
+        Credentials creds = new Credentials("john.doe", "password123");
+        Object[] args = {100L, creds};
 
-        assertThrows(SecurityException.class, () -> authAspect.enforceAuthentication(joinPoint));
+        when(joinPoint.getArgs()).thenReturn(args);
+        when(joinPoint.proceed()).thenReturn(new Object());
 
-        verifyNoInteractions(authService);
+        assertDoesNotThrow(() -> authAspect.enforceAuthentication(joinPoint));
+
+        verify(authService).authenticate("john.doe", "password123");
     }
 
     @Test
     void enforceAuthentication_shouldPropagateException_whenAuthServiceFails() throws Throwable {
-        Object[] validArgs = {"john.doe", "wrongPassword"};
-        when(joinPoint.getArgs()).thenReturn(validArgs);
-        
-        doThrow(new IllegalArgumentException("Invalid credentials"))
+        Credentials creds = new Credentials("john.doe", "wrongPassword");
+        Object[] args = {creds};
+
+        when(joinPoint.getArgs()).thenReturn(args);
+
+        doThrow(new SecurityException("Invalid credentials"))
                 .when(authService).authenticate("john.doe", "wrongPassword");
 
-        assertThrows(IllegalArgumentException.class, () -> authAspect.enforceAuthentication(joinPoint));
-
+        assertThrows(SecurityException.class, () -> authAspect.enforceAuthentication(joinPoint));
         verify(joinPoint, never()).proceed();
     }
 }

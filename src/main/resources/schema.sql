@@ -19,18 +19,16 @@ CREATE TABLE training_types (
 );
 
 CREATE TABLE trainees (
-                          id BIGSERIAL PRIMARY KEY,
+                          id BIGINT PRIMARY KEY,
                           date_of_birth DATE,
                           address VARCHAR(255),
-                          user_id BIGINT NOT NULL UNIQUE,
-                          CONSTRAINT fk_trainee_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                          CONSTRAINT fk_trainee_user FOREIGN KEY (id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE trainers (
-                          id BIGSERIAL PRIMARY KEY,
+                          id BIGINT PRIMARY KEY,
                           specialization_id BIGINT NOT NULL,
-                          user_id BIGINT NOT NULL UNIQUE,
-                          CONSTRAINT fk_trainer_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                          CONSTRAINT fk_trainer_user FOREIGN KEY (id) REFERENCES users (id) ON DELETE CASCADE,
                           CONSTRAINT fk_trainer_specialization FOREIGN KEY (specialization_id) REFERENCES training_types (id)
 );
 

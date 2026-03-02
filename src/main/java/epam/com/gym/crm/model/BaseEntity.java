@@ -11,8 +11,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @MappedSuperclass
 public abstract class BaseEntity {
     @Id

@@ -1,7 +1,6 @@
-package epam.com.gym.crm.dto;
+package epam.com.gym.crm.filter;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,12 +9,9 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrainerTrainingFilter {
-    private String trainerUsername;
+public abstract class BaseTrainingFilter {
     private Date fromDate;
     private Date toDate;
-    private String trainingName;
-    private String traineeName;
-    private String traineeAddress;
     private Double duration;
+    private String trainingName;
 }

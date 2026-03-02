@@ -8,5 +8,4 @@ import java.util.Optional;
 
 public interface TraineeDAO extends BaseDAO<Trainee> {
     Optional<Trainee> findByUsername(String username);
-    List<Trainer> getUnassignedTrainers(String traineeUsername); // Requirement #17
 }

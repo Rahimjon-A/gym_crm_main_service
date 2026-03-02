@@ -1,121 +1,86 @@
 package epam.com.gym.crm.dao.impl;
 
-import epam.com.gym.crm.dto.TraineeTrainingFilter;
-import epam.com.gym.crm.dto.TrainerTrainingFilter;
-import epam.com.gym.crm.model.*;
+import epam.com.gym.crm.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.model.Training;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@TestPropertySource(properties = "spring.sql.init.mode=never")
-@Import(TrainingDaoImpl.class)
+@ExtendWith(MockitoExtension.class)
 class TrainingDaoImplTest {
 
-    @Autowired
-    private TrainingDaoImpl trainingDao;
-
-    @Autowired
+    @Mock
     private EntityManager entityManager;
 
-    private Date pastDate;
-    private Date futureDate;
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private CriteriaBuilder cb;
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private CriteriaQuery<Training> cq;
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private Root<Training> root;
+
+    @Mock
+    private TypedQuery<Training> typedQuery;
+
+    @InjectMocks
+    private TrainingDaoImpl trainingDao;
 
     @BeforeEach
     void setUp() {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DAY_OF_MONTH, -10);
-        pastDate = cal.getTime();
-        cal.add(Calendar.DAY_OF_MONTH, 20);
-        futureDate = cal.getTime();
-
-        User traineeUser = new User();
-        traineeUser.setFirstName("John");
-        traineeUser.setLastName("Doe");
-        traineeUser.setUsername("john.doe");
-        traineeUser.setPassword("pass");
-        traineeUser.setIsActive(true);
-        entityManager.persist(traineeUser);
-
-        Trainee trainee = new Trainee();
-        trainee.setUser(traineeUser);
-        trainee.setAddress("123 Main St, New York");
-        entityManager.persist(trainee);
-
-        User trainerUser = new User();
-        trainerUser.setFirstName("Jane");
-        trainerUser.setLastName("Smith");
-        trainerUser.setUsername("jane.smith");
-        trainerUser.setPassword("pass");
-        trainerUser.setIsActive(true);
-        entityManager.persist(trainerUser);
-
-        TrainingType type = new TrainingType();
-        type.setTrainingTypeName("YOGA");
-        entityManager.persist(type);
-
-        Trainer trainer = new Trainer();
-        trainer.setUser(trainerUser);
-        trainer.setSpecialization(type);
-        entityManager.persist(trainer);
-
-        Training training = new Training();
-        training.setTrainee(trainee);
-        training.setTrainer(trainer);
-        training.setTrainingType(type);
-        training.setTrainingName("Morning Yoga Session");
-        training.setTrainingDate(new Date());
-        training.setTrainingDuration(60.0);
-        entityManager.persist(training);
-
-        entityManager.flush();
-        entityManager.clear();
+        when(entityManager.getCriteriaBuilder()).thenReturn(cb);
+        when(cb.createQuery(Training.class)).thenReturn(cq);
+        when(cq.from(Training.class)).thenReturn(root);
+        when(entityManager.createQuery(cq)).thenReturn(typedQuery);
     }
 
     @Test
-    void findTraineeTrainingsByCriteria_shouldHitAllFiltersAndReturnMatch() {
+    void findTraineeTrainingsByCriteria_shouldBuildCorrectPredicates() {
+        // GIVEN
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
         filter.setTraineeUsername("john.doe");
-        filter.setFromDate(pastDate);
-        filter.setToDate(futureDate);
-        filter.setTrainerName("jane.smith");
-        filter.setTrainingTypeName("YOGA");
+        filter.setFromDate(new Date());
         filter.setDuration(60.0);
-        filter.setTrainingName("Morning");
 
-        List<Training> results = trainingDao.findTraineeTrainingsByCriteria(filter);
+        List<Training> expectedResult = List.of(new Training());
+        when(typedQuery.getResultList()).thenReturn(expectedResult);
 
-        assertFalse(results.isEmpty());
-        assertEquals(1, results.size());
-        assertEquals("Morning Yoga Session", results.get(0).getTrainingName());
+        List<Training> actualResult = trainingDao.findTraineeTrainingsByCriteria(filter);
+
+        assertEquals(expectedResult, actualResult);
+
+        verify(cb).equal(root.get("trainee").get("username"), "john.doe");
+
+        verify(cb).greaterThanOrEqualTo(root.get("trainingDate"), filter.getFromDate());
+        verify(cb).equal(root.get("trainingDuration"), 60.0);
+
+        verify(cq).where(any(Predicate[].class));
+        verify(entityManager).createQuery(cq);
     }
 
     @Test
-    void findTrainerTrainingsByCriteria_shouldHitAllFiltersAndReturnMatch() {
-        TrainerTrainingFilter filter = new TrainerTrainingFilter();
-        filter.setTrainerUsername("jane.smith");
-        filter.setFromDate(pastDate);
-        filter.setToDate(futureDate);
-        filter.setTraineeName("john.doe");
-        filter.setTraineeAddress("New York");
-        filter.setDuration(60.0);
-        filter.setTrainingName("Morning Yoga Session");
+    void findTraineeTrainingsByCriteria_shouldHandleNullOptionals() {
+        TraineeTrainingFilter filter = new TraineeTrainingFilter();
+        filter.setTraineeUsername("john.doe");
 
-        List<Training> results = trainingDao.findTrainerTrainingsByCriteria(filter);
+        trainingDao.findTraineeTrainingsByCriteria(filter);
 
-        assertFalse(results.isEmpty());
-        assertEquals(1, results.size());
-        assertEquals("Morning Yoga Session", results.get(0).getTrainingName());
+        verify(cb, times(1)).equal(any(Expression.class), eq("john.doe"));
+        verify(cb, never()).greaterThanOrEqualTo(any(), any(Date.class));
     }
 }

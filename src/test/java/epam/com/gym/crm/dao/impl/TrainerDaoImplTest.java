@@ -1,68 +1,91 @@
 package epam.com.gym.crm.dao.impl;
 
 import epam.com.gym.crm.model.Trainer;
-import epam.com.gym.crm.model.TrainingType;
-import epam.com.gym.crm.model.User;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@TestPropertySource(properties = "spring.sql.init.mode=never")
-@Import(TrainerDaoImpl.class)
+@ExtendWith(MockitoExtension.class)
 class TrainerDaoImplTest {
 
-    @Autowired
+    @Mock
+    private EntityManager entityManager;
+
+    @Mock
+    private TypedQuery<Trainer> typedQuery;
+
+    @InjectMocks
     private TrainerDaoImpl trainerDao;
 
-    @Autowired
-    private EntityManager entityManager;
+    private Trainer mockTrainer;
 
     @BeforeEach
     void setUp() {
-        User user = new User();
-        user.setFirstName("John");
-        user.setLastName("Smith");
-        user.setUsername("john.smith");
-        user.setPassword("password123");
-        user.setIsActive(true);
-        entityManager.persist(user);
+        mockTrainer = new Trainer();
+        mockTrainer.setId(10L);
+        mockTrainer.setUsername("john.smith");
+        mockTrainer.setFirstName("John");
 
-        TrainingType type = new TrainingType();
-        type.setTrainingTypeName("FITNESS");
-        entityManager.persist(type);
-
-        Trainer trainer = new Trainer();
-        trainer.setUser(user);
-        trainer.setSpecialization(type);
-        entityManager.persist(trainer);
-
-        entityManager.flush();
-        entityManager.clear();
+        // Manually inject mock because AbstractBaseDAO uses @PersistenceContext
+        trainerDao.setEntityManager(entityManager);
     }
 
     @Test
-    void findByUsername_shouldReturnTrainer_whenUsernameExists() {
-        Optional<Trainer> result = trainerDao.findByUsername("john.smith");
+    void findByUsername_shouldReturnTrainer_whenFound() {
+        String targetUser = "john.smith";
+        when(entityManager.createQuery(anyString(), eq(Trainer.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
+        when(typedQuery.getResultStream()).thenReturn(Stream.of(mockTrainer));
+
+        Optional<Trainer> result = trainerDao.findByUsername(targetUser);
 
         assertTrue(result.isPresent());
-        assertEquals("john.smith", result.get().getUser().getUsername());
-        assertEquals("FITNESS", result.get().getSpecialization().getTrainingTypeName());
+        assertEquals(targetUser, result.get().getUsername());
+
+        verify(entityManager).createQuery(contains("t.username = :username"), eq(Trainer.class));
+        verify(typedQuery).setParameter("username", targetUser);
     }
 
     @Test
-    void findByUsername_shouldReturnEmpty_whenUsernameDoesNotExist() {
-        Optional<Trainer> result = trainerDao.findByUsername("unknown.user");
+    void findByUsername_shouldReturnEmpty_whenNotFound() {
+        when(entityManager.createQuery(anyString(), eq(Trainer.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
+        when(typedQuery.getResultStream()).thenReturn(Stream.empty());
+
+        Optional<Trainer> result = trainerDao.findByUsername("ghost.user");
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getUnassignedTrainers_shouldCallQueryWithCorrectParameters() {
+        String traineeUsername = "jane.doe";
+        List<Trainer> expectedList = List.of(mockTrainer);
+
+        when(entityManager.createQuery(anyString(), eq(Trainer.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(expectedList);
+
+        List<Trainer> result = trainerDao.getUnassignedTrainers(traineeUsername);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("john.smith", result.get(0).getUsername());
+
+        verify(entityManager).createQuery(contains("WHERE NOT EXISTS"), eq(Trainer.class));
+        verify(typedQuery).setParameter("username", traineeUsername);
     }
 }

@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
-public class User extends BaseEntity {
+public abstract class User extends BaseEntity {
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -24,6 +25,6 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+    @Column(name = "is_active")
+    private boolean isActive;
 }

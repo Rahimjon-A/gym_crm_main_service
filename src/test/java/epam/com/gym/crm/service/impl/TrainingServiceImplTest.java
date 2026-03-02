@@ -4,14 +4,11 @@ import epam.com.gym.crm.dao.TraineeDAO;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.TraineeTrainingFilter;
-import epam.com.gym.crm.dto.TrainerTrainingFilter;
+import epam.com.gym.crm.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.TrainingDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
-import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.model.Trainer;
-import epam.com.gym.crm.model.Training;
-import epam.com.gym.crm.model.TrainingType;
+import epam.com.gym.crm.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -193,6 +191,57 @@ class TrainingServiceImplTest {
     void getTrainerTrainingsByCriteria_shouldThrowException_whenUsernameIsMissing() {
         assertThrows(IllegalArgumentException.class, () -> trainingService.getTrainerTrainingsByCriteria(null));
         verifyNoInteractions(trainingDao);
+    }
+
+    @Test
+    void updateTraineeTrainings_shouldUpdateTrainings_whenValid() {
+        Long traineeId = 1L;
+        Long trainingId = 10L;
+        Long trainerId = 100L;
+
+        Training training = new Training();
+        training.setId(trainingId);
+        training.setTrainee(validTrainee);
+
+        Trainer trainer = new Trainer();
+        trainer.setId(trainerId);
+        trainer.setActive(true);
+
+        when(traineeDao.findById(traineeId)).thenReturn(Optional.of(validTrainee));
+        when(trainingDao.findById(trainingId)).thenReturn(Optional.of(training));
+        when(trainerDao.findById(trainerId)).thenReturn(Optional.of(trainer));
+
+        when(trainingDao.update(any(Training.class))).thenReturn(training);
+
+        Map<Long, Long> map = Map.of(trainingId, trainerId);
+
+        List<Training> results = trainingService.updateTraineeTrainings(traineeId, map);
+
+        assertEquals(1, results.size());
+        assertEquals(trainer, results.get(0).getTrainer());
+        verify(trainingDao, times(1)).update(training);
+    }
+
+    @Test
+    void updateTraineeTrainings_shouldThrowException_whenTrainingDoesNotBelongToTrainee() {
+        Long traineeId = 1L;
+        Long trainingId = 10L;
+        Long trainerId = 100L;
+
+        Trainee otherTrainee = new Trainee();
+        otherTrainee.setId(2L);
+
+        Training training = new Training();
+        training.setId(trainingId);
+        training.setTrainee(otherTrainee);
+
+        when(traineeDao.findById(traineeId)).thenReturn(Optional.of(validTrainee));
+        when(trainingDao.findById(trainingId)).thenReturn(Optional.of(training));
+
+        Map<Long, Long> map = Map.of(trainingId, trainerId);
+
+        assertThrows(IllegalArgumentException.class, () -> trainingService.updateTraineeTrainings(traineeId, map));
+        verify(trainingDao, never()).update(any());
     }
 
     @Test

@@ -4,8 +4,8 @@ import epam.com.gym.crm.dao.TraineeDAO;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.TraineeTrainingFilter;
-import epam.com.gym.crm.dto.TrainerTrainingFilter;
+import epam.com.gym.crm.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.TrainingDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
@@ -18,7 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -78,6 +80,52 @@ public class TrainingServiceImpl implements TrainingService {
         }
         log.info("Fetching trainings for trainer: {}", filter.getTrainerUsername());
         return trainingDao.findTrainerTrainingsByCriteria(filter);
+    }
+
+    @Override
+    @Transactional
+    public List<Training> updateTraineeTrainings(Long traineeId, Map<Long, Long> trainingAndTrainerIds) {
+        log.info("Updating trainee (id={}) trainings assignments: {}", traineeId, trainingAndTrainerIds);
+
+        if (traineeId == null) {
+            throw new IllegalArgumentException("Trainee id is required");
+        }
+        if (trainingAndTrainerIds == null || trainingAndTrainerIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one training->trainer mapping is required");
+        }
+
+        traineeDao.findById(traineeId)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + traineeId));
+
+        List<Training> updatedTrainings = new ArrayList<>();
+
+        for (Map.Entry<Long, Long> entry : trainingAndTrainerIds.entrySet()) {
+            Long trainingId = entry.getKey();
+            Long trainerId = entry.getValue();
+
+            if (trainingId == null || trainerId == null) {
+                throw new IllegalArgumentException("Training id and trainer id must not be null");
+            }
+
+            Training training = trainingDao.findById(trainingId)
+                    .orElseThrow(() -> new EntityNotFoundException("Training not found id: " + trainingId));
+
+            if (!training.getTrainee().getId().equals(traineeId)) {
+                throw new IllegalArgumentException(
+                        "Training id " + trainingId + " does not belong to trainee id " + traineeId);
+            }
+
+            Trainer trainer = trainerDao.findById(trainerId)
+                    .orElseThrow(() -> new EntityNotFoundException("Trainer not found id: " + trainerId));
+
+            training.setTrainer(trainer);
+            Training savedTraining = trainingDao.update(training);
+            updatedTrainings.add(savedTraining);
+
+            log.info("Assigned trainer id {} to training id {}", trainerId, trainingId);
+        }
+
+        return updatedTrainings;
     }
 
     @Override

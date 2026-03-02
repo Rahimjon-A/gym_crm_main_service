@@ -7,8 +7,8 @@ import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.model.User;
-import epam.com.gym.crm.service.CredentialService;
 import epam.com.gym.crm.service.TrainerService;
+import epam.com.gym.crm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,11 +24,11 @@ public class TrainerServiceImpl implements TrainerService {
     private TrainerDAO trainerDao;
     @Autowired
     private TrainingTypeDAO trainingTypeDAO;
-    private CredentialService credentialService;
+    private UserService userService;
 
     @Autowired
-    public void setCredentialService(CredentialService credentialService) {
-        this.credentialService = credentialService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     @Override
@@ -38,23 +38,20 @@ public class TrainerServiceImpl implements TrainerService {
 
         log.info("Creating trainer profile for: {} {}", dto.getFirstName(), dto.getLastName());
 
-        User user = new User();
-        user.setFirstName(dto.getFirstName().trim());
-        user.setLastName(dto.getLastName().trim());
-        user.setIsActive(true);
-
-        user.setUsername(credentialService.generateUsername(dto.getFirstName(), dto.getLastName()));
-        user.setPassword(credentialService.generatePassword());
-
         Trainer trainer = new Trainer();
-        trainer.setUser(user);
+        trainer.setFirstName(dto.getFirstName().trim());
+        trainer.setLastName(dto.getLastName().trim());
+        trainer.setActive(dto.getIsActive());
+
+        trainer.setUsername(userService.generateUsername(dto.getFirstName(), dto.getLastName()));
+        trainer.setPassword(userService.generatePassword());
 
         TrainingType tt = trainingTypeDAO.findById(dto.getSpecializationId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid specialization id: " + dto.getSpecializationId()));
         trainer.setSpecialization(tt);
 
         Trainer saved = trainerDao.create(trainer);
-        log.info("Trainer created with username: {}", saved.getUser().getUsername());
+        log.info("Trainer created with username: {}", saved.getUsername());
         return saved;
     }
 
@@ -66,13 +63,11 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer existing = findById(trainerId);
 
-        User user = existing.getUser();
-
-        if (!dto.getFirstName().equals(user.getFirstName())) {
-            user.setFirstName(dto.getFirstName().trim());
+        if (!dto.getFirstName().equals(existing.getFirstName())) {
+            existing.setFirstName(dto.getFirstName().trim());
         }
-        if (!dto.getLastName().equals(user.getLastName())) {
-            user.setLastName(dto.getLastName().trim());
+        if (!dto.getLastName().equals(existing.getLastName())) {
+            existing.setLastName(dto.getLastName().trim());
         }
 
         if (!Objects.equals(dto.getSpecializationId(), existing.getSpecialization().getId())) {
@@ -82,6 +77,17 @@ public class TrainerServiceImpl implements TrainerService {
         }
 
         return trainerDao.update(existing);
+    }
+
+    @Override
+    public List<Trainer> getUnassignedTrainers(String traineeUsername) {
+        log.info("Fetching unassigned trainers for trainee username: {}", traineeUsername);
+
+        if (traineeUsername == null || traineeUsername.isBlank()) {
+            throw new IllegalArgumentException("Trainee username must not be null or blank");
+        }
+
+        return trainerDao.getUnassignedTrainers(traineeUsername);
     }
 
     @Override
@@ -109,6 +115,9 @@ public class TrainerServiceImpl implements TrainerService {
         }
         if (dto.getLastName() != null && dto.getLastName().isBlank()) {
             throw new IllegalArgumentException("Last name cannot be blank");
+        }
+        if (dto.getIsActive() == null) {
+            throw new IllegalArgumentException("Active/Deactive flag must not be null");
         }
         if(dto.getSpecializationId() == null) {
             throw new IllegalArgumentException("Specialization cannot be null");
