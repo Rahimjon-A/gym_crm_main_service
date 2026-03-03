@@ -15,6 +15,7 @@ public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
 
     @Getter
     private EntityManager entityManager;
+    @Getter
     private final Class<T> entityClass;
 
     protected AbstractBaseDAO(Class<T> entityClass) {
@@ -28,14 +29,17 @@ public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
 
     @Override
     public T create(T entity) {
-        log.debug("Saving new {} to database", entityClass.getSimpleName());
+        log.debug("Attempting to save new {}. Details: {}", entityClass.getSimpleName(), entity);
+
         entityManager.persist(entity);
+
+        log.debug("Successfully saved {} with generated ID: {}", entityClass.getSimpleName(), getEntityId(entity));
         return entity;
     }
 
     @Override
     public T update(T entity) {
-        log.debug("Updating {} in database", entityClass.getSimpleName());
+        log.info("Updating {} with ID: {}", entityClass.getSimpleName(), getEntityId(entity));
         return entityManager.merge(entity);
     }
 
@@ -54,10 +58,21 @@ public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
 
     @Override
     public void delete(Long id) {
-        log.debug("Deleting {} with ID: {}", entityClass.getSimpleName(), id);
+        log.info("Attempting to delete {} with ID: {}", entityClass.getSimpleName(), id);
+
         T entity = entityManager.find(entityClass, id);
         if (entity != null) {
             entityManager.remove(entity);
+            log.debug("Successfully deleted {} with ID: {}", entityClass.getSimpleName(), id);
+        } else {
+            log.warn("Could not delete. {} with ID: {} not found", entityClass.getSimpleName(), id);
         }
+    }
+
+    private Long getEntityId(T entity) {
+        if (entityManager == null || entity == null) {
+            return null;
+        }
+        return (Long) entityManager.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
     }
 }

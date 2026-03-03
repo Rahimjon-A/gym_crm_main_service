@@ -2,6 +2,8 @@ package epam.com.gym.crm.dao.impl;
 
 import epam.com.gym.crm.model.Trainee;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnitUtil;
 import jakarta.persistence.TypedQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,12 +22,20 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeDaoImplTest {
+    private static final String TARGET_USERNAME = "john.doe";
+    private static final String EXPECTED_QUERY_FRAGMENT = "WHERE e.username = :username";
 
     @Mock
     private EntityManager entityManager;
 
     @Mock
     private TypedQuery<Trainee> typedQuery;
+
+    @Mock
+    private EntityManagerFactory entityManagerFactory;
+
+    @Mock
+    private PersistenceUnitUtil persistenceUnitUtil;
 
     @InjectMocks
     private TraineeDaoImpl traineeDao;
@@ -39,21 +49,26 @@ class TraineeDaoImplTest {
         testTrainee.setUsername("john.doe");
         testTrainee.setFirstName("John");
 
+        lenient().when(entityManager.getEntityManagerFactory()).thenReturn(entityManagerFactory);
+        lenient().when(entityManagerFactory.getPersistenceUnitUtil()).thenReturn(persistenceUnitUtil);
+
+        lenient().when(persistenceUnitUtil.getIdentifier(any())).thenReturn(1L);
+
         traineeDao.setEntityManager(entityManager);
     }
 
     @Test
     void findByUsername_shouldReturnTrainee_whenFound() {
-        String username = "john.doe";
         when(entityManager.createQuery(anyString(), eq(Trainee.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
         when(typedQuery.getResultStream()).thenReturn(Stream.of(testTrainee));
 
-        Optional<Trainee> result = traineeDao.findByUsername(username);
+        Optional<Trainee> result = traineeDao.findByUsername(TARGET_USERNAME);
 
         assertTrue(result.isPresent());
-        assertEquals(username, result.get().getUsername());
-        verify(entityManager).createQuery(contains("WHERE t.username = :username"), eq(Trainee.class));
+        assertEquals(TARGET_USERNAME, result.get().getUsername());
+
+        verify(entityManager).createQuery(contains(EXPECTED_QUERY_FRAGMENT), eq(Trainee.class));
     }
 
     @Test

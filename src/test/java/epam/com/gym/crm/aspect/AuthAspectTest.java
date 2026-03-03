@@ -3,6 +3,7 @@ package epam.com.gym.crm.aspect;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.AuthService;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,20 +23,27 @@ class AuthAspectTest {
     @Mock
     private ProceedingJoinPoint joinPoint;
 
+    @Mock
+    private Credentials credentials;
+
     @InjectMocks
     private AuthAspect authAspect;
 
+    @BeforeEach
+    void setUp() {
+        credentials = new Credentials("john.doe", "password123");
+    }
+
     @Test
     void enforceAuthentication_shouldProceed_whenCredentialsAreValid() throws Throwable {
-        Credentials creds = new Credentials("john.doe", "password123");
-        Object[] args = {creds, "someOtherArg"};
+        Object[] args = {credentials, "someOtherArg"};
 
         when(joinPoint.getArgs()).thenReturn(args);
         when(joinPoint.proceed()).thenReturn(new Object());
 
         assertDoesNotThrow(() -> authAspect.enforceAuthentication(joinPoint));
 
-        verify(authService, times(1)).authenticate("john.doe", "password123");
+        verify(authService, times(1)).authenticate(credentials);
         verify(joinPoint, times(1)).proceed();
     }
 
@@ -51,26 +59,24 @@ class AuthAspectTest {
 
     @Test
     void enforceAuthentication_shouldFindCredentials_evenIfNotFirstArg() throws Throwable {
-        Credentials creds = new Credentials("john.doe", "password123");
-        Object[] args = {100L, creds};
+        Object[] args = {100L, credentials};
 
         when(joinPoint.getArgs()).thenReturn(args);
         when(joinPoint.proceed()).thenReturn(new Object());
 
         assertDoesNotThrow(() -> authAspect.enforceAuthentication(joinPoint));
 
-        verify(authService).authenticate("john.doe", "password123");
+        verify(authService).authenticate(credentials);
     }
 
     @Test
     void enforceAuthentication_shouldPropagateException_whenAuthServiceFails() throws Throwable {
-        Credentials creds = new Credentials("john.doe", "wrongPassword");
-        Object[] args = {creds};
+        Object[] args = {credentials};
 
         when(joinPoint.getArgs()).thenReturn(args);
 
         doThrow(new SecurityException("Invalid credentials"))
-                .when(authService).authenticate("john.doe", "wrongPassword");
+                .when(authService).authenticate(credentials);
 
         assertThrows(SecurityException.class, () -> authAspect.enforceAuthentication(joinPoint));
         verify(joinPoint, never()).proceed();

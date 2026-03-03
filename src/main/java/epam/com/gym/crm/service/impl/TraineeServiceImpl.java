@@ -1,12 +1,9 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TraineeDAO;
-import epam.com.gym.crm.dao.TrainerDAO;
+import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.model.Trainer;
-import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.service.TraineeService;
 import epam.com.gym.crm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +18,7 @@ import java.util.List;
 @Slf4j
 public class TraineeServiceImpl implements TraineeService {
     @Autowired
-    private TraineeDAO traineeDao;
+    private UserDAO<Trainee> traineeDao;
     private UserService userService;
 
     @Autowired

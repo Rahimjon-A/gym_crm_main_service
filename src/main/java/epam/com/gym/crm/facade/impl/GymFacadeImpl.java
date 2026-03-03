@@ -1,8 +1,8 @@
 package epam.com.gym.crm.facade.impl;
 
 import epam.com.gym.crm.aspect.RequireAuth;
-import epam.com.gym.crm.filter.TraineeTrainingFilter;
-import epam.com.gym.crm.filter.TrainerTrainingFilter;
+import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.*;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.model.Trainee;

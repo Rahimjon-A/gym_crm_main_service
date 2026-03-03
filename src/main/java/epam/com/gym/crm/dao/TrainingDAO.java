@@ -1,7 +1,7 @@
 package epam.com.gym.crm.dao;
 
-import epam.com.gym.crm.filter.TraineeTrainingFilter;
-import epam.com.gym.crm.filter.TrainerTrainingFilter;
+import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.model.Training;
 
 import java.util.List;

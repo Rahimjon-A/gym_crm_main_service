@@ -1,11 +1,11 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TraineeDAO;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.filter.TraineeTrainingFilter;
-import epam.com.gym.crm.filter.TrainerTrainingFilter;
+import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.TrainingDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.*;
@@ -31,7 +31,7 @@ class TrainingServiceImplTest {
     @Mock
     private TrainingDAO trainingDao;
     @Mock
-    private TraineeDAO traineeDao;
+    private UserDAO<Trainee> traineeDao;
     @Mock
     private TrainerDAO trainerDao;
     @Mock

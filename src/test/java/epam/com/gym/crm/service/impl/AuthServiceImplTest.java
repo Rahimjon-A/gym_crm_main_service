@@ -2,6 +2,7 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.model.User;
+import epam.com.gym.crm.model.common.Credentials;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.*;
 class AuthServiceImplTest {
 
     @Mock
-    private UserDAO userDAO;
+    private UserDAO<User> userDAO;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -37,14 +38,14 @@ class AuthServiceImplTest {
     void authenticate_shouldSucceed_whenCredentialsAreValid() {
         when(userDAO.findByUsername("john.smith")).thenReturn(Optional.of(validUser));
 
-        assertDoesNotThrow(() -> authService.authenticate("john.smith", "securePass123"));
+        assertDoesNotThrow(() -> authService.authenticate( new Credentials("john.smith", "securePass123")));
         verify(userDAO, times(1)).findByUsername("john.smith");
     }
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsBlank() {
         assertThrows(IllegalArgumentException.class, 
-                () -> authService.authenticate("", "password"));
+                () -> authService.authenticate(new Credentials("", "password")));
         verifyNoInteractions(userDAO);
     }
 
@@ -53,7 +54,7 @@ class AuthServiceImplTest {
         when(userDAO.findByUsername("unknown.user")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, 
-                () -> authService.authenticate("unknown.user", "password"));
+                () -> authService.authenticate(new Credentials("unknown.user", "password")));
     }
 
     @Test
@@ -61,6 +62,6 @@ class AuthServiceImplTest {
         when(userDAO.findByUsername("john.smith")).thenReturn(Optional.of(validUser));
 
         assertThrows(IllegalArgumentException.class, 
-                () -> authService.authenticate("john.smith", "wrongPassword"));
+                () -> authService.authenticate(new Credentials("john.smith", "wrongPassword")));
     }
 }

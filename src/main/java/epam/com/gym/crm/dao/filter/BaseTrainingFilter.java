@@ -1,4 +1,4 @@
-package epam.com.gym.crm.filter;
+package epam.com.gym.crm.dao.filter;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +12,4 @@ import java.util.Date;
 public abstract class BaseTrainingFilter {
     private Date fromDate;
     private Date toDate;
-    private Double duration;
-    private String trainingName;
 }

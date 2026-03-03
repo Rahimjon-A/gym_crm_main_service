@@ -1,6 +1,6 @@
 package epam.com.gym.crm.dao.impl;
 
-import epam.com.gym.crm.filter.TraineeTrainingFilter;
+import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.model.Training;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -51,11 +51,9 @@ class TrainingDaoImplTest {
 
     @Test
     void findTraineeTrainingsByCriteria_shouldBuildCorrectPredicates() {
-        // GIVEN
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
         filter.setTraineeUsername("john.doe");
         filter.setFromDate(new Date());
-        filter.setDuration(60.0);
 
         List<Training> expectedResult = List.of(new Training());
         when(typedQuery.getResultList()).thenReturn(expectedResult);
@@ -67,7 +65,6 @@ class TrainingDaoImplTest {
         verify(cb).equal(root.get("trainee").get("username"), "john.doe");
 
         verify(cb).greaterThanOrEqualTo(root.get("trainingDate"), filter.getFromDate());
-        verify(cb).equal(root.get("trainingDuration"), 60.0);
 
         verify(cq).where(any(Predicate[].class));
         verify(entityManager).createQuery(cq);

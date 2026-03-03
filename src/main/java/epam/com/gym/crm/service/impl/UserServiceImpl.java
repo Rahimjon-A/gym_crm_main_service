@@ -16,7 +16,7 @@ public class UserServiceImpl implements UserService {
     private static final String SEPARATOR = ".";
 
     @Autowired
-    private UserDAO userDAO;
+    private UserDAO<User> userDAO;
 
     @Override
     public String generatePassword() {

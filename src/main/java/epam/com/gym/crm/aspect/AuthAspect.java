@@ -34,7 +34,7 @@ public class AuthAspect {
                 .findFirst()
                 .orElseThrow(() -> new SecurityException("Credentials must be provided for this operation"));
 
-        authService.authenticate(credentials.username(), credentials.password());
+        authService.authenticate(credentials);
 
         return joinPoint.proceed();
     }

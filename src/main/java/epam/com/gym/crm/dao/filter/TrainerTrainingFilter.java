@@ -1,4 +1,4 @@
-package epam.com.gym.crm.filter;
+package epam.com.gym.crm.dao.filter;
 
 import lombok.*;
 
@@ -9,5 +9,4 @@ import lombok.*;
 public class TrainerTrainingFilter extends BaseTrainingFilter {
     private String trainerUsername;
     private String traineeName;
-    private String traineeAddress;
 }

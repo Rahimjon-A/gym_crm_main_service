@@ -1,10 +1,12 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.dao.TraineeDAO;
+import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.UserService;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnitUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.*;
 class TraineeServiceImplTest {
 
     @Mock
-    private TraineeDAO traineeDao;
+    private UserDAO<Trainee> traineeDao;
     @Mock
     private UserService userService;
 

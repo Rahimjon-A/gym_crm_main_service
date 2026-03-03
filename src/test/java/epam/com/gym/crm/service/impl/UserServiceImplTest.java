@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 class UserServiceImplTest {
 
     @Mock
-    private UserDAO userDAO;
+    private UserDAO<User> userDAO;
 
     @InjectMocks
     private UserServiceImpl userService;

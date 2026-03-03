@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>example.com</groupId>
-    <artifactId>spring-core-task-1</artifactId>
+    <artifactId>gym-crm-lab-project</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>spring-core-task-1</name>
-    <description>spring-core-task-1</description>
+    <name>gym-crm-lab-project</name>
+    <description>gym-crm-lab-project</description>
     <url/>
     <licenses>
         <license/>

@@ -1,4 +1,4 @@
-package epam.com.gym.crm.filter;
+package epam.com.gym.crm.dao.filter;
 
 import lombok.*;
 
