@@ -52,7 +52,7 @@ class TrainingDaoImplTest {
     @Test
     void findTraineeTrainingsByCriteria_shouldBuildCorrectPredicates() {
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
-        filter.setTraineeUsername("john.doe");
+        filter.setTraineeName("john.doe");
         filter.setFromDate(new Date());
 
         List<Training> expectedResult = List.of(new Training());
@@ -73,7 +73,7 @@ class TrainingDaoImplTest {
     @Test
     void findTraineeTrainingsByCriteria_shouldHandleNullOptionals() {
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
-        filter.setTraineeUsername("john.doe");
+        filter.setTraineeName("john.doe");
 
         trainingDao.findTraineeTrainingsByCriteria(filter);
 

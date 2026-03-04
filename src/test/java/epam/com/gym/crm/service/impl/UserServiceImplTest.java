@@ -102,24 +102,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void isUsernameTaken_shouldReturnTrue_ifTaken() {
-        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
-        assertTrue(userService.isUsernameTaken("john.doe"));
-    }
-
-    @Test
-    void isUsernameTaken_shouldReturnFalse_ifNotTaken() {
-        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.empty());
-        assertFalse(userService.isUsernameTaken("john.doe"));
-    }
-
-    @Test
-    void isUsernameTaken_shouldReturnFalse_ifUsernameIsNull() {
-        assertFalse(userService.isUsernameTaken(null));
-        verifyNoInteractions(userDAO);
-    }
-
-    @Test
     void changePassword_shouldUpdatePassword_whenValid() {
         when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
 

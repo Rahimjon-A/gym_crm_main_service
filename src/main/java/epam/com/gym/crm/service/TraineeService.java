@@ -7,8 +7,6 @@ import epam.com.gym.crm.model.Trainer;
 import java.util.List;
 import java.util.Map;
 
-public interface TraineeService extends BaseService<Trainee, TraineeDTO>{
-    Trainee update(Long traineeId, TraineeDTO dto);
-    Trainee findByUsername(String username);
+public interface TraineeService extends AbstractUserService<Trainee, TraineeDTO>{
     void deleteByUsername(String username);
 }

@@ -26,6 +26,10 @@ public class AuthServiceImpl implements AuthService {
         if (!credentials.password().equals(user.getPassword())) {
             throw new IllegalArgumentException("Invalid username or password");
         }
+
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("User account is deactivated");
+        }
     }
 
     private void validateCredentials(Credentials credentials) {

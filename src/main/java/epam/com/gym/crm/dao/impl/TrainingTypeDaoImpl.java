@@ -13,7 +13,7 @@ import java.util.Optional;
 @Slf4j
 @Repository
 public class TrainingTypeDaoImpl implements TrainingTypeDAO {
-    private static final String FIND_BY_NAME_QUERY = "SELECT tt FROM TrainingType tt WHERE lower(tt.trainingTypeName) = :name";
+    private static final String FIND_BY_NAME_QUERY = "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name";
     private static final String FIND_ALL_QUERY = "FROM TrainingType";
     private static final String PARAM_NAME = "name";
 

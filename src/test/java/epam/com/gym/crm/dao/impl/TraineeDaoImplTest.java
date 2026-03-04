@@ -24,6 +24,9 @@ import static org.mockito.Mockito.*;
 class TraineeDaoImplTest {
     private static final String TARGET_USERNAME = "john.doe";
     private static final String EXPECTED_QUERY_FRAGMENT = "WHERE e.username = :username";
+    private static final String EXPECTED_DELETE_QUERY = "DELETE FROM Trainee e WHERE e.id = :id";
+    private static final String PARAM_ID = "id";
+    private static final Long TARGET_ID = 1L;
 
     @Mock
     private EntityManager entityManager;
@@ -112,11 +115,18 @@ class TraineeDaoImplTest {
     }
 
     @Test
-    void delete_shouldRemove_whenEntityExists() {
-        when(entityManager.find(Trainee.class, 1L)).thenReturn(testTrainee);
+    void delete_shouldExecuteDeleteQuery() {
+        doReturn(typedQuery).when(entityManager).createQuery(anyString());
+        when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
+        when(typedQuery.executeUpdate()).thenReturn(1);
 
-        traineeDao.delete(1L);
+        traineeDao.delete(TARGET_ID);
 
-        verify(entityManager).remove(testTrainee);
+        verify(entityManager).createQuery(contains(EXPECTED_DELETE_QUERY));
+        verify(typedQuery).setParameter(PARAM_ID, TARGET_ID);
+        verify(typedQuery).executeUpdate();
+
+        verify(entityManager, never()).find(any(), any());
+        verify(entityManager, never()).remove(any());
     }
 }

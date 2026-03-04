@@ -5,8 +5,6 @@ import epam.com.gym.crm.model.Trainer;
 
 import java.util.List;
 
-public interface TrainerService extends BaseService<Trainer, TrainerDTO> {
-    Trainer update(Long userId, TrainerDTO dto);
-    Trainer findByUsername(String username);
+public interface TrainerService extends AbstractUserService<Trainer, TrainerDTO> {
     List<Trainer> getUnassignedTrainers(String traineeUsername);
 }

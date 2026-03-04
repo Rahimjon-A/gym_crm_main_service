@@ -12,6 +12,8 @@ import java.util.Optional;
 @Slf4j
 public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
     private static final String FROM_CLAUSE = "FROM ";
+    private static final String QUERY_DELETE_TEMPLATE = "DELETE FROM %s e WHERE e.id = :id";
+    private static final String PARAM_ID = "id";
 
     @Getter
     private EntityManager entityManager;
@@ -29,7 +31,7 @@ public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
 
     @Override
     public T create(T entity) {
-        log.debug("Attempting to save new {}. Details: {}", entityClass.getSimpleName(), entity);
+        log.debug("Attempting to save new {}.", entityClass.getSimpleName());
 
         entityManager.persist(entity);
 
@@ -58,11 +60,15 @@ public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
 
     @Override
     public void delete(Long id) {
-        log.info("Attempting to delete {} with ID: {}", entityClass.getSimpleName(), id);
+        log.debug("Attempting to delete {} with ID: {}", entityClass.getSimpleName(), id);
 
-        T entity = entityManager.find(entityClass, id);
-        if (entity != null) {
-            entityManager.remove(entity);
+        String queryString = String.format(QUERY_DELETE_TEMPLATE, entityClass.getSimpleName());
+
+        int deletedCount = entityManager.createQuery(queryString)
+                .setParameter(PARAM_ID, id)
+                .executeUpdate();
+
+        if (deletedCount > 0) {
             log.debug("Successfully deleted {} with ID: {}", entityClass.getSimpleName(), id);
         } else {
             log.warn("Could not delete. {} with ID: {} not found", entityClass.getSimpleName(), id);
@@ -71,7 +77,7 @@ public abstract class AbstractBaseDAO<T> implements BaseDAO<T> {
 
     private Long getEntityId(T entity) {
         if (entityManager == null || entity == null) {
-            return null;
+            throw  new IllegalStateException("EntityManager is null! and could not instantiate PersistenceUnitUtil");
         }
         return (Long) entityManager.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
     }

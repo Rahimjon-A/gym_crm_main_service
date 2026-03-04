@@ -39,19 +39,13 @@ public class UserServiceImpl implements UserService {
         String candidate = base;
         int counter = 1;
 
-        while (isUsernameTaken(candidate)) {
+        while(userDAO.findByUsername(candidate).isPresent()) {
             candidate = base + counter;
             counter++;
         }
 
         log.debug("Final username generated='{}'", candidate);
         return candidate;
-    }
-
-    @Override
-    public boolean isUsernameTaken(String username) {
-        if (username == null) return false;
-        return userDAO.findByUsername(username).isPresent();
     }
 
     @Override

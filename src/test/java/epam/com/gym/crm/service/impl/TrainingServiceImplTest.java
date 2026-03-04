@@ -153,7 +153,7 @@ class TrainingServiceImplTest {
     @Test
     void getTraineeTrainingsByCriteria_shouldReturnList_whenFilterIsValid() {
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
-        filter.setTraineeUsername("john.doe");
+        filter.setTraineeName("john.doe");
 
         List<Training> expectedList = List.of(validTraining);
         when(trainingDao.findTraineeTrainingsByCriteria(filter)).thenReturn(expectedList);
@@ -167,7 +167,7 @@ class TrainingServiceImplTest {
     @Test
     void getTraineeTrainingsByCriteria_shouldThrowException_whenUsernameIsMissing() {
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
-        filter.setTraineeUsername("   ");
+        filter.setTraineeName("   ");
 
         assertThrows(IllegalArgumentException.class, () -> trainingService.getTraineeTrainingsByCriteria(filter));
         verifyNoInteractions(trainingDao);
@@ -176,7 +176,7 @@ class TrainingServiceImplTest {
     @Test
     void getTrainerTrainingsByCriteria_shouldReturnList_whenFilterIsValid() {
         TrainerTrainingFilter filter = new TrainerTrainingFilter();
-        filter.setTrainerUsername("jane.smith");
+        filter.setTrainerName("jane.smith");
 
         List<Training> expectedList = List.of(validTraining);
         when(trainingDao.findTrainerTrainingsByCriteria(filter)).thenReturn(expectedList);

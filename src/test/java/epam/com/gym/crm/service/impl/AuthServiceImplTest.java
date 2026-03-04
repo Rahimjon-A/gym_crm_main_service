@@ -64,4 +64,13 @@ class AuthServiceImplTest {
         assertThrows(IllegalArgumentException.class, 
                 () -> authService.authenticate(new Credentials("john.smith", "wrongPassword")));
     }
+
+    @Test
+    void authenticate_shouldThrowException_whenUserIsInactive() {
+        when(userDAO.findByUsername("john.smith")).thenReturn(Optional.of(validUser));
+        when(validUser.isActive()).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> authService.authenticate(new Credentials("john.smith", "securePass123")));
+    }
 }

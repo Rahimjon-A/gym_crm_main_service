@@ -66,19 +66,19 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter) {
-        if (filter == null || filter.getTraineeUsername() == null || filter.getTraineeUsername().isBlank()) {
+        if (filter == null || filter.getTraineeName() == null || filter.getTraineeName().isBlank()) {
             throw new IllegalArgumentException("Trainee username is required for filtering");
         }
-        log.info("Fetching trainings for trainee: {}", filter.getTraineeUsername());
+        log.info("Fetching trainings for trainee: {}", filter.getTraineeName());
         return trainingDao.findTraineeTrainingsByCriteria(filter);
     }
 
     @Override
     public List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter) {
-        if (filter == null || filter.getTrainerUsername() == null || filter.getTrainerUsername().isBlank()) {
+        if (filter == null || filter.getTrainerName() == null || filter.getTrainerName().isBlank()) {
             throw new IllegalArgumentException("Trainer username is required for filtering");
         }
-        log.info("Fetching trainings for trainer: {}", filter.getTrainerUsername());
+        log.info("Fetching trainings for trainer: {}", filter.getTrainerName());
         return trainingDao.findTrainerTrainingsByCriteria(filter);
     }
 

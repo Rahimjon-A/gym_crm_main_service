@@ -28,14 +28,14 @@ public class TrainingDaoImpl extends AbstractBaseDAO<Training> implements Traini
 
     @Override
     public List<Training> findTraineeTrainingsByCriteria(TraineeTrainingFilter request) {
-        log.debug("Searching trainings for Trainee: {}", request.getTraineeUsername());
+        log.debug("Searching trainings for Trainee: {}", request.getTraineeName());
 
         CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Training> cq = cb.createQuery(Training.class);
         Root<Training> root = cq.from(Training.class);
         List<Predicate> predicates = new ArrayList<>();
 
-        addUsernamePredicate(cb, root, predicates, FIELD_TRAINEE, request.getTraineeUsername());
+        addUsernamePredicate(cb, root, predicates, FIELD_TRAINEE, request.getTraineeName());
         addUsernamePredicate(cb, root, predicates, FIELD_TRAINER, request.getTrainerName());
 
         if (request.getTrainingTypeName() != null) {
@@ -49,14 +49,14 @@ public class TrainingDaoImpl extends AbstractBaseDAO<Training> implements Traini
 
     @Override
     public List<Training> findTrainerTrainingsByCriteria(TrainerTrainingFilter request) {
-        log.debug("Searching trainings for Trainer: {}", request.getTrainerUsername());
+        log.debug("Searching trainings for Trainer: {}", request.getTrainerName());
 
         CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Training> cq = cb.createQuery(Training.class);
         Root<Training> root = cq.from(Training.class);
         List<Predicate> predicates = new ArrayList<>();
 
-        addUsernamePredicate(cb, root, predicates, FIELD_TRAINER, request.getTrainerUsername());
+        addUsernamePredicate(cb, root, predicates, FIELD_TRAINER, request.getTrainerName());
         addUsernamePredicate(cb, root, predicates, FIELD_TRAINEE, request.getTraineeName());
 
         addCommonPredicates(cb, root, predicates, request);
