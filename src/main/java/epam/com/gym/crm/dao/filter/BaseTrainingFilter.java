@@ -15,3 +15,4 @@ public abstract class BaseTrainingFilter {
     private Date fromDate;
     private Date toDate;
 }
+
