@@ -2,11 +2,11 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.TrainerDTO;
+import epam.com.gym.crm.dto.trainer.TrainerDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.TrainingType;
-import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.service.TrainerService;
 import epam.com.gym.crm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ public class TrainerServiceImpl implements TrainerService {
         trainer.setPassword(userService.generatePassword());
 
         TrainingType tt = trainingTypeDAO.findById(dto.getSpecializationId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid specialization id: " + dto.getSpecializationId()));
+                .orElseThrow(() -> new EntityNotFoundException("Invalid specialization id: " + dto.getSpecializationId()));
         trainer.setSpecialization(tt);
 
         Trainer saved = trainerDao.create(trainer);
@@ -57,11 +57,11 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public Trainer update(Long trainerId, TrainerDTO dto) {
+    public Trainer update(String username, TrainerDTO dto) {
         validate(dto);
-        log.info("Updating trainer id={}", trainerId);
+        log.info("Updating trainer username={}", username);
 
-        Trainer existing = findById(trainerId);
+        Trainer existing = findByUsername(username);
 
         if (!dto.getFirstName().equals(existing.getFirstName())) {
             existing.setFirstName(dto.getFirstName().trim());
@@ -72,7 +72,7 @@ public class TrainerServiceImpl implements TrainerService {
 
         if (!Objects.equals(dto.getSpecializationId(), existing.getSpecialization().getId())) {
             TrainingType tt = trainingTypeDAO.findById(dto.getSpecializationId())
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid specialization id: " + dto.getSpecializationId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Invalid specialization id: " + dto.getSpecializationId()));
             existing.setSpecialization(tt);
         }
 
@@ -84,7 +84,7 @@ public class TrainerServiceImpl implements TrainerService {
         log.info("Fetching unassigned trainers for trainee username: {}", traineeUsername);
 
         if (traineeUsername == null || traineeUsername.isBlank()) {
-            throw new IllegalArgumentException("Trainee username must not be null or blank");
+            throw new ValidationException("Trainee username must not be null or blank");
         }
 
         return trainerDao.getUnassignedTrainers(traineeUsername);
@@ -109,18 +109,20 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     private void validate(TrainerDTO dto) {
-        if (dto == null) throw new IllegalArgumentException("Trainer data is required");
+        if (dto == null) {
+            throw new ValidationException("Trainer data is required");
+        }
         if (dto.getFirstName() != null && dto.getFirstName().isBlank()) {
-            throw new IllegalArgumentException("First name cannot be blank");
+            throw new ValidationException("First name cannot be blank");
         }
         if (dto.getLastName() != null && dto.getLastName().isBlank()) {
-            throw new IllegalArgumentException("Last name cannot be blank");
+            throw new ValidationException("Last name cannot be blank");
         }
         if (dto.getIsActive() == null) {
-            throw new IllegalArgumentException("Active/Deactive flag must not be null");
+            throw new ValidationException("Active/Deactive flag must not be null");
         }
         if(dto.getSpecializationId() == null) {
-            throw new IllegalArgumentException("Specialization cannot be null");
+            throw new ValidationException("Specialization cannot be null");
         }
     }
 }

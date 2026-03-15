@@ -2,10 +2,14 @@ package epam.com.gym.crm.facade.impl;
 
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.*;
+import epam.com.gym.crm.dto.request.PasswordChangeRequest;
+import epam.com.gym.crm.dto.trainee.TraineeDTO;
+import epam.com.gym.crm.dto.trainer.TrainerDTO;
+import epam.com.gym.crm.dto.training.TrainingDTO;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,13 +20,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class GymFacadeImplTest {
+    private static final String AUTH_USER = "auth.user";
+    private static final String AUTH_PASS = "authPass123";
+    private static final String NEW_PASS = "newPass123";
 
     @Mock
     private TrainerService trainerService;
@@ -31,7 +37,11 @@ class GymFacadeImplTest {
     @Mock
     private TrainingService trainingService;
     @Mock
+    private TrainingTypeService trainingTypeService;
+    @Mock
     private UserService userService;
+    @Mock
+    private AuthService authService;
 
     @InjectMocks
     private GymFacadeImpl facade;
@@ -52,7 +62,22 @@ class GymFacadeImplTest {
         mockTraining = new Training();
         mockTraining.setId(3L);
 
-        credentials = new Credentials("auth.user", "authPass123");
+        credentials = new Credentials(AUTH_USER, AUTH_PASS);
+    }
+
+    /* ================= AUTH TESTS ================= */
+
+    @Test
+    void login_shouldDelegateToAuthService() {
+        facade.login(credentials);
+        verify(authService, times(1)).authenticate(credentials);
+    }
+
+    @Test
+    void changePassword_shouldDelegateToUserService() {
+        PasswordChangeRequest request = new PasswordChangeRequest(AUTH_USER, AUTH_PASS, NEW_PASS);
+        facade.changePassword(request);
+        verify(userService, times(1)).changePassword(AUTH_USER, AUTH_PASS, NEW_PASS);
     }
 
     /* ================= TRAINER TESTS ================= */
@@ -71,49 +96,57 @@ class GymFacadeImplTest {
     @Test
     void updateTrainer_shouldDelegateToService() {
         TrainerDTO dto = new TrainerDTO();
-        when(trainerService.update(1L, dto)).thenReturn(mockTrainer);
+        when(trainerService.update(AUTH_USER, dto)).thenReturn(mockTrainer);
 
-        Trainer result = facade.updateTrainer(credentials, 1L, dto);
+        Trainer result = facade.updateTrainer(AUTH_USER, dto);
 
         assertEquals(mockTrainer, result);
-        verify(trainerService, times(1)).update(1L, dto);
+        verify(trainerService, times(1)).update(AUTH_USER, dto);
     }
 
     @Test
     void activateTrainer_shouldDelegateToUserService() {
-        facade.activateTrainer(credentials);
-        verify(userService, times(1)).activateUser(credentials.username());
+        facade.activateTrainer(AUTH_USER);
+        verify(userService, times(1)).activateUser(AUTH_USER);
     }
 
     @Test
     void deactivateTrainer_shouldDelegateToUserService() {
-        facade.deactivateTrainer(credentials);
-        verify(userService, times(1)).deactivateUser(credentials.username());
+        facade.deactivateTrainer(AUTH_USER);
+        verify(userService, times(1)).deactivateUser(AUTH_USER);
     }
 
     @Test
     void changeTrainerPassword_shouldDelegateToUserService() {
-        facade.changeTrainerPassword(credentials, "newPass123");
-        verify(userService, times(1)).changePassword("auth.user", "authPass123", "newPass123");
+        facade.changeTrainerPassword(credentials, NEW_PASS);
+        verify(userService, times(1)).changePassword(AUTH_USER, AUTH_PASS, NEW_PASS);
     }
 
     @Test
     void getTrainerById_shouldDelegateToService() {
         when(trainerService.findById(1L)).thenReturn(mockTrainer);
-        assertEquals(mockTrainer, facade.getTrainerById(credentials, 1L));
+        assertEquals(mockTrainer, facade.getTrainerById(1L));
     }
 
     @Test
     void getTrainerByUserName_shouldDelegateToService() {
-        when(trainerService.findByUsername(credentials.username())).thenReturn(mockTrainer);
-        assertEquals(mockTrainer, facade.getTrainerByUserName(credentials));
+        when(trainerService.findByUsername(AUTH_USER)).thenReturn(mockTrainer);
+        assertEquals(mockTrainer, facade.getTrainerByUserName(AUTH_USER));
+    }
+
+    @Test
+    void getUnassignedTrainersOfTrainee_shouldDelegateToService() {
+        List<Trainer> list = List.of(mockTrainer);
+        when(trainerService.getUnassignedTrainers(AUTH_USER)).thenReturn(list);
+
+        assertEquals(list, facade.getUnassignedTrainersOfTrainee(AUTH_USER));
     }
 
     @Test
     void getAllTrainers_shouldDelegateToService() {
         List<Trainer> list = List.of(mockTrainer);
         when(trainerService.findAll()).thenReturn(list);
-        assertEquals(list, facade.getAllTrainers(credentials));
+        assertEquals(list, facade.getAllTrainers());
     }
 
     /* ================= TRAINEE TESTS ================= */
@@ -132,70 +165,55 @@ class GymFacadeImplTest {
     @Test
     void updateTrainee_shouldDelegateToService() {
         TraineeDTO dto = new TraineeDTO();
-        when(traineeService.update(2L, dto)).thenReturn(mockTrainee);
+        when(traineeService.update(AUTH_USER, dto)).thenReturn(mockTrainee);
 
-        Trainee result = facade.updateTrainee(credentials, 2L, dto);
+        Trainee result = facade.updateTrainee(AUTH_USER, dto);
 
         assertEquals(mockTrainee, result);
-        verify(traineeService, times(1)).update(2L, dto);
-    }
-
-    @Test
-    void updateTraineeTrainings_shouldDelegateToService() {
-        Map<Long, Long> mappings = Map.of(10L, 20L);
-        facade.updateTraineeTrainings(credentials, 2L, mappings);
-        verify(trainingService, times(1)).updateTraineeTrainings(2L, mappings);
+        verify(traineeService, times(1)).update(AUTH_USER, dto);
     }
 
     @Test
     void activateTrainee_shouldDelegateToUserService() {
-        facade.activateTrainee(credentials);
-        verify(userService, times(1)).activateUser(credentials.username());
+        facade.activateTrainee(AUTH_USER);
+        verify(userService, times(1)).activateUser(AUTH_USER);
     }
 
     @Test
     void deactivateTrainee_shouldDelegateToUserService() {
-        facade.deactivateTrainee(credentials);
-        verify(userService, times(1)).deactivateUser(credentials.username());
+        facade.deactivateTrainee(AUTH_USER);
+        verify(userService, times(1)).deactivateUser(AUTH_USER);
     }
 
     @Test
     void changeTraineePassword_shouldDelegateToUserService() {
-        facade.changeTraineePassword(credentials, "newPass123");
-        verify(userService, times(1)).changePassword("auth.user", "authPass123", "newPass123");
+        facade.changeTraineePassword(credentials, NEW_PASS);
+        verify(userService, times(1)).changePassword(AUTH_USER, AUTH_PASS, NEW_PASS);
     }
 
     @Test
     void getTraineeById_shouldDelegateToService() {
         when(traineeService.findById(2L)).thenReturn(mockTrainee);
-        assertEquals(mockTrainee, facade.getTraineeById(credentials, 2L));
+        assertEquals(mockTrainee, facade.getTraineeById(2L));
     }
 
     @Test
     void getTraineeByUsername_shouldDelegateToService() {
-        when(traineeService.findByUsername(credentials.username())).thenReturn(mockTrainee);
-        assertEquals(mockTrainee, facade.getTraineeByUsername(credentials));
-    }
-
-    @Test
-    void getUnassignedTrainersOfTrainee_shouldDelegateToService() {
-        List<Trainer> list = List.of(mockTrainer);
-        when(trainerService.getUnassignedTrainers(credentials.username())).thenReturn(list);
-
-        assertEquals(list, facade.getUnassignedTrainersOfTrainee(credentials));
+        when(traineeService.findByUsername(AUTH_USER)).thenReturn(mockTrainee);
+        assertEquals(mockTrainee, facade.getTraineeByUsername(AUTH_USER));
     }
 
     @Test
     void getAllTrainees_shouldDelegateToService() {
         List<Trainee> list = List.of(mockTrainee);
         when(traineeService.findAll()).thenReturn(list);
-        assertEquals(list, facade.getAllTrainees(credentials));
+        assertEquals(list, facade.getAllTrainees());
     }
 
     @Test
     void deleteTrainee_shouldDelegateToService() {
-        facade.deleteTrainee(credentials);
-        verify(traineeService, times(1)).deleteByUsername(credentials.username());
+        facade.deleteTrainee(AUTH_USER);
+        verify(traineeService, times(1)).deleteByUsername(AUTH_USER);
     }
 
     /* ================= TRAINING TESTS ================= */
@@ -205,7 +223,7 @@ class GymFacadeImplTest {
         TrainingDTO dto = new TrainingDTO();
         when(trainingService.create(dto)).thenReturn(mockTraining);
 
-        Training result = facade.createTraining(credentials, dto);
+        Training result = facade.createTraining(dto);
 
         assertEquals(mockTraining, result);
         verify(trainingService, times(1)).create(dto);
@@ -217,7 +235,7 @@ class GymFacadeImplTest {
         List<Training> list = List.of(mockTraining);
         when(trainingService.getTraineeTrainingsByCriteria(filter)).thenReturn(list);
 
-        assertEquals(list, facade.getTraineeTrainingsByCriteria(credentials, filter));
+        assertEquals(list, facade.getTraineeTrainingsByCriteria(filter));
     }
 
     @Test
@@ -226,19 +244,32 @@ class GymFacadeImplTest {
         List<Training> list = List.of(mockTraining);
         when(trainingService.getTrainerTrainingsByCriteria(filter)).thenReturn(list);
 
-        assertEquals(list, facade.getTrainerTrainingsByCriteria(credentials, filter));
+        assertEquals(list, facade.getTrainerTrainingsByCriteria(filter));
     }
 
     @Test
     void getTrainingById_shouldDelegateToService() {
         when(trainingService.findById(3L)).thenReturn(mockTraining);
-        assertEquals(mockTraining, facade.getTrainingById(credentials, 3L));
+        assertEquals(mockTraining, facade.getTrainingById(3L));
     }
 
     @Test
     void getAllTrainings_shouldDelegateToService() {
         List<Training> list = List.of(mockTraining);
         when(trainingService.findAll()).thenReturn(list);
-        assertEquals(list, facade.getAllTrainings(credentials));
+        assertEquals(list, facade.getAllTrainings());
+    }
+
+    /* ================= TRAINING TYPES TESTS ================= */
+
+    @Test
+    void getAllTrainingTypes_shouldDelegateToService() {
+        TrainingType mockType = new TrainingType();
+        List<TrainingType> list = List.of(mockType);
+
+        when(trainingTypeService.findAll()).thenReturn(list);
+
+        assertEquals(list, facade.getAllTrainingTypes());
+        verify(trainingTypeService, times(1)).findAll();
     }
 }

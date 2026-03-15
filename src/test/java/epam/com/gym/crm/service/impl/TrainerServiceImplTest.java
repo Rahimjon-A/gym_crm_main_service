@@ -2,8 +2,9 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.TrainerDTO;
+import epam.com.gym.crm.dto.trainer.TrainerDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,21 +82,21 @@ class TrainerServiceImplTest {
 
     @Test
     void create_shouldThrowException_whenDtoIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> trainerService.create(null));
+        assertThrows(ValidationException.class, () -> trainerService.create(null));
         verifyNoInteractions(trainerDao);
     }
 
     @Test
     void create_shouldThrowException_whenFirstNameIsBlank() {
         validDto.setFirstName("   ");
-        assertThrows(IllegalArgumentException.class, () -> trainerService.create(validDto));
+        assertThrows(ValidationException.class, () -> trainerService.create(validDto));
         verifyNoInteractions(trainerDao);
     }
 
     @Test
     void create_shouldThrowException_whenSpecializationIdIsNull() {
         validDto.setSpecializationId(null);
-        assertThrows(IllegalArgumentException.class, () -> trainerService.create(validDto));
+        assertThrows(ValidationException.class, () -> trainerService.create(validDto));
         verifyNoInteractions(trainerDao);
     }
 
@@ -105,13 +106,13 @@ class TrainerServiceImplTest {
         when(credentialService.generatePassword()).thenReturn("abc1234567");
         when(trainingTypeDAO.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> trainerService.create(validDto));
+        assertThrows(EntityNotFoundException.class, () -> trainerService.create(validDto));
         verify(trainerDao, never()).create(any(Trainer.class));
     }
 
     @Test
     void update_shouldUpdateFields_whenValidAndChanged() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.of(validTrainer));
+        when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
 
         TrainingType newTrainingType = new TrainingType();
         newTrainingType.setId(3L);
@@ -126,7 +127,7 @@ class TrainerServiceImplTest {
         updateDto.setSpecializationId(3L);
         updateDto.setIsActive(true);
 
-        Trainer result = trainerService.update(1L, updateDto);
+        Trainer result = trainerService.update("john.smith", updateDto);
 
         assertEquals("Mike", result.getFirstName());
         assertEquals("Jones", result.getLastName());
@@ -136,7 +137,7 @@ class TrainerServiceImplTest {
 
     @Test
     void update_shouldNotFetchSpecialization_whenIdIsUnchanged() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.of(validTrainer));
+        when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
         when(trainerDao.update(any(Trainer.class))).thenAnswer(i -> i.getArgument(0));
 
         TrainerDTO updateDto = new TrainerDTO();
@@ -145,7 +146,7 @@ class TrainerServiceImplTest {
         updateDto.setSpecializationId(2L);
         updateDto.setIsActive(true);
 
-        trainerService.update(1L, updateDto);
+        trainerService.update("john.smith", updateDto);
 
         verify(trainingTypeDAO, never()).findById(anyLong());
         verify(trainerDao, times(1)).update(validTrainer);
@@ -153,13 +154,14 @@ class TrainerServiceImplTest {
 
     @Test
     void update_shouldThrowException_whenTrainerNotFound() {
-        when(trainerDao.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> trainerService.update(99L, validDto));
+        when(trainerDao.findByUsername("unknown.user")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> trainerService.update("unknown.user", validDto));
     }
 
     @Test
     void update_shouldThrowException_whenNewSpecializationNotFound() {
-        when(trainerDao.findById(1L)).thenReturn(Optional.of(validTrainer));
+        when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
         when(trainingTypeDAO.findById(99L)).thenReturn(Optional.empty());
 
         TrainerDTO updateDto = new TrainerDTO();
@@ -168,7 +170,7 @@ class TrainerServiceImplTest {
         updateDto.setSpecializationId(99L);
         updateDto.setIsActive(true);
 
-        assertThrows(IllegalArgumentException.class, () -> trainerService.update(1L, updateDto));
+        assertThrows(EntityNotFoundException.class, () -> trainerService.update("john.smith", updateDto));
         verify(trainerDao, never()).update(any(Trainer.class));
     }
 
@@ -179,6 +181,34 @@ class TrainerServiceImplTest {
 
         assertEquals(mockTrainers, trainerDao.getUnassignedTrainers("john.smith"));
         verify(trainerDao, times(1)).getUnassignedTrainers("john.smith");
+    }
+
+    @Test
+    void getUnassignedTrainers_shouldReturnList_whenUsernameIsValid() {
+        List<Trainer> expectedList = List.of(validTrainer);
+        when(trainerDao.getUnassignedTrainers("john.smith")).thenReturn(expectedList);
+
+        List<Trainer> result = trainerService.getUnassignedTrainers("john.smith");
+
+        assertNotNull(result);
+        assertEquals(expectedList, result);
+        verify(trainerDao, times(1)).getUnassignedTrainers("john.smith");
+    }
+
+    @Test
+    void getUnassignedTrainers_shouldThrowException_whenUsernameIsNull() {
+        assertThrows(ValidationException.class,
+                () -> trainerService.getUnassignedTrainers(null));
+
+        verify(trainerDao, never()).getUnassignedTrainers(any());
+    }
+
+    @Test
+    void getUnassignedTrainers_shouldThrowException_whenUsernameIsBlank() {
+        assertThrows(ValidationException.class,
+                () -> trainerService.getUnassignedTrainers(" "));
+
+        verify(trainerDao, never()).getUnassignedTrainers(any());
     }
 
     @Test

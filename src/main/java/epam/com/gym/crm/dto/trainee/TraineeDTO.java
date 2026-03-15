@@ -1,6 +1,6 @@
-package epam.com.gym.crm.dto;
+package epam.com.gym.crm.dto.trainee;
 
-import jakarta.validation.constraints.NotBlank;
+import epam.com.gym.crm.dto.BaseUserDTO;
 import jakarta.validation.constraints.Past;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +14,5 @@ import java.util.Date;
 public class TraineeDTO extends BaseUserDTO {
     @Past(message = "Date of birth must be in the past")
     private Date dateOfBirth;
-    @NotBlank(message = "Address is mandatory")
     private String address;
 }

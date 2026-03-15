@@ -1,8 +1,9 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.dto.TraineeDTO;
+import epam.com.gym.crm.dto.trainee.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.TraineeService;
 import epam.com.gym.crm.service.UserService;
@@ -49,11 +50,11 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public Trainee update(Long traineeId, TraineeDTO dto) {
+    public Trainee update(String username, TraineeDTO dto) {
         validate(dto);
-        log.info("Updating profile for id: {}", traineeId);
+        log.info("Updating profile for username: {}", username);
 
-        Trainee existing = findById(traineeId);
+        Trainee existing = findByUsername(username);
 
         if (!dto.getFirstName().equals(existing.getFirstName())) {
             existing.setFirstName(dto.getFirstName().trim());
@@ -98,19 +99,19 @@ public class TraineeServiceImpl implements TraineeService {
 
     private void validate(TraineeDTO dto) {
         if (dto == null) {
-            throw new IllegalArgumentException("Trainee data must not be null");
+            throw new ValidationException("Trainee data must not be null");
         }
         if (dto.getFirstName() == null || dto.getFirstName().isBlank()) {
-            throw new IllegalArgumentException("First name is mandatory");
+            throw new ValidationException("First name is mandatory");
         }
         if (dto.getLastName() == null || dto.getLastName().isBlank()) {
-            throw new IllegalArgumentException("Last name is mandatory");
+            throw new ValidationException("Last name is mandatory");
         }
         if (dto.getIsActive() == null) {
-            throw new IllegalArgumentException("Active/Deactive flag must not be null");
+            throw new ValidationException("Active/Deactive flag must not be null");
         }
         if (dto.getDateOfBirth() != null && dto.getDateOfBirth().after(new Date())) {
-            throw new IllegalArgumentException("Date of birth must be in the past");
+            throw new ValidationException("Date of birth must be in the past");
         };
     }
 }

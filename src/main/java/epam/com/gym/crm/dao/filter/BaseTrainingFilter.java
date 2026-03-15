@@ -10,8 +10,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class BaseTrainingFilter {
-    private String traineeName;
-    private String trainerName;
+    private String username;
     private Date fromDate;
     private Date toDate;
 }

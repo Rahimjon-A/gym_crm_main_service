@@ -12,7 +12,9 @@ import java.util.Optional;
 @Repository
 public class TrainerDaoImpl extends UserDaoImpl<Trainer> implements TrainerDAO {
     private static final String GET_UNASSIGNED_TRAINERS_QUERY = """
-            SELECT tr FROM Trainer tr WHERE NOT EXISTS
+            SELECT tr FROM Trainer tr
+            WHERE tr.isActive = true
+            AND NOT EXISTS
                 (SELECT 1 FROM Training t WHERE
                 t.trainer = tr AND t.trainee.username = :username)
             """;

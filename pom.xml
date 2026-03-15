@@ -60,6 +60,14 @@
             <scope>test</scope>
         </dependency>
 
+<!--     OpenApi    -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.14</version>
+        </dependency>
+<!--     OpenApi    -->
+
 <!--     JPA and Hibernate and H2  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

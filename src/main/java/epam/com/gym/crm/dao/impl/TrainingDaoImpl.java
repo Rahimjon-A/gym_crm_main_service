@@ -18,6 +18,7 @@ public class TrainingDaoImpl extends AbstractBaseDAO<Training> implements Traini
     private static final String FIELD_TRAINEE = "trainee";
     private static final String FIELD_TRAINER = "trainer";
     private static final String FIELD_USERNAME = "username";
+    private static final String FIELD_FIRST_NAME = "firstName";
     private static final String FIELD_TRAINING_TYPE = "trainingType";
     private static final String FIELD_TRAINING_TYPE_NAME = "trainingTypeName";
     private static final String FIELD_TRAINING_DATE = "trainingDate";
@@ -28,17 +29,20 @@ public class TrainingDaoImpl extends AbstractBaseDAO<Training> implements Traini
 
     @Override
     public List<Training> findTraineeTrainingsByCriteria(TraineeTrainingFilter request) {
-        log.debug("Searching trainings for Trainee: {}", request.getTraineeName());
+        log.debug("Searching trainings for Trainee username: {}", request.getUsername());
 
         CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Training> cq = cb.createQuery(Training.class);
         Root<Training> root = cq.from(Training.class);
         List<Predicate> predicates = new ArrayList<>();
 
-        addUsernamePredicate(cb, root, predicates, FIELD_TRAINEE, request.getTraineeName());
-        addUsernamePredicate(cb, root, predicates, FIELD_TRAINER, request.getTrainerName());
+        predicates.add(cb.equal(root.get(FIELD_TRAINEE).get(FIELD_USERNAME), request.getUsername()));
 
-        if (request.getTrainingTypeName() != null) {
+        if (request.getTrainerName() != null && !request.getTrainerName().isBlank()) {
+            predicates.add(cb.equal(root.get(FIELD_TRAINER).get(FIELD_FIRST_NAME), request.getTrainerName()));
+        }
+
+        if (request.getTrainingTypeName() != null && !request.getTrainingTypeName().isBlank()) {
             predicates.add(cb.equal(root.get(FIELD_TRAINING_TYPE).get(FIELD_TRAINING_TYPE_NAME), request.getTrainingTypeName()));
         }
 
@@ -49,26 +53,22 @@ public class TrainingDaoImpl extends AbstractBaseDAO<Training> implements Traini
 
     @Override
     public List<Training> findTrainerTrainingsByCriteria(TrainerTrainingFilter request) {
-        log.debug("Searching trainings for Trainer: {}", request.getTrainerName());
+        log.debug("Searching trainings for Trainer username: {}", request.getUsername());
 
         CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Training> cq = cb.createQuery(Training.class);
         Root<Training> root = cq.from(Training.class);
         List<Predicate> predicates = new ArrayList<>();
 
-        addUsernamePredicate(cb, root, predicates, FIELD_TRAINER, request.getTrainerName());
-        addUsernamePredicate(cb, root, predicates, FIELD_TRAINEE, request.getTraineeName());
+        predicates.add(cb.equal(root.get(FIELD_TRAINER).get(FIELD_USERNAME), request.getUsername()));
+
+        if (request.getTraineeName() != null && !request.getTraineeName().isBlank()) {
+            predicates.add(cb.equal(root.get(FIELD_TRAINEE).get(FIELD_FIRST_NAME), request.getTraineeName()));
+        }
 
         addCommonPredicates(cb, root, predicates, request);
 
         return executeQuery(cq, predicates);
-    }
-
-    private void addUsernamePredicate(CriteriaBuilder cb, Root<Training> root,
-                                      List<Predicate> predicates, String relationField, String username) {
-        if (username != null && !username.isBlank()) {
-            predicates.add(cb.equal(root.get(relationField).get(FIELD_USERNAME), username));
-        }
     }
 
     private void addCommonPredicates(CriteriaBuilder cb, Root<Training> root,
