@@ -1,7 +1,7 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
@@ -30,7 +30,7 @@ class TraineeServiceImplTest {
     @InjectMocks
     private TraineeServiceImpl traineeService;
 
-    private TraineeDTO validDto;
+    private TraineeCreateRequest validDto;
     private Trainee validTrainee;
     private Date pastDate;
 
@@ -38,7 +38,7 @@ class TraineeServiceImplTest {
     void setUp() {
         pastDate = new Date(System.currentTimeMillis() - 10000000L);
 
-        validDto = new TraineeDTO();
+        validDto = new TraineeCreateRequest();
         validDto.setFirstName("John");
         validDto.setLastName("Doe");
         validDto.setDateOfBirth(pastDate);
@@ -95,7 +95,7 @@ class TraineeServiceImplTest {
         when(traineeDao.findByUsername("john.doe")).thenReturn(Optional.of(validTrainee));
         when(traineeDao.update(any(Trainee.class))).thenAnswer(i -> i.getArgument(0));
 
-        TraineeDTO updateDto = new TraineeDTO();
+        TraineeCreateRequest updateDto = new TraineeCreateRequest();
         updateDto.setFirstName("Jane");
         updateDto.setLastName("Smith");
         updateDto.setAddress("456 New Ave");

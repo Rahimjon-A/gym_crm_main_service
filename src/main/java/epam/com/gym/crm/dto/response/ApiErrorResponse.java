@@ -1,4 +1,4 @@
-package epam.com.gym.crm.dto;
+package epam.com.gym.crm.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrainingTypeDTO {
-    private Long trainingTypeId;
-    private String trainingType;
+public class ApiErrorResponse {
+    private String message;
 }

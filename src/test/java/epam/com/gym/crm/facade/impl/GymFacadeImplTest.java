@@ -3,9 +3,11 @@ package epam.com.gym.crm.facade.impl;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
-import epam.com.gym.crm.dto.trainer.TrainerDTO;
-import epam.com.gym.crm.dto.training.TrainingDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -65,7 +67,7 @@ class GymFacadeImplTest {
         credentials = new Credentials(AUTH_USER, AUTH_PASS);
     }
 
-    /* ================= AUTH TESTS ================= */
+    /* ================= AUTH & USER TESTS ================= */
 
     @Test
     void login_shouldDelegateToAuthService() {
@@ -80,11 +82,23 @@ class GymFacadeImplTest {
         verify(userService, times(1)).changePassword(AUTH_USER, AUTH_PASS, NEW_PASS);
     }
 
+    @Test
+    void activateUser_shouldDelegateToUserService() {
+        facade.activateUser(AUTH_USER);
+        verify(userService, times(1)).activateUser(AUTH_USER);
+    }
+
+    @Test
+    void deactivateUser_shouldDelegateToUserService() {
+        facade.deactivateUser(AUTH_USER);
+        verify(userService, times(1)).deactivateUser(AUTH_USER);
+    }
+
     /* ================= TRAINER TESTS ================= */
 
     @Test
     void createTrainer_shouldDelegateToService() {
-        TrainerDTO dto = new TrainerDTO();
+        TrainerCreateRequest dto = new TrainerCreateRequest();
         when(trainerService.create(dto)).thenReturn(mockTrainer);
 
         Trainer result = facade.createTrainer(dto);
@@ -95,31 +109,13 @@ class GymFacadeImplTest {
 
     @Test
     void updateTrainer_shouldDelegateToService() {
-        TrainerDTO dto = new TrainerDTO();
+        TrainerUpdateRequest dto = new TrainerUpdateRequest();
         when(trainerService.update(AUTH_USER, dto)).thenReturn(mockTrainer);
 
         Trainer result = facade.updateTrainer(AUTH_USER, dto);
 
         assertEquals(mockTrainer, result);
         verify(trainerService, times(1)).update(AUTH_USER, dto);
-    }
-
-    @Test
-    void activateTrainer_shouldDelegateToUserService() {
-        facade.activateTrainer(AUTH_USER);
-        verify(userService, times(1)).activateUser(AUTH_USER);
-    }
-
-    @Test
-    void deactivateTrainer_shouldDelegateToUserService() {
-        facade.deactivateTrainer(AUTH_USER);
-        verify(userService, times(1)).deactivateUser(AUTH_USER);
-    }
-
-    @Test
-    void changeTrainerPassword_shouldDelegateToUserService() {
-        facade.changeTrainerPassword(credentials, NEW_PASS);
-        verify(userService, times(1)).changePassword(AUTH_USER, AUTH_PASS, NEW_PASS);
     }
 
     @Test
@@ -153,7 +149,7 @@ class GymFacadeImplTest {
 
     @Test
     void createTrainee_shouldDelegateToService() {
-        TraineeDTO dto = new TraineeDTO();
+        TraineeCreateRequest dto = new TraineeCreateRequest();
         when(traineeService.create(dto)).thenReturn(mockTrainee);
 
         Trainee result = facade.createTrainee(dto);
@@ -164,31 +160,13 @@ class GymFacadeImplTest {
 
     @Test
     void updateTrainee_shouldDelegateToService() {
-        TraineeDTO dto = new TraineeDTO();
+        TraineeUpdateRequest dto = new TraineeUpdateRequest();
         when(traineeService.update(AUTH_USER, dto)).thenReturn(mockTrainee);
 
         Trainee result = facade.updateTrainee(AUTH_USER, dto);
 
         assertEquals(mockTrainee, result);
         verify(traineeService, times(1)).update(AUTH_USER, dto);
-    }
-
-    @Test
-    void activateTrainee_shouldDelegateToUserService() {
-        facade.activateTrainee(AUTH_USER);
-        verify(userService, times(1)).activateUser(AUTH_USER);
-    }
-
-    @Test
-    void deactivateTrainee_shouldDelegateToUserService() {
-        facade.deactivateTrainee(AUTH_USER);
-        verify(userService, times(1)).deactivateUser(AUTH_USER);
-    }
-
-    @Test
-    void changeTraineePassword_shouldDelegateToUserService() {
-        facade.changeTraineePassword(credentials, NEW_PASS);
-        verify(userService, times(1)).changePassword(AUTH_USER, AUTH_PASS, NEW_PASS);
     }
 
     @Test
@@ -220,7 +198,7 @@ class GymFacadeImplTest {
 
     @Test
     void createTraining_shouldDelegateToService() {
-        TrainingDTO dto = new TrainingDTO();
+        TrainingCreateRequest dto = new TrainingCreateRequest();
         when(trainingService.create(dto)).thenReturn(mockTraining);
 
         Training result = facade.createTraining(dto);

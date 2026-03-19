@@ -1,8 +1,8 @@
 package epam.com.gym.crm.mapper;
 
-import epam.com.gym.crm.dto.trainer.TrainerResponseDTO;
-import epam.com.gym.crm.dto.trainer.TrainerShortDTO;
-import epam.com.gym.crm.dto.trainer.TrainerUpdateDTO;
+import epam.com.gym.crm.dto.response.trainer.TrainerResponse;
+import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
+import epam.com.gym.crm.dto.response.trainer.TrainerUpdateResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -53,7 +53,7 @@ class TrainerMapperTest {
 
     @Test
     void toProfileResponse_shouldMapFieldsAndFilterDistinctTrainees() {
-        TrainerResponseDTO response = trainerMapper.toProfileResponse(trainer);
+        TrainerResponse response = trainerMapper.toProfileResponse(trainer);
 
         assertNotNull(response);
         assertEquals(FIRST_NAME, response.getFirstName());
@@ -63,12 +63,12 @@ class TrainerMapperTest {
 
         assertNotNull(response.getTrainees());
         assertEquals(1, response.getTrainees().size());
-        assertEquals(TRAINEE_USER, response.getTrainees().get(0).username());
+        assertEquals(TRAINEE_USER, response.getTrainees().get(0).getUsername());
     }
 
     @Test
     void toUpdateResponse_shouldMapFieldsIncludingUsername() {
-        TrainerUpdateDTO response = trainerMapper.toUpdateResponse(trainer);
+        TrainerUpdateResponse response = trainerMapper.toUpdateResponse(trainer);
 
         assertNotNull(response);
         assertEquals(USERNAME, response.getUsername());
@@ -79,13 +79,13 @@ class TrainerMapperTest {
 
     @Test
     void toShortDTOList_shouldMapListOfTrainers() {
-        List<TrainerShortDTO> result = trainerMapper.toShortDTOList(List.of(trainer));
+        List<TrainerShortResponse> result = trainerMapper.toShortDTOList(List.of(trainer));
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(USERNAME, result.get(0).username());
-        assertEquals(FIRST_NAME, result.get(0).firstName());
-        assertEquals(LAST_NAME, result.get(0).lastName());
-        assertEquals(TRAINING_TYPE_NAME, result.get(0).specialization());
+        assertEquals(USERNAME, result.get(0).getUsername());
+        assertEquals(FIRST_NAME, result.get(0).getFirstName());
+        assertEquals(LAST_NAME, result.get(0).getLastName());
+        assertEquals(TRAINING_TYPE_NAME, result.get(0).getSpecialization());
     }
 }

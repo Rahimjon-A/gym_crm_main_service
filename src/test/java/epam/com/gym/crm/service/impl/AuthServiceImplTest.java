@@ -2,6 +2,7 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.exception.AuthenticationException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.model.common.Credentials;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,14 +46,14 @@ class AuthServiceImplTest {
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(AuthenticationException.class,
+        assertThrows(ValidationException.class,
                 () -> authService.authenticate(new Credentials("", "password")));
         verifyNoInteractions(userDAO);
     }
 
     @Test
     void authenticate_shouldThrowException_whenPasswordIsBlank() {
-        assertThrows(AuthenticationException.class,
+        assertThrows(ValidationException.class,
                 () -> authService.authenticate(new Credentials("john.smith", "")));
         verifyNoInteractions(userDAO);
     }

@@ -1,4 +1,4 @@
-package epam.com.gym.crm.dto.training;
+package epam.com.gym.crm.dto.request.training;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +12,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrainingDTO {
+public class TrainingCreateRequest {
     @NotBlank(message = "Trainee username is mandatory")
     private String traineeUsername;
 

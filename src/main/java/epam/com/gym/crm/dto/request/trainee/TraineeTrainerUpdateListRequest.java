@@ -1,6 +1,6 @@
-package epam.com.gym.crm.dto.trainee;
+package epam.com.gym.crm.dto.request.trainee;
 
-import epam.com.gym.crm.dto.trainer.TrainerAssignmentDTO;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -14,9 +14,9 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TraineeTrainerUpdateListDTO {
+public class TraineeTrainerUpdateListRequest {
 
     @NotEmpty(message = "Assignments list cannot be empty")
     @Valid
-    private List<TrainerAssignmentDTO> assignments;
+    private List<TrainerAssignmentRequest> assignments;
 }

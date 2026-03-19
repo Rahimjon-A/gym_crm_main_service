@@ -1,4 +1,4 @@
-package epam.com.gym.crm.model.common;
+package epam.com.gym.crm.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Credentials {
-    private String username;
-    private String password;
+public class TrainingTypeResponse {
+    private Long trainingTypeId;
+    private String trainingType;
 }

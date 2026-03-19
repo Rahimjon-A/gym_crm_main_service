@@ -2,9 +2,9 @@ package epam.com.gym.crm.controller;
 
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.training.TraineeTrainingResponseDTO;
-import epam.com.gym.crm.dto.training.TrainerTrainingResponseDTO;
-import epam.com.gym.crm.dto.training.TrainingDTO;
+import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
+import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Training;
@@ -86,14 +86,14 @@ class TrainingControllerTest {
 
     @Test
     void addTraining_shouldReturn200_whenRequestIsValid() throws Exception {
-        TrainingDTO requestBody = new TrainingDTO();
+        TrainingCreateRequest requestBody = new TrainingCreateRequest();
         requestBody.setTraineeUsername(USERNAME);
         requestBody.setTrainerUsername(TRAINER_NAME);
         requestBody.setTrainingName(TRAINING_NAME);
         requestBody.setTrainingDate(now);
         requestBody.setTrainingDuration(DURATION);
 
-        when(gymFacade.createTraining(any(TrainingDTO.class))).thenReturn(mockTraining);
+        when(gymFacade.createTraining(any(TrainingCreateRequest.class))).thenReturn(mockTraining);
 
         mockMvc.perform(post(BASE_URL)
                         .header(AUTH_HEADER, BASIC_AUTH_VALUE)
@@ -101,14 +101,14 @@ class TrainingControllerTest {
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().isOk());
 
-        verify(gymFacade, times(1)).createTraining(any(TrainingDTO.class));
+        verify(gymFacade, times(1)).createTraining(any(TrainingCreateRequest.class));
     }
 
     @Test
     void getTraineeTrainings_shouldReturn200AndList_whenUsingFilters() throws Exception {
-        TraineeTrainingResponseDTO responseDTO = new TraineeTrainingResponseDTO();
+        TraineeTrainingResponse responseDTO = new TraineeTrainingResponse();
         responseDTO.setTrainingName(TRAINING_NAME);
-        List<TraineeTrainingResponseDTO> expectedResponse = List.of(responseDTO);
+        List<TraineeTrainingResponse> expectedResponse = List.of(responseDTO);
 
         when(gymFacade.getTraineeTrainingsByCriteria(any(TraineeTrainingFilter.class))).thenReturn(List.of(mockTraining));
         when(trainingMapper.mapTraineeTrainings(anyList())).thenReturn(expectedResponse);
@@ -129,9 +129,9 @@ class TrainingControllerTest {
 
     @Test
     void getTrainerTrainings_shouldReturn200AndList_whenUsingFilters() throws Exception {
-        TrainerTrainingResponseDTO responseDTO = new TrainerTrainingResponseDTO();
+        TrainerTrainingResponse responseDTO = new TrainerTrainingResponse();
         responseDTO.setTrainingName(TRAINING_NAME);
-        List<TrainerTrainingResponseDTO> expectedResponse = List.of(responseDTO);
+        List<TrainerTrainingResponse> expectedResponse = List.of(responseDTO);
 
         when(gymFacade.getTrainerTrainingsByCriteria(any(TrainerTrainingFilter.class))).thenReturn(List.of(mockTraining));
         when(trainingMapper.mapTrainerTrainings(anyList())).thenReturn(expectedResponse);

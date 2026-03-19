@@ -1,11 +1,12 @@
 package epam.com.gym.crm.controller;
 
-import epam.com.gym.crm.dto.request.PasswordChangeRequest;
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
-import epam.com.gym.crm.dto.trainee.TraineeResponseDTO;
-import epam.com.gym.crm.dto.trainee.TraineeTrainerUpdateListDTO;
-import epam.com.gym.crm.dto.trainee.TraineeUpdateDTO;
-import epam.com.gym.crm.dto.trainer.TrainerShortDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeTrainerUpdateListRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.response.trainee.TraineeResponse;
+import epam.com.gym.crm.dto.response.trainee.TraineeUpdateResponse;
+import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TraineeMapper;
 import epam.com.gym.crm.model.Trainee;
@@ -24,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,21 +35,20 @@ class TraineeControllerTest {
     private static final String BASE_URL = "/api/v1/trainees";
     private static final String URL_PROFILE = BASE_URL + "/{username}";
     private static final String URL_TRAINERS = BASE_URL + "/{username}/trainers";
-    private static final String URL_STATUS = BASE_URL + "/{username}/status";
-    private static final String URL_PASSWORD = BASE_URL + "/password";
-    
-    private static final String PARAM_IS_ACTIVE = "isActive";
+    private static final String URL_UNASSIGNED = BASE_URL + "/{username}/unassigned-trainers";
 
     private static final String USERNAME = "john.doe";
+    private static final String PASSWORD = "plainPassword123";
     private static final String FIRST_NAME = "John";
-    private static final String NEW_PASSWORD = "newSecurePassword123";
+    private static final String LAST_NAME = "Doe";
 
     private static final String AUTH_HEADER = "Authorization";
-    private static final String PLAIN_CREDS = USERNAME + ":oldPassword123";
+    private static final String PLAIN_CREDS = USERNAME + ":" + PASSWORD;
     private static final String BASE64_CREDS = Base64.getEncoder().encodeToString(PLAIN_CREDS.getBytes());
     private static final String BASIC_AUTH_VALUE = "Basic " + BASE64_CREDS;
 
     private static final String JSON_PATH_FIRST_NAME = "$.firstName";
+    private static final String JSON_PATH_USERNAME = "$.username";
     private static final String JSON_PATH_ROOT_ARRAY = "$";
 
     @Autowired
@@ -67,22 +67,41 @@ class TraineeControllerTest {
     private AuthService authService;
 
     private Trainee mockTrainee;
-    private TraineeResponseDTO profileResponse;
-    private TraineeUpdateDTO updateResponse;
+    private TraineeResponse profileResponse;
+    private TraineeUpdateResponse updateResponse;
 
     @BeforeEach
     void setUp() {
         mockTrainee = new Trainee();
         mockTrainee.setUsername(USERNAME);
         mockTrainee.setFirstName(FIRST_NAME);
+        mockTrainee.setPassword(PASSWORD);
 
-        profileResponse = new TraineeResponseDTO();
+        profileResponse = new TraineeResponse();
         profileResponse.setFirstName(FIRST_NAME);
 
-        updateResponse = new TraineeUpdateDTO();
+        updateResponse = new TraineeUpdateResponse();
         updateResponse.setFirstName(FIRST_NAME);
 
         doNothing().when(authService).authenticate(any());
+    }
+
+    @Test
+    void registerTrainee_shouldReturn201AndCredentials_whenRequestIsValid() throws Exception {
+        TraineeCreateRequest requestBody = new TraineeCreateRequest();
+        requestBody.setFirstName(FIRST_NAME);
+        requestBody.setLastName(LAST_NAME);
+
+        when(gymFacade.createTrainee(any(TraineeCreateRequest.class))).thenReturn(mockTrainee);
+
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath(JSON_PATH_USERNAME).value(USERNAME))
+                .andExpect(jsonPath("$.password").value(PASSWORD));
+
+        verify(gymFacade, times(1)).createTrainee(any(TraineeCreateRequest.class));
     }
 
     @Test
@@ -101,11 +120,13 @@ class TraineeControllerTest {
 
     @Test
     void updateTraineeProfile_shouldReturn200AndUpdatedProfile() throws Exception {
-        TraineeDTO requestBody = new TraineeDTO();
+        TraineeUpdateRequest requestBody = new TraineeUpdateRequest();
+        requestBody.setUsername(USERNAME);
         requestBody.setFirstName(FIRST_NAME);
         requestBody.setLastName("Doe");
+        requestBody.setIsActive(true);
 
-        when(gymFacade.updateTrainee(eq(USERNAME), any(TraineeDTO.class))).thenReturn(mockTrainee);
+        when(gymFacade.updateTrainee(eq(USERNAME), any(TraineeUpdateRequest.class))).thenReturn(mockTrainee);
         when(traineeMapper.toUpdateResponse(mockTrainee)).thenReturn(updateResponse);
 
         mockMvc.perform(put(URL_PROFILE, USERNAME)
@@ -115,16 +136,27 @@ class TraineeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(JSON_PATH_FIRST_NAME).value(FIRST_NAME));
 
-        verify(gymFacade, times(1)).updateTrainee(eq(USERNAME), any(TraineeDTO.class));
+        verify(gymFacade, times(1)).updateTrainee(eq(USERNAME), any(TraineeUpdateRequest.class));
+    }
+
+    @Test
+    void deleteTraineeProfile_shouldReturn200() throws Exception {
+        doNothing().when(gymFacade).deleteTrainee(USERNAME);
+
+        mockMvc.perform(delete(URL_PROFILE, USERNAME)
+                        .header(AUTH_HEADER, BASIC_AUTH_VALUE))
+                .andExpect(status().isOk());
+
+        verify(gymFacade, times(1)).deleteTrainee(USERNAME);
     }
 
     @Test
     void updateTraineeTrainers_shouldReturn200AndTrainerList() throws Exception {
-        TraineeTrainerUpdateListDTO requestBody = new TraineeTrainerUpdateListDTO(
-                List.of(new epam.com.gym.crm.dto.trainer.TrainerAssignmentDTO(10L, "jane.smith"))
+        TraineeTrainerUpdateListRequest requestBody = new TraineeTrainerUpdateListRequest(
+                List.of(new TrainerAssignmentRequest(10L, "jane.smith"))
         );
 
-        List<TrainerShortDTO> expectedResponse = List.of(new TrainerShortDTO("jane.smith", "Jane", "Smith", "YOGA"));
+        List<TrainerShortResponse> expectedResponse = List.of(new TrainerShortResponse("jane.smith", "Jane", "Smith", "YOGA"));
 
         when(gymFacade.updateTraineeTrainings(eq(USERNAME), anyList())).thenReturn(Collections.emptyList());
         when(traineeMapper.extractTrainers(any(Trainee.class))).thenReturn(expectedResponse);
@@ -140,40 +172,18 @@ class TraineeControllerTest {
     }
 
     @Test
-    void deleteTraineeProfile_shouldReturn200() throws Exception {
-        doNothing().when(gymFacade).deleteTrainee(USERNAME);
+    void getUnassignedTrainers_shouldReturn200AndTrainerList() throws Exception {
+        List<TrainerShortResponse> expectedResponse = List.of(new TrainerShortResponse("jane.smith", "Jane", "Smith", "YOGA"));
 
-        mockMvc.perform(delete(URL_PROFILE, USERNAME)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE))
-                .andExpect(status().isOk());
+        when(gymFacade.getUnassignedTrainersOfTrainee(USERNAME)).thenReturn(Collections.emptyList());
+        when(traineeMapper.toTrainerShortDTOList(anyList())).thenReturn(expectedResponse);
 
-        verify(gymFacade, times(1)).deleteTrainee(USERNAME);
-    }
-
-    @Test
-    void toggleTraineeStatus_shouldReturn200_whenActivating() throws Exception {
-        doNothing().when(gymFacade).activateTrainee(USERNAME);
-
-        mockMvc.perform(patch(URL_STATUS, USERNAME)
+        mockMvc.perform(get(URL_UNASSIGNED, USERNAME)
                         .header(AUTH_HEADER, BASIC_AUTH_VALUE)
-                        .param(PARAM_IS_ACTIVE, String.valueOf(true)))
-                .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(JSON_PATH_ROOT_ARRAY).isArray());
 
-        verify(gymFacade, times(1)).activateTrainee(USERNAME);
-        verify(gymFacade, never()).deactivateTrainee(anyString());
-    }
-
-    @Test
-    void changePassword_shouldReturn200() throws Exception {
-        PasswordChangeRequest requestBody = new PasswordChangeRequest(USERNAME, "old", NEW_PASSWORD);
-        doNothing().when(gymFacade).changePassword(any(PasswordChangeRequest.class));
-
-        mockMvc.perform(put(URL_PASSWORD)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
-                .andExpect(status().isOk());
-
-        verify(gymFacade, times(1)).changePassword(any(PasswordChangeRequest.class));
+        verify(gymFacade, times(1)).getUnassignedTrainersOfTrainee(USERNAME);
     }
 }

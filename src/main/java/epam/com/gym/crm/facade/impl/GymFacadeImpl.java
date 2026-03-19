@@ -3,10 +3,10 @@ package epam.com.gym.crm.facade.impl;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
-import epam.com.gym.crm.dto.trainer.TrainerAssignmentDTO;
-import epam.com.gym.crm.dto.trainer.TrainerDTO;
-import epam.com.gym.crm.dto.training.TrainingDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -49,9 +48,22 @@ public class GymFacadeImpl implements GymFacade {
 
     @Override
     public void login(Credentials credentials) {
-        log.info("Facade: Login into profile {}", credentials.username());
+        log.info("Facade: Login into profile {}", credentials.getUsername());
 
         authService.authenticate(credentials);
+    }
+
+    /* ================= USER ================= */
+    @Override
+    public void activateUser(String username) {
+        log.info("Facade: Activating user username={}", username);
+        userService.activateUser(username);
+    }
+
+    @Override
+    public void deactivateUser(String username) {
+        log.info("Facade: Deactivating user username={}", username);
+        userService.deactivateUser(username);
     }
 
     @Override
@@ -67,13 +79,13 @@ public class GymFacadeImpl implements GymFacade {
     /* ================= TRAINER ================= */
 
     @Override
-    public Trainer createTrainer(TrainerDTO dto) {
+    public Trainer createTrainer(TrainerCreateRequest dto) {
         log.info("Facade: Creating trainer {} {}", dto.getFirstName(), dto.getLastName());
         return trainerService.create(dto);
     }
 
     @Override
-    public Trainer updateTrainer(String username, TrainerDTO dto) {
+    public Trainer updateTrainer(String username, TrainerCreateRequest dto) {
         log.info("Facade: Updating trainer username={}", username);
         return trainerService.update(username, dto);
     }
@@ -82,24 +94,6 @@ public class GymFacadeImpl implements GymFacade {
     public List<Trainer> getUnassignedTrainersOfTrainee(String username) {
         log.info("Facade: Fetching unassigned trainers for username={}", username);
         return trainerService.getUnassignedTrainers(username);
-    }
-
-    @Override
-    public void activateTrainer(String username) {
-        log.info("Facade: Activating trainer username={}", username);
-        userService.activateUser(username);
-    }
-
-    @Override
-    public void deactivateTrainer(String username) {
-        log.info("Facade: Deactivating trainer username={}", username);
-        userService.deactivateUser(username);
-    }
-
-    @Override
-    public void changeTrainerPassword(Credentials credentials, String newPassword) {
-        log.info("Facade: Changing password for trainer username={}", credentials.username());
-        userService.changePassword(credentials.username(), credentials.password(), newPassword);
     }
 
     @Override
@@ -123,33 +117,15 @@ public class GymFacadeImpl implements GymFacade {
     /* ================= TRAINEE ================= */
 
     @Override
-    public Trainee createTrainee(TraineeDTO dto) {
+    public Trainee createTrainee(TraineeCreateRequest dto) {
         log.info("Facade: Creating trainee {} {}", dto.getFirstName(), dto.getLastName());
         return traineeService.create(dto);
     }
 
     @Override
-    public Trainee updateTrainee(String username,  TraineeDTO dto) {
+    public Trainee updateTrainee(String username,  TraineeCreateRequest dto) {
         log.info("Facade: Updating trainee username={}", username);
         return traineeService.update(username, dto);
-    }
-
-    @Override
-    public void activateTrainee(String username) {
-        log.info("Facade: Activating trainee username={}", username);
-        userService.activateUser(username);
-    }
-
-    @Override
-    public void deactivateTrainee(String username) {
-        log.info("Facade: Deactivating trainee username={}", username);
-        userService.deactivateUser(username);
-    }
-
-    @Override
-    public void changeTraineePassword(Credentials credentials, String newPassword) {
-        log.info("Facade: Changing password for trainee username={}", credentials.username());
-        userService.changePassword(credentials.username(), credentials.password(), newPassword);
     }
 
     @Override
@@ -179,7 +155,7 @@ public class GymFacadeImpl implements GymFacade {
     /* ================= TRAINING ================= */
 
     @Override
-    public Training createTraining(TrainingDTO dto) {
+    public Training createTraining(TrainingCreateRequest dto) {
         log.info("Facade: Creating training '{}' trainee={} trainer={}",
                 dto.getTrainingName(), dto.getTraineeUsername(), dto.getTrainerUsername());
         return trainingService.create(dto);
@@ -198,7 +174,7 @@ public class GymFacadeImpl implements GymFacade {
     }
 
     @Override
-    public List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentDTO> assignments) {
+    public List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentRequest> assignments) {
         log.info("Facade: Updating trainee trainings for trainee={}", traineeUsername);
         return trainingService.updateTraineeTrainings(traineeUsername, assignments);
     }

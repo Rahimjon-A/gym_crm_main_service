@@ -1,7 +1,7 @@
 package epam.com.gym.crm.mapper;
 
-import epam.com.gym.crm.dto.training.TraineeTrainingResponseDTO;
-import epam.com.gym.crm.dto.training.TrainerTrainingResponseDTO;
+import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
+import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -52,12 +52,12 @@ class TrainingMapperTest {
 
     @Test
     void mapTrainerTrainings_shouldMapFieldsAndUseTraineeName() {
-        List<TrainerTrainingResponseDTO> result = trainingMapper.mapTrainerTrainings(List.of(training));
+        List<TrainerTrainingResponse> result = trainingMapper.mapTrainerTrainings(List.of(training));
 
         assertNotNull(result);
         assertEquals(1, result.size());
 
-        TrainerTrainingResponseDTO dto = result.get(0);
+        TrainerTrainingResponse dto = result.get(0);
         assertEquals(TRAINING_NAME, dto.getTrainingName());
         assertEquals(now, dto.getTrainingDate());
         assertEquals(TRAINING_TYPE, dto.getTrainingType());
@@ -68,12 +68,12 @@ class TrainingMapperTest {
 
     @Test
     void mapTraineeTrainings_shouldMapFieldsAndUseTrainerName() {
-        List<TraineeTrainingResponseDTO> result = trainingMapper.mapTraineeTrainings(List.of(training));
+        List<TraineeTrainingResponse> result = trainingMapper.mapTraineeTrainings(List.of(training));
 
         assertNotNull(result);
         assertEquals(1, result.size());
 
-        TraineeTrainingResponseDTO dto = result.get(0);
+        TraineeTrainingResponse dto = result.get(0);
         assertEquals(TRAINING_NAME, dto.getTrainingName());
         assertEquals(now, dto.getTrainingDate());
         assertEquals(TRAINING_TYPE, dto.getTrainingType());

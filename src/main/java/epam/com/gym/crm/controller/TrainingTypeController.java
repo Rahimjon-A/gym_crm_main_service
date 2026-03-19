@@ -1,6 +1,6 @@
 package epam.com.gym.crm.controller;
 
-import epam.com.gym.crm.dto.TrainingTypeDTO;
+import epam.com.gym.crm.dto.response.TrainingTypeResponse;
 import epam.com.gym.crm.facade.GymFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,16 +26,13 @@ public class TrainingTypeController {
         this.gymFacade = gymFacade;
     }
 
-    /**
-     * Get all Training Types (GET method)
-     */
     @GetMapping
     @Operation(summary = "Get all Training Types", description = "Returns a list of all available training types in the gym")
-    public ResponseEntity<List<TrainingTypeDTO>> getAllTrainingTypes() {
+    public ResponseEntity<List<TrainingTypeResponse>> getAllTrainingTypes() {
         log.info("REST: Fetching all training types");
 
-        List<TrainingTypeDTO> response = gymFacade.getAllTrainingTypes().stream()
-                .map(type -> new TrainingTypeDTO(
+        List<TrainingTypeResponse> response = gymFacade.getAllTrainingTypes().stream()
+                .map(type -> new TrainingTypeResponse(
                         type.getId(),
                         type.getTrainingTypeName()
                 ))

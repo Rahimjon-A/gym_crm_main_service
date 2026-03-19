@@ -1,6 +1,6 @@
-package epam.com.gym.crm.dto.trainee;
+package epam.com.gym.crm.dto.response.trainee;
 
-import epam.com.gym.crm.dto.trainer.TrainerShortDTO;
+import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,12 +12,11 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class TraineeUpdateDTO extends TraineeResponseDTO {
+public class TraineeUpdateResponse extends TraineeResponse {
     @NotBlank(message = "Username is mandatory")
     private String username;
 
-    public TraineeUpdateDTO(String username, String firstName, String lastName, Date dateOfBirth,
-                            String address, Boolean isActive, List<TrainerShortDTO> trainers) {
+    public TraineeUpdateResponse(String firstName, String lastName, Date dateOfBirth, String address, Boolean isActive, List<TrainerShortResponse> trainers, String username) {
         super(firstName, lastName, dateOfBirth, address, isActive, trainers);
         this.username = username;
     }

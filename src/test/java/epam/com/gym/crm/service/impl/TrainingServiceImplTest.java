@@ -5,8 +5,8 @@ import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.trainer.TrainerAssignmentDTO;
-import epam.com.gym.crm.dto.training.TrainingDTO;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.*;
@@ -42,7 +42,7 @@ class TrainingServiceImplTest {
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
-    private TrainingDTO validDto;
+    private TrainingCreateRequest validDto;
     private Trainee validTrainee;
     private Trainer validTrainer;
     private TrainingType validTrainingType;
@@ -53,7 +53,7 @@ class TrainingServiceImplTest {
     void setUp() {
         now = new Date();
 
-        validDto = new TrainingDTO();
+        validDto = new TrainingCreateRequest();
         validDto.setTraineeUsername("john.doe");
         validDto.setTrainerUsername("jane.smith");
         validDto.setTrainingName("Morning Cardio");
@@ -169,8 +169,8 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldUpdateSuccessfully_whenInputsAreValid() {
-        List<TrainerAssignmentDTO> assignments = List.of(
-                new TrainerAssignmentDTO(validTraining.getId(), validTrainer.getUsername())
+        List<TrainerAssignmentRequest> assignments = List.of(
+                new TrainerAssignmentRequest(validTraining.getId(), validTrainer.getUsername())
         );
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
@@ -190,8 +190,8 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldThrowException_whenTraineeNotFound() {
-        List<TrainerAssignmentDTO> assignments = List.of(
-                new TrainerAssignmentDTO(validTraining.getId(), validTrainer.getUsername())
+        List<TrainerAssignmentRequest> assignments = List.of(
+                new TrainerAssignmentRequest(validTraining.getId(), validTrainer.getUsername())
         );
 
         when(traineeDao.findByUsername(UNKNOWN_USER)).thenReturn(Optional.empty());
@@ -204,8 +204,8 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldThrowException_whenTrainingNotFound() {
-        List<TrainerAssignmentDTO> assignments = List.of(
-                new TrainerAssignmentDTO(UNKNOWN_ID, validTrainer.getUsername())
+        List<TrainerAssignmentRequest> assignments = List.of(
+                new TrainerAssignmentRequest(UNKNOWN_ID, validTrainer.getUsername())
         );
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
@@ -219,8 +219,8 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldThrowException_whenTrainerNotFound() {
-        List<TrainerAssignmentDTO> assignments = List.of(
-                new TrainerAssignmentDTO(validTraining.getId(), UNKNOWN_USER)
+        List<TrainerAssignmentRequest> assignments = List.of(
+                new TrainerAssignmentRequest(validTraining.getId(), UNKNOWN_USER)
         );
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
@@ -240,8 +240,8 @@ class TrainingServiceImplTest {
 
         validTraining.setTrainee(ownerTrainee);
 
-        List<TrainerAssignmentDTO> assignments = List.of(
-                new TrainerAssignmentDTO(validTraining.getId(), validTrainer.getUsername())
+        List<TrainerAssignmentRequest> assignments = List.of(
+                new TrainerAssignmentRequest(validTraining.getId(), validTrainer.getUsername())
         );
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));

@@ -1,4 +1,4 @@
-package epam.com.gym.crm.dto.training;
+package epam.com.gym.crm.dto.response.training;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.util.Date;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class TrainingResponseDTO {
+public abstract class BaseTrainingResponse {
     private Long trainingId;
     private String trainingName;
     private Date trainingDate;

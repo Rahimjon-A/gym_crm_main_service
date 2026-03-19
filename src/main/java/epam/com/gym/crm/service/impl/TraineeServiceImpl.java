@@ -1,7 +1,7 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
@@ -29,7 +29,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public Trainee create(TraineeDTO dto) {
+    public Trainee create(TraineeCreateRequest dto) {
         validate(dto);
         log.info("Creating profile for: {} {}", dto.getFirstName(), dto.getLastName());
 
@@ -50,7 +50,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public Trainee update(String username, TraineeDTO dto) {
+    public Trainee update(String username, TraineeCreateRequest dto) {
         validate(dto);
         log.info("Updating profile for username: {}", username);
 
@@ -97,7 +97,7 @@ public class TraineeServiceImpl implements TraineeService {
         return traineeDao.findAll();
     }
 
-    private void validate(TraineeDTO dto) {
+    private void validate(TraineeCreateRequest dto) {
         if (dto == null) {
             throw new ValidationException("Trainee data must not be null");
         }

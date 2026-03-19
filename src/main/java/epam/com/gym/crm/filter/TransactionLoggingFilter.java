@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -23,10 +24,10 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
     private static final int CACHE_LIMIT = 10_000;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, 
-                                    HttpServletResponse response, 
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        
+
         String transactionId = UUID.randomUUID().toString();
         MDC.put(TRANSACTION_ID_KEY, transactionId);
 
@@ -36,7 +37,7 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
         long startTime = System.currentTimeMillis();
 
         try {
-            log.info("Incoming REST Call: [{}] {}", request.getMethod(), request.getRequestURI());
+            log.debug("Incoming REST Call: [{}] {}", request.getMethod(), request.getRequestURI());
 
             filterChain.doFilter(wrappedRequest, wrappedResponse);
 
@@ -45,21 +46,26 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
 
         } finally {
             wrappedResponse.copyBodyToResponse();
-
             MDC.remove(TRANSACTION_ID_KEY);
         }
     }
 
     private void logResponse(ContentCachingResponseWrapper response, String uri, long duration) {
-        int status = response.getStatus();
-        
-        byte[] responseArray = response.getContentAsByteArray();
-        String responseBody = new String(responseArray, StandardCharsets.UTF_8);
+        int statusCode = response.getStatus();
+        HttpStatus status = HttpStatus.valueOf(statusCode);
 
-        if (status >= 400) {
-            log.error("Outgoing REST Error: [{}] {} in {}ms. Error Payload: {}", status, uri, duration, responseBody);
+        if (status.isError()) {
+            byte[] responseArray = response.getContentAsByteArray();
+            String responseBody = new String(responseArray, StandardCharsets.UTF_8);
+
+            if (status.is4xxClientError()) {
+                log.warn("Outgoing REST Client Error: [{}] {} in {}ms. Error Payload: {}", statusCode, uri, duration, responseBody);
+            } else if (status.is5xxServerError()) {
+                log.error("Outgoing REST Server Error: [{}] {} in {}ms. Error Payload: {}", statusCode, uri, duration, responseBody);
+            }
+
         } else {
-            log.info("Outgoing REST Response: [{}] {} in {}ms.", status, uri, duration);
+            log.debug("Outgoing REST Response: [{}] {} in {}ms.", statusCode, uri, duration);
         }
     }
 }

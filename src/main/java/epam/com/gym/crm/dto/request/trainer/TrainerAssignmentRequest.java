@@ -1,4 +1,4 @@
-package epam.com.gym.crm.dto.trainer;
+package epam.com.gym.crm.dto.request.trainer;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrainerAssignmentDTO {
+public class TrainerAssignmentRequest {
     
     @NotNull(message = "Training ID is mandatory")
     private Long trainingId;

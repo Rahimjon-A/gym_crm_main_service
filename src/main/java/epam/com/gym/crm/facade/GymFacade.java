@@ -3,10 +3,10 @@ package epam.com.gym.crm.facade;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
-import epam.com.gym.crm.dto.trainer.TrainerAssignmentDTO;
-import epam.com.gym.crm.dto.trainer.TrainerDTO;
-import epam.com.gym.crm.dto.training.TrainingDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -14,27 +14,24 @@ import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.model.common.Credentials;
 
 import java.util.List;
-import java.util.Map;
 
 public interface GymFacade {
 
     /* ================= AUTH ================= */
     void login(Credentials credentials);
 
+    void activateUser(String username);
+
+    void deactivateUser(String username);
+
     void changePassword(PasswordChangeRequest passwordChangeRequest);
 
     /* ================= TRAINER ================= */
-    Trainer createTrainer(TrainerDTO dto);
+    Trainer createTrainer(TrainerCreateRequest dto);
 
-    Trainer updateTrainer(String username, TrainerDTO dto);
+    Trainer updateTrainer(String username, TrainerCreateRequest dto);
 
     List<Trainer> getUnassignedTrainersOfTrainee(String username);
-
-    void activateTrainer(String username);
-
-    void deactivateTrainer(String username);
-
-    void changeTrainerPassword(Credentials credentials, String newPassword);
 
     Trainer getTrainerById(Long trainerId);
 
@@ -43,15 +40,9 @@ public interface GymFacade {
     List<Trainer> getAllTrainers();
 
     /* ================= TRAINEE ================= */
-    Trainee createTrainee(TraineeDTO dto);
+    Trainee createTrainee(TraineeCreateRequest dto);
 
-    Trainee updateTrainee(String username, TraineeDTO dto);
-
-    void activateTrainee(String username);
-
-    void deactivateTrainee(String username);
-
-    void changeTraineePassword(Credentials credentials, String newPassword);
+    Trainee updateTrainee(String username, TraineeCreateRequest dto);
 
     Trainee getTraineeById(Long traineeId);
 
@@ -62,13 +53,13 @@ public interface GymFacade {
     void deleteTrainee(String username);
 
     /* ================= TRAINING ================= */
-    Training createTraining(TrainingDTO dto);
+    Training createTraining(TrainingCreateRequest dto);
 
     List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter);
 
     List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter);
 
-    List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentDTO> assignments);
+    List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentRequest> assignments);
 
     Training getTrainingById(Long id);
 

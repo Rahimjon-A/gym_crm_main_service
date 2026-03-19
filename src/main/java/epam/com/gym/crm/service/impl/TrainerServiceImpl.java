@@ -2,7 +2,7 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.trainer.TrainerDTO;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
@@ -33,7 +33,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public Trainer create(TrainerDTO dto) {
+    public Trainer create(TrainerCreateRequest dto) {
         validate(dto);
 
         log.info("Creating trainer profile for: {} {}", dto.getFirstName(), dto.getLastName());
@@ -57,7 +57,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public Trainer update(String username, TrainerDTO dto) {
+    public Trainer update(String username, TrainerCreateRequest dto) {
         validate(dto);
         log.info("Updating trainer username={}", username);
 
@@ -108,7 +108,7 @@ public class TrainerServiceImpl implements TrainerService {
         return trainerDao.findAll();
     }
 
-    private void validate(TrainerDTO dto) {
+    private void validate(TrainerCreateRequest dto) {
         if (dto == null) {
             throw new ValidationException("Trainer data is required");
         }

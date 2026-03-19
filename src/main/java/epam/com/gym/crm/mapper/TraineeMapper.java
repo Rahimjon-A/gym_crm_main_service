@@ -1,9 +1,10 @@
 package epam.com.gym.crm.mapper;
 
-import epam.com.gym.crm.dto.trainee.TraineeResponseDTO;
-import epam.com.gym.crm.dto.trainee.TraineeUpdateDTO;
-import epam.com.gym.crm.dto.trainer.TrainerShortDTO;
+import epam.com.gym.crm.dto.response.trainee.TraineeResponse;
+import epam.com.gym.crm.dto.response.trainee.TraineeUpdateResponse;
+import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
 import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Trainer; // Added import
 import epam.com.gym.crm.model.Training;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +13,8 @@ import java.util.List;
 @Component
 public class TraineeMapper {
 
-    /**
-     * Maps to the GET Profile Response
-     */
-    public TraineeResponseDTO toProfileResponse(Trainee trainee) {
-        return new TraineeResponseDTO(
+    public TraineeResponse toProfileResponse(Trainee trainee) {
+        return new TraineeResponse(
                 trainee.getFirstName(),
                 trainee.getLastName(),
                 trainee.getDateOfBirth(),
@@ -26,26 +24,30 @@ public class TraineeMapper {
         );
     }
 
-    /**
-     * Maps to the PUT Update Response (includes username)
-     */
-    public TraineeUpdateDTO toUpdateResponse(Trainee trainee) {
-        return new TraineeUpdateDTO(
-                trainee.getUsername(),
+    public TraineeUpdateResponse toUpdateResponse(Trainee trainee) {
+        return new TraineeUpdateResponse(
                 trainee.getFirstName(),
                 trainee.getLastName(),
                 trainee.getDateOfBirth(),
                 trainee.getAddress(),
                 trainee.isActive(),
-                extractTrainers(trainee)
+                extractTrainers(trainee),
+                trainee.getUsername()
         );
     }
 
-    public List<TrainerShortDTO> extractTrainers(Trainee trainee) {
-        return trainee.getTrainings().stream()
+    public List<TrainerShortResponse> extractTrainers(Trainee trainee) {
+        List<Trainer> trainers = trainee.getTrainings().stream()
                 .map(Training::getTrainer)
                 .distinct()
-                .map(trainer -> new TrainerShortDTO(
+                .toList();
+
+        return toTrainerShortDTOList(trainers);
+    }
+
+    public List<TrainerShortResponse> toTrainerShortDTOList(List<Trainer> trainers) {
+        return trainers.stream()
+                .map(trainer -> new TrainerShortResponse(
                         trainer.getUsername(),
                         trainer.getFirstName(),
                         trainer.getLastName(),

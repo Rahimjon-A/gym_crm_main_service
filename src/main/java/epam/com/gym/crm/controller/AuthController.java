@@ -1,10 +1,6 @@
 package epam.com.gym.crm.controller;
 
-import epam.com.gym.crm.dto.trainee.TraineeDTO;
-import epam.com.gym.crm.dto.trainer.TrainerDTO;
 import epam.com.gym.crm.facade.GymFacade;
-import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.common.Credentials;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,39 +24,10 @@ public class AuthController {
         this.gymFacade = gymFacade;
     }
 
-    /**
-     * 1. Trainee Registration (POST method)
-     */
-    @PostMapping("/trainee/registration")
-    @Operation(summary = "Register a new Trainee profile", description = "Generates and returns username and password")
-    public ResponseEntity<Credentials> registerTrainee(@Valid @RequestBody TraineeDTO request) {
-        log.info("REST: Registering new Trainee profile for {} {}", request.getFirstName(), request.getLastName());
-        request.setIsActive(true);
-        Trainee trainee = gymFacade.createTrainee(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new Credentials(trainee.getUsername(), trainee.getPassword()));
-    }
-
-    /**
-     * 2. Trainer Registration (POST method)
-     */
-    @PostMapping("/trainer/registration")
-    @Operation(summary = "Register a new Trainer profile", description = "Generates and returns username and password")
-    public ResponseEntity<Credentials> registerTrainer(@Valid @RequestBody TrainerDTO request) {
-        log.info("REST: Registering new Trainer profile for {} {}", request.getFirstName(), request.getLastName());
-        request.setIsActive(true);
-        Trainer trainer = gymFacade.createTrainer(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new Credentials(trainer.getUsername(), trainer.getPassword()));
-    }
-
-    /**
-     * 3. Login (POST)
-     */
     @PostMapping("/login")
     @Operation(summary = "Login user", description = "Validates username and password, returns 200 OK if successful")
     public ResponseEntity<Void> login(@Valid @RequestBody Credentials credentials) {
-        log.info("REST: Login attempt for user: {}", credentials.username());
+        log.info("REST: Login attempt for user: {}", credentials.getUsername());
         
         gymFacade.login(credentials);
         return ResponseEntity.status(HttpStatus.OK).build();

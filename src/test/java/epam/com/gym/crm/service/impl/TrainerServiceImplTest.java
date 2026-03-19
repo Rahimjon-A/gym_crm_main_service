@@ -2,7 +2,7 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.trainer.TrainerDTO;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
@@ -34,13 +34,13 @@ class TrainerServiceImplTest {
     @InjectMocks
     private TrainerServiceImpl trainerService;
 
-    private TrainerDTO validDto;
+    private TrainerCreateRequest validDto;
     private Trainer validTrainer;
     private TrainingType validTrainingType;
 
     @BeforeEach
     void setUp() {
-        validDto = new TrainerDTO();
+        validDto = new TrainerCreateRequest();
         validDto.setFirstName("John");
         validDto.setLastName("Smith");
         validDto.setSpecializationId(2L);
@@ -121,7 +121,7 @@ class TrainerServiceImplTest {
         when(trainingTypeDAO.findById(3L)).thenReturn(Optional.of(newTrainingType));
         when(trainerDao.update(any(Trainer.class))).thenAnswer(i -> i.getArgument(0));
 
-        TrainerDTO updateDto = new TrainerDTO();
+        TrainerCreateRequest updateDto = new TrainerCreateRequest();
         updateDto.setFirstName("Mike");
         updateDto.setLastName("Jones");
         updateDto.setSpecializationId(3L);
@@ -140,7 +140,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
         when(trainerDao.update(any(Trainer.class))).thenAnswer(i -> i.getArgument(0));
 
-        TrainerDTO updateDto = new TrainerDTO();
+        TrainerCreateRequest updateDto = new TrainerCreateRequest();
         updateDto.setFirstName("John");
         updateDto.setLastName("Smith");
         updateDto.setSpecializationId(2L);
@@ -164,7 +164,7 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
         when(trainingTypeDAO.findById(99L)).thenReturn(Optional.empty());
 
-        TrainerDTO updateDto = new TrainerDTO();
+        TrainerCreateRequest updateDto = new TrainerCreateRequest();
         updateDto.setFirstName("John");
         updateDto.setLastName("Smith");
         updateDto.setSpecializationId(99L);

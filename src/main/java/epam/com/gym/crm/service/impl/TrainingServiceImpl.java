@@ -2,12 +2,11 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
-import epam.com.gym.crm.dao.TrainingTypeDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.trainer.TrainerAssignmentDTO;
-import epam.com.gym.crm.dto.training.TrainingDTO;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -37,7 +35,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Transactional
-    public Training create(TrainingDTO dto) {
+    public Training create(TrainingCreateRequest dto) {
         validate(dto);
         log.info("Creating training '{}' for trainee={} and trainer={}",
                 dto.getTrainingName(), dto.getTraineeUsername(), dto.getTrainerUsername());
@@ -83,7 +81,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Transactional
-    public List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentDTO> assignments) {
+    public List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentRequest> assignments) {
         log.info("Updating trainings for trainee: {}", traineeUsername);
         validateUpdateInputs(traineeUsername, assignments);
 
@@ -92,7 +90,7 @@ public class TrainingServiceImpl implements TrainingService {
 
         List<Training> updatedTrainings = new ArrayList<>();
 
-        for (TrainerAssignmentDTO assignment : assignments) {
+        for (TrainerAssignmentRequest assignment : assignments) {
             updatedTrainings.add(processSingleTrainingAssignment(
                     trainee.getUsername(),
                     assignment.getTrainingId(),
@@ -132,7 +130,7 @@ public class TrainingServiceImpl implements TrainingService {
         return trainingDao.update(training);
     }
 
-    private void validateUpdateInputs(String traineeUsername, List<TrainerAssignmentDTO> assignments) {
+    private void validateUpdateInputs(String traineeUsername, List<TrainerAssignmentRequest> assignments) {
         if (traineeUsername == null || traineeUsername.isBlank()) {
             throw new ValidationException("Trainee id is required");
         }
@@ -141,7 +139,7 @@ public class TrainingServiceImpl implements TrainingService {
         }
     }
 
-    private void validate(TrainingDTO dto) {
+    private void validate(TrainingCreateRequest dto) {
         if (dto == null) {
             throw new ValidationException("Training data cannot be null");
         }

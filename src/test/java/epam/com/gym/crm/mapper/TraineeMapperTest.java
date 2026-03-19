@@ -1,7 +1,7 @@
 package epam.com.gym.crm.mapper;
 
-import epam.com.gym.crm.dto.trainee.TraineeResponseDTO;
-import epam.com.gym.crm.dto.trainee.TraineeUpdateDTO;
+import epam.com.gym.crm.dto.response.trainee.TraineeResponse;
+import epam.com.gym.crm.dto.response.trainee.TraineeUpdateResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -58,7 +58,7 @@ class TraineeMapperTest {
 
     @Test
     void toProfileResponse_shouldMapAllFieldsAndFilterDistinctTrainers() {
-        TraineeResponseDTO response = traineeMapper.toProfileResponse(trainee);
+        TraineeResponse response = traineeMapper.toProfileResponse(trainee);
 
         assertNotNull(response);
         assertEquals(FIRST_NAME, response.getFirstName());
@@ -69,14 +69,14 @@ class TraineeMapperTest {
 
         assertNotNull(response.getTrainers());
         assertEquals(1, response.getTrainers().size());
-        
-        assertEquals(TRAINER_USER, response.getTrainers().get(0).username());
-        assertEquals(TRAINING_TYPE, response.getTrainers().get(0).specialization());
+
+        assertEquals(TRAINER_USER, response.getTrainers().get(0).getUsername());
+        assertEquals(TRAINING_TYPE, response.getTrainers().get(0).getSpecialization());
     }
 
     @Test
     void toUpdateResponse_shouldMapAllFieldsIncludingUsername() {
-        TraineeUpdateDTO response = traineeMapper.toUpdateResponse(trainee);
+        TraineeUpdateResponse response = traineeMapper.toUpdateResponse(trainee);
 
         assertNotNull(response);
         assertEquals(USERNAME, response.getUsername());
@@ -91,7 +91,7 @@ class TraineeMapperTest {
     void toProfileResponse_shouldHandleEmptyTrainingsList() {
         trainee.setTrainings(List.of());
 
-        TraineeResponseDTO response = traineeMapper.toProfileResponse(trainee);
+        TraineeResponse response = traineeMapper.toProfileResponse(trainee);
 
         assertNotNull(response);
         assertNotNull(response.getTrainers());
