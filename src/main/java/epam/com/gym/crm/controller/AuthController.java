@@ -24,7 +24,7 @@ public class AuthController {
         this.gymFacade = gymFacade;
     }
 
-    @PostMapping("/login")
+    @PostMapping
     @Operation(summary = "Login user", description = "Validates username and password, returns 200 OK if successful")
     public ResponseEntity<Void> login(@Valid @RequestBody Credentials credentials) {
         log.info("REST: Login attempt for user: {}", credentials.getUsername());

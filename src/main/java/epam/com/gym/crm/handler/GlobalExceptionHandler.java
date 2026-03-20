@@ -30,19 +30,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(EntityNotFoundException ex) {
-        log.warn("Resource not found: {}", ex.getMessage());
+        log.error("Resource not found: ", ex);
         return buildErrorResponse(HttpStatus.NOT_FOUND, MSG_NOT_FOUND);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiErrorResponse> handleAuthentication(AuthenticationException ex) {
-        log.warn("Authentication failed: {}", ex.getMessage());
+        log.error("Authentication failed: ", ex);
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, MSG_AUTH_FAILED);
     }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(ValidationException ex) {
-        log.warn("Business validation failed: {}", ex.getMessage());
+        log.error("Business validation failed: ", ex);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, MSG_VALIDATION_FAILED);
     }
 
@@ -59,7 +59,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request) {
 
-        log.warn("REST Payload validation failed.");
 
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put(KEY_MESSAGE, MSG_VALIDATION_FAILED);
@@ -70,6 +69,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         }
 
         responseBody.put(KEY_ERRORS, fieldErrors);
+
+        log.error("REST Payload validation failed: {}", responseBody, ex);
 
         return new ResponseEntity<>(responseBody, headers, status);
     }

@@ -27,12 +27,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     
     private static final String ERROR_MISSING_HEADER = "Missing Authorization header";
     private static final String ERROR_INVALID_FORMAT = "Invalid Basic Auth format";
-    private static final String ERROR_INVALID_CREDS = "Wrong Username or Password, Please check credentials!";
 
     private static final String METHOD_POST = "POST";
     private static final String URL_TRAINEE_REGISTRATION = "/api/v1/trainees";
     private static final String URL_TRAINER_REGISTRATION = "/api/v1/trainers";
-    private static final String URL_LOGIN = "/api/v1/auth/login";
+    private static final String URL_LOGIN = "/api/v1/auth";
     private static final String URL_SWAGGER_UI = "/swagger-ui";
     private static final String URL_API_DOCS = "/v3/api-docs";
 
@@ -57,7 +56,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             String authHeader = request.getHeader(HEADER_AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith(PREFIX_BASIC)) {
-                log.error("Filter Authentication failed: {}", ERROR_MISSING_HEADER);
+                log.warn("Filter Authentication failed: {}", ERROR_MISSING_HEADER);
                 throw new AuthenticationException(ERROR_MISSING_HEADER);
             }
 
@@ -80,11 +79,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (IllegalArgumentException e) {
-            log.error("Filter Authentication failed: {}", ERROR_INVALID_FORMAT);
+            log.error("Filter Authentication failed: {}", ERROR_INVALID_FORMAT, e);
             
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_INVALID_FORMAT));
         } catch (AuthenticationException e) {
-            log.error("Filter Authentication failed: {}", ERROR_MISSING_HEADER);
+            log.error("Filter Authentication failed: {}", ERROR_MISSING_HEADER, e);
 
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_MISSING_HEADER));
         }

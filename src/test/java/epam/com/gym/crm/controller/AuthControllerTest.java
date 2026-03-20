@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 class AuthControllerTest {
-    private static final String URL_LOGIN = "/api/v1/auth/login";
+    private static final String URL_LOGIN = "/api/v1/auth";
     private static final String USERNAME = "john.doe";
     private static final String PASSWORD = "securePassword123";
 
