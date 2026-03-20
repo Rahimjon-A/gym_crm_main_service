@@ -149,14 +149,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void activateUser_shouldThrowException_whenUserAlreadyActive() {
-        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
-
-        assertThrows(ValidationException.class, () -> userService.activateUser("john.doe"));
-        verify(userDAO, never()).update(any());
-    }
-
-    @Test
     void deactivateUser_shouldSetActiveFalse_whenUserIsActive() {
         when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
 
@@ -164,14 +156,5 @@ class UserServiceImplTest {
 
         assertFalse(testUser.isActive());
         verify(userDAO, times(1)).update(testUser);
-    }
-
-    @Test
-    void deactivateUser_shouldThrowException_whenUserAlreadyInactive() {
-        testUser.setActive(false);
-        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
-
-        assertThrows(ValidationException.class, () -> userService.deactivateUser("john.doe"));
-        verify(userDAO, never()).update(any());
     }
 }

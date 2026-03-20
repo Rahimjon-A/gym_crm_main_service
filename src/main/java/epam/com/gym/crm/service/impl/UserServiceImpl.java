@@ -75,10 +75,6 @@ public class UserServiceImpl implements UserService {
         User user = userDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        if (user.isActive()) {
-            throw new ValidationException("User already active");
-        }
-
         user.setActive(true);
         userDAO.update(user);
     }
@@ -88,10 +84,6 @@ public class UserServiceImpl implements UserService {
     public void deactivateUser(String username) {
         User user = userDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        if (!user.isActive()) {
-            throw new ValidationException("User already inactive");
-        }
 
         user.setActive(false);
         userDAO.update(user);

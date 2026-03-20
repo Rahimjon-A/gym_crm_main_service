@@ -46,14 +46,14 @@ class AuthServiceImplTest {
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(ValidationException.class,
+        assertThrows(AuthenticationException.class,
                 () -> authService.authenticate(new Credentials("", "password")));
         verifyNoInteractions(userDAO);
     }
 
     @Test
     void authenticate_shouldThrowException_whenPasswordIsBlank() {
-        assertThrows(ValidationException.class,
+        assertThrows(AuthenticationException.class,
                 () -> authService.authenticate(new Credentials("john.smith", "")));
         verifyNoInteractions(userDAO);
     }

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/users")
-@Tag(name = "User API", description = "Endpoints for managing Gym Users (common operations for Trainees and Trainers)")
+@Tag(name = "User API", description = "Endpoints for managing Gym Users' password and active/deactive status")
 public class UserController {
 
     private GymFacade gymFacade;

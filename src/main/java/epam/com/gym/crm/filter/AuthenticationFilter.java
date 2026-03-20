@@ -27,6 +27,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     
     private static final String ERROR_MISSING_HEADER = "Missing Authorization header";
     private static final String ERROR_INVALID_FORMAT = "Invalid Basic Auth format";
+    private static final String ERROR_INVALID_CREDS = "Wrong Username or Password, Please check credentials!";
 
     private static final String METHOD_POST = "POST";
     private static final String URL_TRAINEE_REGISTRATION = "/api/v1/trainees";

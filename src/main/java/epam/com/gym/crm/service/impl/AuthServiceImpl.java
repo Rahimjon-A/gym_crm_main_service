@@ -30,10 +30,10 @@ public class AuthServiceImpl implements AuthService {
 
     private void validate(Credentials credentials) {
         if (credentials.getUsername() == null || credentials.getUsername().isBlank()) {
-            throw new ValidationException("Username cannot be empty");
+            throw new AuthenticationException("Username cannot be empty");
         }
         if (credentials.getPassword() == null || credentials.getPassword().isBlank()) {
-            throw new ValidationException("Password cannot be empty");
+            throw new AuthenticationException("Password cannot be empty");
         }
     }
 }
