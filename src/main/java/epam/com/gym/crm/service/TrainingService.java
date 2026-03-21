@@ -8,8 +8,8 @@ import epam.com.gym.crm.model.Training;
 
 import java.util.List;
 
-public interface TrainingService extends BaseService<Training, TrainingCreateRequest> {
+public interface TrainingService extends BaseService<Training> {
     List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter);
     List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter);
-    List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentRequest> assignments);
+    List<Training> updateTraineeTrainings(String traineeUsername, List<Training> assignments);
 }

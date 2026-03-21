@@ -4,10 +4,15 @@ import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
 import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
 import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
 import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.facade.GymFacade;
+import epam.com.gym.crm.mapper.TraineeMapper;
+import epam.com.gym.crm.mapper.TrainerMapper;
+import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -29,19 +34,28 @@ public class GymFacadeImpl implements GymFacade {
     private final TrainingTypeService trainingTypeService;
     private final UserService userService;
     private final AuthService authService;
+    private final TraineeMapper traineeMapper;
+    private final TrainerMapper trainerMapper;
+    private final TrainingMapper trainingMapper;
 
     public GymFacadeImpl(TrainerService trainerService,
                          TraineeService traineeService,
                          TrainingService trainingService,
                          TrainingTypeService trainingTypeService,
                          UserService userService,
-                         AuthService authService) {
+                         AuthService authService,
+                         TraineeMapper traineeMapper,
+                         TrainerMapper trainerMapper,
+                         TrainingMapper trainingMapper) {
         this.trainerService = trainerService;
         this.traineeService = traineeService;
         this.trainingService = trainingService;
         this.trainingTypeService = trainingTypeService;
         this.userService = userService;
         this.authService = authService;
+        this.traineeMapper = traineeMapper;
+        this.trainerMapper = trainerMapper;
+        this.trainingMapper = trainingMapper;
     }
 
     /* ================= AUTH ================= */
@@ -81,13 +95,17 @@ public class GymFacadeImpl implements GymFacade {
     @Override
     public Trainer createTrainer(TrainerCreateRequest dto) {
         log.info("Facade: Creating trainer {} {}", dto.getFirstName(), dto.getLastName());
-        return trainerService.create(dto);
+
+        Trainer newTrainer = trainerMapper.toEntity(dto);
+        return trainerService.create(newTrainer);
     }
 
     @Override
-    public Trainer updateTrainer(String username, TrainerCreateRequest dto) {
+    public Trainer updateTrainer(String username, TrainerUpdateRequest dto) {
         log.info("Facade: Updating trainer username={}", username);
-        return trainerService.update(username, dto);
+
+        Trainer trainerUpdates = trainerMapper.toEntity(dto);
+        return trainerService.update(username, trainerUpdates);
     }
 
     @Override
@@ -119,13 +137,18 @@ public class GymFacadeImpl implements GymFacade {
     @Override
     public Trainee createTrainee(TraineeCreateRequest dto) {
         log.info("Facade: Creating trainee {} {}", dto.getFirstName(), dto.getLastName());
-        return traineeService.create(dto);
+        Trainee newTrainee = traineeMapper.toEntity(dto);
+
+        return traineeService.create(newTrainee);
     }
 
     @Override
-    public Trainee updateTrainee(String username,  TraineeCreateRequest dto) {
+    public Trainee updateTrainee(String username, TraineeUpdateRequest dto) {
         log.info("Facade: Updating trainee username={}", username);
-        return traineeService.update(username, dto);
+
+        Trainee traineeUpdates = traineeMapper.toEntity(dto);
+
+        return traineeService.update(username, traineeUpdates);
     }
 
     @Override
@@ -158,7 +181,9 @@ public class GymFacadeImpl implements GymFacade {
     public Training createTraining(TrainingCreateRequest dto) {
         log.info("Facade: Creating training '{}' trainee={} trainer={}",
                 dto.getTrainingName(), dto.getTraineeUsername(), dto.getTrainerUsername());
-        return trainingService.create(dto);
+
+        Training newTraining = trainingMapper.toEntity(dto);
+        return trainingService.create(newTraining);
     }
 
     @Override
@@ -174,9 +199,11 @@ public class GymFacadeImpl implements GymFacade {
     }
 
     @Override
-    public List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentRequest> assignments) {
-        log.info("Facade: Updating trainee trainings for trainee={}", traineeUsername);
-        return trainingService.updateTraineeTrainings(traineeUsername, assignments);
+    public List<Training> updateTraineeTrainings(String username, List<TrainerAssignmentRequest> requests) {
+        log.info("Facade: Updating trainee trainings for username={}", username);
+
+        List<Training> domainAssignments = trainingMapper.toTrainingEntityList(requests);
+        return trainingService.updateTraineeTrainings(username, domainAssignments);
     }
 
     @Override

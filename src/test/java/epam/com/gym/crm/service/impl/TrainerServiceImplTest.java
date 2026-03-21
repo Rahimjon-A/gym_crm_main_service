@@ -2,7 +2,6 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
@@ -34,21 +33,24 @@ class TrainerServiceImplTest {
     @InjectMocks
     private TrainerServiceImpl trainerService;
 
-    private TrainerCreateRequest validDto;
+    private Trainer validInputTrainer;
     private Trainer validTrainer;
     private TrainingType validTrainingType;
 
     @BeforeEach
     void setUp() {
-        validDto = new TrainerCreateRequest();
-        validDto.setFirstName("John");
-        validDto.setLastName("Smith");
-        validDto.setSpecializationId(2L);
-        validDto.setIsActive(true);
-
         validTrainingType = new TrainingType();
         validTrainingType.setId(2L);
         validTrainingType.setTrainingTypeName("YOGA");
+
+        validInputTrainer = new Trainer();
+        validInputTrainer.setFirstName("John");
+        validInputTrainer.setLastName("Smith");
+        validInputTrainer.setActive(true);
+
+        TrainingType dummyType = new TrainingType();
+        dummyType.setId(2L);
+        validInputTrainer.setSpecialization(dummyType);
 
         validTrainer = new Trainer();
         validTrainer.setUsername("john.smith");
@@ -56,19 +58,18 @@ class TrainerServiceImplTest {
         validTrainer.setActive(true);
         validTrainer.setFirstName("John");
         validTrainer.setLastName("Smith");
-
         validTrainer.setId(1L);
         validTrainer.setSpecialization(validTrainingType);
     }
 
     @Test
-    void create_shouldSaveTrainer_whenDtoIsValid() {
+    void create_shouldSaveTrainer_whenInputIsValid() {
         when(credentialService.generateUsername("John", "Smith")).thenReturn("john.smith");
         when(credentialService.generatePassword()).thenReturn("abc1234567");
         when(trainingTypeDAO.findById(2L)).thenReturn(Optional.of(validTrainingType));
         when(trainerDao.create(any(Trainer.class))).thenAnswer(i -> i.getArgument(0));
 
-        Trainer result = trainerService.create(validDto);
+        Trainer result = trainerService.create(validInputTrainer);
 
         assertNotNull(result);
         assertEquals("john.smith", result.getUsername());
@@ -81,22 +82,22 @@ class TrainerServiceImplTest {
     }
 
     @Test
-    void create_shouldThrowException_whenDtoIsNull() {
+    void create_shouldThrowException_whenInputIsNull() {
         assertThrows(ValidationException.class, () -> trainerService.create(null));
         verifyNoInteractions(trainerDao);
     }
 
     @Test
     void create_shouldThrowException_whenFirstNameIsBlank() {
-        validDto.setFirstName("   ");
-        assertThrows(ValidationException.class, () -> trainerService.create(validDto));
+        validInputTrainer.setFirstName("   ");
+        assertThrows(ValidationException.class, () -> trainerService.create(validInputTrainer));
         verifyNoInteractions(trainerDao);
     }
 
     @Test
-    void create_shouldThrowException_whenSpecializationIdIsNull() {
-        validDto.setSpecializationId(null);
-        assertThrows(ValidationException.class, () -> trainerService.create(validDto));
+    void create_shouldThrowException_whenSpecializationIsNull() {
+        validInputTrainer.setSpecialization(null);
+        assertThrows(ValidationException.class, () -> trainerService.create(validInputTrainer));
         verifyNoInteractions(trainerDao);
     }
 
@@ -106,7 +107,7 @@ class TrainerServiceImplTest {
         when(credentialService.generatePassword()).thenReturn("abc1234567");
         when(trainingTypeDAO.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> trainerService.create(validDto));
+        assertThrows(EntityNotFoundException.class, () -> trainerService.create(validInputTrainer));
         verify(trainerDao, never()).create(any(Trainer.class));
     }
 
@@ -121,13 +122,16 @@ class TrainerServiceImplTest {
         when(trainingTypeDAO.findById(3L)).thenReturn(Optional.of(newTrainingType));
         when(trainerDao.update(any(Trainer.class))).thenAnswer(i -> i.getArgument(0));
 
-        TrainerCreateRequest updateDto = new TrainerCreateRequest();
-        updateDto.setFirstName("Mike");
-        updateDto.setLastName("Jones");
-        updateDto.setSpecializationId(3L);
-        updateDto.setIsActive(true);
+        Trainer updateInput = new Trainer();
+        updateInput.setFirstName("Mike");
+        updateInput.setLastName("Jones");
+        updateInput.setActive(true);
 
-        Trainer result = trainerService.update("john.smith", updateDto);
+        TrainingType updateDummyType = new TrainingType();
+        updateDummyType.setId(3L);
+        updateInput.setSpecialization(updateDummyType);
+
+        Trainer result = trainerService.update("john.smith", updateInput);
 
         assertEquals("Mike", result.getFirstName());
         assertEquals("Jones", result.getLastName());
@@ -140,13 +144,16 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
         when(trainerDao.update(any(Trainer.class))).thenAnswer(i -> i.getArgument(0));
 
-        TrainerCreateRequest updateDto = new TrainerCreateRequest();
-        updateDto.setFirstName("John");
-        updateDto.setLastName("Smith");
-        updateDto.setSpecializationId(2L);
-        updateDto.setIsActive(true);
+        Trainer updateInput = new Trainer();
+        updateInput.setFirstName("John");
+        updateInput.setLastName("Smith");
+        updateInput.setActive(true);
 
-        trainerService.update("john.smith", updateDto);
+        TrainingType updateDummyType = new TrainingType();
+        updateDummyType.setId(2L);
+        updateInput.setSpecialization(updateDummyType);
+
+        trainerService.update("john.smith", updateInput);
 
         verify(trainingTypeDAO, never()).findById(anyLong());
         verify(trainerDao, times(1)).update(validTrainer);
@@ -156,7 +163,7 @@ class TrainerServiceImplTest {
     void update_shouldThrowException_whenTrainerNotFound() {
         when(trainerDao.findByUsername("unknown.user")).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> trainerService.update("unknown.user", validDto));
+        assertThrows(EntityNotFoundException.class, () -> trainerService.update("unknown.user", validInputTrainer));
     }
 
     @Test
@@ -164,13 +171,16 @@ class TrainerServiceImplTest {
         when(trainerDao.findByUsername("john.smith")).thenReturn(Optional.of(validTrainer));
         when(trainingTypeDAO.findById(99L)).thenReturn(Optional.empty());
 
-        TrainerCreateRequest updateDto = new TrainerCreateRequest();
-        updateDto.setFirstName("John");
-        updateDto.setLastName("Smith");
-        updateDto.setSpecializationId(99L);
-        updateDto.setIsActive(true);
+        Trainer updateInput = new Trainer();
+        updateInput.setFirstName("John");
+        updateInput.setLastName("Smith");
+        updateInput.setActive(true);
 
-        assertThrows(EntityNotFoundException.class, () -> trainerService.update("john.smith", updateDto));
+        TrainingType updateDummyType = new TrainingType();
+        updateDummyType.setId(99L);
+        updateInput.setSpecialization(updateDummyType);
+
+        assertThrows(EntityNotFoundException.class, () -> trainerService.update("john.smith", updateInput));
         verify(trainerDao, never()).update(any(Trainer.class));
     }
 

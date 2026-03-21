@@ -5,11 +5,12 @@ import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
-import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
-import epam.com.gym.crm.model.*;
+import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class TrainingServiceImplTest {
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
-    private TrainingCreateRequest validDto;
+    private Training validInputTraining;
     private Trainee validTrainee;
     private Trainer validTrainer;
     private TrainingType validTrainingType;
@@ -52,13 +53,6 @@ class TrainingServiceImplTest {
     @BeforeEach
     void setUp() {
         now = new Date();
-
-        validDto = new TrainingCreateRequest();
-        validDto.setTraineeUsername("john.doe");
-        validDto.setTrainerUsername("jane.smith");
-        validDto.setTrainingName("Morning Cardio");
-        validDto.setTrainingDate(now);
-        validDto.setTrainingDuration(60.0);
 
         validTrainee = new Trainee();
         validTrainee.setId(1L);
@@ -73,6 +67,18 @@ class TrainingServiceImplTest {
         validTrainer.setUsername("jane.smith");
         validTrainer.setSpecialization(validTrainingType);
 
+        Trainee dummyTrainee = new Trainee();
+        dummyTrainee.setUsername(validTrainee.getUsername());
+        Trainer dummyTrainer = new Trainer();
+        dummyTrainer.setUsername(validTrainer.getUsername());
+
+        validInputTraining = new Training();
+        validInputTraining.setTrainee(dummyTrainee);
+        validInputTraining.setTrainer(dummyTrainer);
+        validInputTraining.setTrainingName("Morning Cardio");
+        validInputTraining.setTrainingDate(now);
+        validInputTraining.setTrainingDuration(60.0);
+
         validTraining = new Training();
         validTraining.setId(10L);
         validTraining.setTrainee(validTrainee);
@@ -81,20 +87,20 @@ class TrainingServiceImplTest {
     }
 
     @Test
-    void create_shouldSaveTraining_whenDtoIsValid() {
+    void create_shouldSaveTraining_whenInputIsValid() {
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
         when(trainerDao.findByUsername(validTrainer.getUsername())).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
 
-        Training result = trainingService.create(validDto);
+        Training result = trainingService.create(validInputTraining);
 
         assertNotNull(result);
-        assertEquals(validDto.getTrainingName(), result.getTrainingName());
+        assertEquals(validInputTraining.getTrainingName(), result.getTrainingName());
         assertEquals(validTrainee, result.getTrainee());
         assertEquals(validTrainer, result.getTrainer());
         assertEquals(validTrainingType, result.getTrainingType());
         assertEquals(now, result.getTrainingDate());
-        assertEquals(validDto.getTrainingDuration(), result.getTrainingDuration());
+        assertEquals(validInputTraining.getTrainingDuration(), result.getTrainingDuration());
 
         verify(trainingDao, times(1)).create(any(Training.class));
     }
@@ -103,7 +109,7 @@ class TrainingServiceImplTest {
     void create_shouldThrowException_whenTraineeNotFound() {
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> trainingService.create(validDto));
+        assertThrows(EntityNotFoundException.class, () -> trainingService.create(validInputTraining));
 
         verify(trainerDao, never()).findByUsername(any());
         verify(trainingDao, never()).create(any());
@@ -114,13 +120,13 @@ class TrainingServiceImplTest {
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
         when(trainerDao.findByUsername(validTrainer.getUsername())).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> trainingService.create(validDto));
+        assertThrows(EntityNotFoundException.class, () -> trainingService.create(validInputTraining));
 
         verify(trainingDao, never()).create(any());
     }
 
     @Test
-    void create_shouldThrowException_whenDtoIsNull() {
+    void create_shouldThrowException_whenInputIsNull() {
         assertThrows(ValidationException.class, () -> trainingService.create(null));
     }
 
@@ -169,9 +175,13 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldUpdateSuccessfully_whenInputsAreValid() {
-        List<TrainerAssignmentRequest> assignments = List.of(
-                new TrainerAssignmentRequest(validTraining.getId(), validTrainer.getUsername())
-        );
+        Training assignmentDummy = new Training();
+        assignmentDummy.setId(validTraining.getId());
+        Trainer dummyTrainer = new Trainer();
+        dummyTrainer.setUsername(validTrainer.getUsername());
+        assignmentDummy.setTrainer(dummyTrainer);
+
+        List<Training> assignments = List.of(assignmentDummy);
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
         when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));
@@ -190,9 +200,13 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldThrowException_whenTraineeNotFound() {
-        List<TrainerAssignmentRequest> assignments = List.of(
-                new TrainerAssignmentRequest(validTraining.getId(), validTrainer.getUsername())
-        );
+        Training assignmentDummy = new Training();
+        assignmentDummy.setId(validTraining.getId());
+        Trainer dummyTrainer = new Trainer();
+        dummyTrainer.setUsername(validTrainer.getUsername());
+        assignmentDummy.setTrainer(dummyTrainer);
+
+        List<Training> assignments = List.of(assignmentDummy);
 
         when(traineeDao.findByUsername(UNKNOWN_USER)).thenReturn(Optional.empty());
 
@@ -204,9 +218,13 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldThrowException_whenTrainingNotFound() {
-        List<TrainerAssignmentRequest> assignments = List.of(
-                new TrainerAssignmentRequest(UNKNOWN_ID, validTrainer.getUsername())
-        );
+        Training assignmentDummy = new Training();
+        assignmentDummy.setId(UNKNOWN_ID);
+        Trainer dummyTrainer = new Trainer();
+        dummyTrainer.setUsername(validTrainer.getUsername());
+        assignmentDummy.setTrainer(dummyTrainer);
+
+        List<Training> assignments = List.of(assignmentDummy);
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
         when(trainingDao.findById(UNKNOWN_ID)).thenReturn(Optional.empty());
@@ -219,9 +237,13 @@ class TrainingServiceImplTest {
 
     @Test
     void updateTraineeTrainings_shouldThrowException_whenTrainerNotFound() {
-        List<TrainerAssignmentRequest> assignments = List.of(
-                new TrainerAssignmentRequest(validTraining.getId(), UNKNOWN_USER)
-        );
+        Training assignmentDummy = new Training();
+        assignmentDummy.setId(validTraining.getId());
+        Trainer dummyTrainer = new Trainer();
+        dummyTrainer.setUsername(UNKNOWN_USER);
+        assignmentDummy.setTrainer(dummyTrainer);
+
+        List<Training> assignments = List.of(assignmentDummy);
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
         when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));
@@ -237,12 +259,15 @@ class TrainingServiceImplTest {
     void updateTraineeTrainings_shouldThrowValidationException_whenTrainingBelongsToDifferentTrainee() {
         Trainee ownerTrainee = new Trainee();
         ownerTrainee.setUsername(WRONG_USER);
-
         validTraining.setTrainee(ownerTrainee);
 
-        List<TrainerAssignmentRequest> assignments = List.of(
-                new TrainerAssignmentRequest(validTraining.getId(), validTrainer.getUsername())
-        );
+        Training assignmentDummy = new Training();
+        assignmentDummy.setId(validTraining.getId());
+        Trainer dummyTrainer = new Trainer();
+        dummyTrainer.setUsername(validTrainer.getUsername());
+        assignmentDummy.setTrainer(dummyTrainer);
+
+        List<Training> assignments = List.of(assignmentDummy);
 
         when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
         when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));

@@ -8,6 +8,9 @@ import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
 import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
 import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
+import epam.com.gym.crm.mapper.TraineeMapper;
+import epam.com.gym.crm.mapper.TrainerMapper;
+import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -44,6 +47,13 @@ class GymFacadeImplTest {
     private UserService userService;
     @Mock
     private AuthService authService;
+
+    @Mock
+    private TrainerMapper trainerMapper;
+    @Mock
+    private TraineeMapper traineeMapper;
+    @Mock
+    private TrainingMapper trainingMapper;
 
     @InjectMocks
     private GymFacadeImpl facade;
@@ -99,23 +109,29 @@ class GymFacadeImplTest {
     @Test
     void createTrainer_shouldDelegateToService() {
         TrainerCreateRequest dto = new TrainerCreateRequest();
-        when(trainerService.create(dto)).thenReturn(mockTrainer);
+
+        when(trainerMapper.toEntity(dto)).thenReturn(mockTrainer);
+        when(trainerService.create(mockTrainer)).thenReturn(mockTrainer);
 
         Trainer result = facade.createTrainer(dto);
 
         assertEquals(mockTrainer, result);
-        verify(trainerService, times(1)).create(dto);
+        verify(trainerMapper, times(1)).toEntity(dto);
+        verify(trainerService, times(1)).create(mockTrainer);
     }
 
     @Test
     void updateTrainer_shouldDelegateToService() {
         TrainerUpdateRequest dto = new TrainerUpdateRequest();
-        when(trainerService.update(AUTH_USER, dto)).thenReturn(mockTrainer);
+
+        when(trainerMapper.toEntity(dto)).thenReturn(mockTrainer);
+        when(trainerService.update(AUTH_USER, mockTrainer)).thenReturn(mockTrainer);
 
         Trainer result = facade.updateTrainer(AUTH_USER, dto);
 
         assertEquals(mockTrainer, result);
-        verify(trainerService, times(1)).update(AUTH_USER, dto);
+        verify(trainerMapper, times(1)).toEntity(dto);
+        verify(trainerService, times(1)).update(AUTH_USER, mockTrainer);
     }
 
     @Test
@@ -150,23 +166,30 @@ class GymFacadeImplTest {
     @Test
     void createTrainee_shouldDelegateToService() {
         TraineeCreateRequest dto = new TraineeCreateRequest();
-        when(traineeService.create(dto)).thenReturn(mockTrainee);
+
+        // FIX: Mock the mapper translating the DTO to an entity
+        when(traineeMapper.toEntity(dto)).thenReturn(mockTrainee);
+        when(traineeService.create(mockTrainee)).thenReturn(mockTrainee);
 
         Trainee result = facade.createTrainee(dto);
 
         assertEquals(mockTrainee, result);
-        verify(traineeService, times(1)).create(dto);
+        verify(traineeMapper, times(1)).toEntity(dto);
+        verify(traineeService, times(1)).create(mockTrainee);
     }
 
     @Test
     void updateTrainee_shouldDelegateToService() {
         TraineeUpdateRequest dto = new TraineeUpdateRequest();
-        when(traineeService.update(AUTH_USER, dto)).thenReturn(mockTrainee);
+
+        when(traineeMapper.toEntity(dto)).thenReturn(mockTrainee);
+        when(traineeService.update(AUTH_USER, mockTrainee)).thenReturn(mockTrainee);
 
         Trainee result = facade.updateTrainee(AUTH_USER, dto);
 
         assertEquals(mockTrainee, result);
-        verify(traineeService, times(1)).update(AUTH_USER, dto);
+        verify(traineeMapper, times(1)).toEntity(dto);
+        verify(traineeService, times(1)).update(AUTH_USER, mockTrainee);
     }
 
     @Test
@@ -199,12 +222,15 @@ class GymFacadeImplTest {
     @Test
     void createTraining_shouldDelegateToService() {
         TrainingCreateRequest dto = new TrainingCreateRequest();
-        when(trainingService.create(dto)).thenReturn(mockTraining);
+
+        when(trainingMapper.toEntity(dto)).thenReturn(mockTraining);
+        when(trainingService.create(mockTraining)).thenReturn(mockTraining);
 
         Training result = facade.createTraining(dto);
 
         assertEquals(mockTraining, result);
-        verify(trainingService, times(1)).create(dto);
+        verify(trainingMapper, times(1)).toEntity(dto);
+        verify(trainingService, times(1)).create(mockTraining);
     }
 
     @Test

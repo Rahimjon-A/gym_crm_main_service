@@ -1,11 +1,14 @@
 package epam.com.gym.crm.mapper;
 
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeShortResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerUpdateResponse;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.TrainingType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -55,5 +58,35 @@ public class TrainerMapper {
                         trainee.getLastName()
                 ))
                 .toList();
+    }
+
+    public Trainer toEntity(TrainerCreateRequest request) {
+        Trainer trainer = new Trainer();
+        trainer.setFirstName(request.getFirstName() != null ? request.getFirstName().trim() : null);
+        trainer.setLastName(request.getLastName() != null ? request.getLastName().trim() : null);
+        trainer.setActive(request.getIsActive());
+
+        if (request.getSpecializationId() != null) {
+            TrainingType dummyType = new TrainingType();
+            dummyType.setId(request.getSpecializationId());
+            trainer.setSpecialization(dummyType);
+        }
+
+        return trainer;
+    }
+
+    public Trainer toEntity(TrainerUpdateRequest request) {
+        Trainer trainer = new Trainer();
+        trainer.setFirstName(request.getFirstName() != null ? request.getFirstName().trim() : null);
+        trainer.setLastName(request.getLastName() != null ? request.getLastName().trim() : null);
+        trainer.setActive(request.getIsActive());
+
+        if (request.getSpecializationId() != null) {
+            TrainingType dummyType = new TrainingType();
+            dummyType.setId(request.getSpecializationId());
+            trainer.setSpecialization(dummyType);
+        }
+
+        return trainer;
     }
 }

@@ -5,6 +5,6 @@ import epam.com.gym.crm.model.Trainer;
 
 import java.util.List;
 
-public interface TrainerService extends AbstractUserService<Trainer, TrainerCreateRequest> {
+public interface TrainerService extends AbstractUserService<Trainer> {
     List<Trainer> getUnassignedTrainers(String traineeUsername);
 }

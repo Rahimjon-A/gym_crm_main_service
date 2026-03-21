@@ -1,5 +1,7 @@
 package epam.com.gym.crm.mapper;
 
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeResponse;
 import epam.com.gym.crm.dto.response.trainee.TraineeUpdateResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
@@ -54,5 +56,29 @@ public class TraineeMapper {
                         trainer.getSpecialization().getTrainingTypeName()
                 ))
                 .toList();
+    }
+
+    public Trainee toEntity(TraineeCreateRequest request) {
+        Trainee trainee = new Trainee();
+        trainee.setFirstName(request.getFirstName() != null ? request.getFirstName().trim() : null);
+        trainee.setLastName(request.getLastName() != null ? request.getLastName().trim() : null);
+        trainee.setActive(request.getIsActive() != null ? request.getIsActive() : true);
+        trainee.setDateOfBirth(request.getDateOfBirth());
+        if (request.getAddress() != null) {
+            trainee.setAddress(request.getAddress().trim());
+        }
+        return trainee;
+    }
+
+    public Trainee toEntity(TraineeUpdateRequest request) {
+        Trainee trainee = new Trainee();
+        trainee.setFirstName(request.getFirstName() != null ? request.getFirstName().trim() : null);
+        trainee.setLastName(request.getLastName() != null ? request.getLastName().trim() : null);
+        trainee.setActive(request.getIsActive());
+        trainee.setDateOfBirth(request.getDateOfBirth());
+        if (request.getAddress() != null) {
+            trainee.setAddress(request.getAddress().trim());
+        }
+        return trainee;
     }
 }

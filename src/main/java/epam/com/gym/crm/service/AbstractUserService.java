@@ -1,6 +1,6 @@
 package epam.com.gym.crm.service;
 
-public interface AbstractUserService<T, DTO> extends BaseService<T, DTO> {
-    T update(String username, DTO dto);
+public interface AbstractUserService<T> extends BaseService<T> {
+    T update(String username, T entity);
     T findByUsername(String username);
 }

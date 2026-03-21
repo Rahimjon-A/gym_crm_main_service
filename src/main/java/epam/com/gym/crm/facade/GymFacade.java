@@ -4,8 +4,10 @@ import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
 import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
 import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
 import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
@@ -29,7 +31,7 @@ public interface GymFacade {
     /* ================= TRAINER ================= */
     Trainer createTrainer(TrainerCreateRequest dto);
 
-    Trainer updateTrainer(String username, TrainerCreateRequest dto);
+    Trainer updateTrainer(String username, TrainerUpdateRequest dto);
 
     List<Trainer> getUnassignedTrainersOfTrainee(String username);
 
@@ -42,7 +44,7 @@ public interface GymFacade {
     /* ================= TRAINEE ================= */
     Trainee createTrainee(TraineeCreateRequest dto);
 
-    Trainee updateTrainee(String username, TraineeCreateRequest dto);
+    Trainee updateTrainee(String username, TraineeUpdateRequest dto);
 
     Trainee getTraineeById(Long traineeId);
 
