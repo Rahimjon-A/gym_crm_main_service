@@ -1,8 +1,9 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.dto.TraineeDTO;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.TraineeService;
 import epam.com.gym.crm.service.UserService;
@@ -28,44 +29,38 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public Trainee create(TraineeDTO dto) {
-        validate(dto);
-        log.info("Creating profile for: {} {}", dto.getFirstName(), dto.getLastName());
+    public Trainee create(Trainee trainee) {
+         validate(trainee);
+        log.info("Creating profile for: {} {}", trainee.getFirstName(), trainee.getLastName());
 
-        Trainee trainee = new Trainee();
-        trainee.setFirstName(dto.getFirstName().trim());
-        trainee.setLastName(dto.getLastName().trim());
-        trainee.setActive(dto.getIsActive());
-        trainee.setUsername(userService.generateUsername(dto.getFirstName(), dto.getLastName()));
+        trainee.setUsername(userService.generateUsername(trainee.getFirstName(), trainee.getLastName()));
         trainee.setPassword(userService.generatePassword());
-        trainee.setDateOfBirth(dto.getDateOfBirth());
-
-        if (dto.getAddress() != null) {
-            trainee.setAddress(dto.getAddress().trim());
-        }
 
         return traineeDao.create(trainee);
     }
 
     @Override
     @Transactional
-    public Trainee update(Long traineeId, TraineeDTO dto) {
-        validate(dto);
-        log.info("Updating profile for id: {}", traineeId);
+    public Trainee update(String username, Trainee update) {
+         validate(update);
+        log.info("Updating profile for username: {}", username);
 
-        Trainee existing = findById(traineeId);
+        Trainee existing = findByUsername(username);
 
-        if (!dto.getFirstName().equals(existing.getFirstName())) {
-            existing.setFirstName(dto.getFirstName().trim());
+        if (update.getFirstName() != null && !update.getFirstName().equals(existing.getFirstName())) {
+            existing.setFirstName(update.getFirstName());
         }
-        if (!dto.getLastName().equals(existing.getLastName())) {
-            existing.setLastName(dto.getLastName().trim());
+        if (update.getLastName() != null && !update.getLastName().equals(existing.getLastName())) {
+            existing.setLastName(update.getLastName());
         }
-        if (dto.getDateOfBirth() != null && !dto.getDateOfBirth().equals(existing.getDateOfBirth())) {
-            existing.setDateOfBirth(dto.getDateOfBirth());
+        if (update.getDateOfBirth() != null && !update.getDateOfBirth().equals(existing.getDateOfBirth())) {
+            existing.setDateOfBirth(update.getDateOfBirth());
         }
-        if (dto.getAddress() != null && !dto.getAddress().equals(existing.getAddress())) {
-            existing.setAddress(dto.getAddress().trim());
+        if (update.getAddress() != null && !update.getAddress().equals(existing.getAddress())) {
+            existing.setAddress(update.getAddress());
+        }
+        if (update.isActive() != existing.isActive()) {
+            existing.setActive(update.isActive());
         }
 
         return traineeDao.update(existing);
@@ -96,21 +91,19 @@ public class TraineeServiceImpl implements TraineeService {
         return traineeDao.findAll();
     }
 
-    private void validate(TraineeDTO dto) {
-        if (dto == null) {
-            throw new IllegalArgumentException("Trainee data must not be null");
+    private void validate(Trainee trainee) {
+        if (trainee == null) {
+            throw new ValidationException("Trainee data must not be null");
         }
-        if (dto.getFirstName() == null || dto.getFirstName().isBlank()) {
-            throw new IllegalArgumentException("First name is mandatory");
+        if (trainee.getFirstName() == null || trainee.getFirstName().isBlank()) {
+            throw new ValidationException("First name is mandatory");
         }
-        if (dto.getLastName() == null || dto.getLastName().isBlank()) {
-            throw new IllegalArgumentException("Last name is mandatory");
+        if (trainee.getLastName() == null || trainee.getLastName().isBlank()) {
+            throw new ValidationException("Last name is mandatory");
         }
-        if (dto.getIsActive() == null) {
-            throw new IllegalArgumentException("Active/Deactive flag must not be null");
+
+        if (trainee.getDateOfBirth() != null && trainee.getDateOfBirth().after(new java.util.Date())) {
+            throw new ValidationException("Date of birth must be in the past");
         }
-        if (dto.getDateOfBirth() != null && dto.getDateOfBirth().after(new Date())) {
-            throw new IllegalArgumentException("Date of birth must be in the past");
-        };
     }
 }

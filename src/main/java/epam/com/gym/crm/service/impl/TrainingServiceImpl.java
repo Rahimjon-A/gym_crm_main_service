@@ -2,16 +2,16 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
-import epam.com.gym.crm.dao.TrainingTypeDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.TrainingDTO;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
-import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.service.TrainingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -34,67 +33,71 @@ public class TrainingServiceImpl implements TrainingService {
     @Autowired
     private TrainerDAO trainerDao;
 
-    @Autowired
-    private TrainingTypeDAO trainingTypeDao;
-
     @Override
     @Transactional
-    public Training create(TrainingDTO dto) {
-        validate(dto);
+    public Training create(Training training) {
+        validate(training);
+
+        String traineeUsername = training.getTrainee().getUsername();
+        String trainerUsername = training.getTrainer().getUsername();
+
         log.info("Creating training '{}' for trainee={} and trainer={}",
-                dto.getTrainingName(), dto.getTraineeId(), dto.getTrainerId());
+                training.getTrainingName(), traineeUsername, trainerUsername);
 
-        Trainee trainee = traineeDao.findById(dto.getTraineeId())
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + dto.getTraineeId()));
+        Trainee realTrainee = traineeDao.findByUsername(traineeUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + traineeUsername));
 
-        Trainer trainer = trainerDao.findById(dto.getTrainerId())
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + dto.getTrainerId()));
+        Trainer realTrainer = trainerDao.findByUsername(trainerUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + trainerUsername));
 
-        TrainingType trainingType = trainingTypeDao.findById(dto.getTrainingTypeId())
-                .orElseThrow(() -> new EntityNotFoundException("Training Type not found: " + dto.getTrainingTypeId()));
-
-        Training training = new Training();
-        training.setTrainee(trainee);
-        training.setTrainer(trainer);
-        training.setTrainingName(dto.getTrainingName().trim());
-        training.setTrainingType(trainingType);
-        training.setTrainingDate(dto.getTrainingDate());
-        training.setTrainingDuration(dto.getTrainingDuration());
+        training.setTrainee(realTrainee);
+        training.setTrainer(realTrainer);
+        training.setTrainingType(realTrainer.getSpecialization());
 
         return trainingDao.create(training);
     }
 
     @Override
     public List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter) {
-        if (filter == null || filter.getTraineeName() == null || filter.getTraineeName().isBlank()) {
-            throw new IllegalArgumentException("Trainee username is required for filtering");
+        if (filter == null || filter.getUsername() == null || filter.getUsername().isBlank()) {
+            log.error("Attempted to fetch trainee trainings without a valid username.");
+            throw new ValidationException("Trainee username is required for filtering.");
         }
-        log.info("Fetching trainings for trainee: {}", filter.getTraineeName());
+
+        log.info("Fetching trainings for trainee: {}", filter.getUsername());
         return trainingDao.findTraineeTrainingsByCriteria(filter);
     }
 
     @Override
     public List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter) {
-        if (filter == null || filter.getTrainerName() == null || filter.getTrainerName().isBlank()) {
-            throw new IllegalArgumentException("Trainer username is required for filtering");
+        if (filter == null || filter.getUsername() == null || filter.getUsername().isBlank()) {
+            log.error("Attempted to fetch trainer trainings without a valid username.");
+            throw new ValidationException("Trainer username is required for filtering.");
         }
-        log.info("Fetching trainings for trainer: {}", filter.getTrainerName());
+
+        log.info("Fetching trainings for trainer: {}", filter.getUsername());
         return trainingDao.findTrainerTrainingsByCriteria(filter);
     }
 
     @Override
     @Transactional
-    public List<Training> updateTraineeTrainings(Long traineeId, Map<Long, Long> trainingAndTrainerIds) {
-        log.info("Updating trainee (id={}) trainings assignments: {}", traineeId, trainingAndTrainerIds);
+    public List<Training> updateTraineeTrainings(String traineeUsername, List<Training> assignments) {
+        log.info("Updating trainings for trainee: {}", traineeUsername);
 
-        validateUpdateInputs(traineeId, trainingAndTrainerIds);
+        Trainee trainee = traineeDao.findByUsername(traineeUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + traineeUsername));
 
-        traineeDao.findById(traineeId)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + traineeId));
+        List<Training> updatedTrainings = new java.util.ArrayList<>();
 
-        List<Training> updatedTrainings = new ArrayList<>();
-        for (Map.Entry<Long, Long> entry : trainingAndTrainerIds.entrySet()) {
-            updatedTrainings.add(processSingleTrainingAssignment(traineeId, entry.getKey(), entry.getValue()));
+        for (Training assignment : assignments) {
+            Long trainingId = assignment.getId();
+            String newTrainerUsername = assignment.getTrainer().getUsername();
+
+            updatedTrainings.add(processSingleTrainingAssignment(
+                    trainee.getUsername(),
+                    trainingId,
+                    newTrainerUsername
+            ));
         }
 
         return updatedTrainings;
@@ -111,58 +114,51 @@ public class TrainingServiceImpl implements TrainingService {
         return trainingDao.findAll();
     }
 
-    private Training processSingleTrainingAssignment(Long traineeId, Long trainingId, Long trainerId) {
-        if (trainingId == null || trainerId == null) {
-            throw new IllegalArgumentException("Training id and trainer id must not be null");
-        }
+    private Training processSingleTrainingAssignment(String traineeUsername, Long trainingId, String trainerUsername) {
 
         Training training = trainingDao.findById(trainingId)
                 .orElseThrow(() -> new EntityNotFoundException("Training not found id: " + trainingId));
 
-        if (!training.getTrainee().getId().equals(traineeId)) {
-            throw new IllegalArgumentException(
-                    "Training id " + trainingId + " does not belong to trainee id " + traineeId);
+        if (!training.getTrainee().getUsername().equals(traineeUsername)) {
+            throw new ValidationException(String.format("Training id %d does not belong to trainee %s", trainingId, traineeUsername));
         }
 
-        Trainer trainer = trainerDao.findById(trainerId)
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found id: " + trainerId));
+        Trainer trainer = trainerDao.findByUsername(trainerUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found username: " + trainerUsername));
 
         training.setTrainer(trainer);
 
-        log.info("Assigned trainer id {} to training id {}", trainerId, trainingId);
+        log.info("Assigned trainer {} to training id {}", trainerUsername, trainingId);
         return trainingDao.update(training);
     }
 
-    private void validateUpdateInputs(Long traineeId, Map<Long, Long> assignments) {
-        if (traineeId == null) {
-            throw new IllegalArgumentException("Trainee id is required");
+    private void validateUpdateInputs(String traineeUsername, List<TrainerAssignmentRequest> assignments) {
+        if (traineeUsername == null || traineeUsername.isBlank()) {
+            throw new ValidationException("Trainee id is required");
         }
         if (assignments == null || assignments.isEmpty()) {
-            throw new IllegalArgumentException("At least one training->trainer mapping is required");
+            throw new ValidationException("At least one training->trainer mapping is required");
         }
     }
 
-    private void validate(TrainingDTO dto) {
-        if (dto == null) {
-            throw new IllegalArgumentException("Training data cannot be null");
+    private void validate(Training training) {
+        if (training == null) {
+            throw new ValidationException("Training data cannot be null");
         }
-        if (dto.getTraineeId() == null) {
-            throw new IllegalArgumentException("Trainee is mandatory");
+        if (training.getTrainee() == null || training.getTrainee().getUsername() == null) {
+            throw new ValidationException("Trainee is mandatory");
         }
-        if (dto.getTrainerId() == null) {
-            throw new IllegalArgumentException("Trainer is mandatory");
+        if (training.getTrainer() == null || training.getTrainer().getUsername() == null) {
+            throw new ValidationException("Trainer is mandatory");
         }
-        if (dto.getTrainingName() == null || dto.getTrainingName().isBlank()) {
-            throw new IllegalArgumentException("Training name is mandatory");
+        if (training.getTrainingName() == null || training.getTrainingName().isBlank()) {
+            throw new ValidationException("Training name is mandatory");
         }
-        if (dto.getTrainingDate() == null) {
-            throw new IllegalArgumentException("Training date is mandatory");
+        if (training.getTrainingDate() == null) {
+            throw new ValidationException("Training date is mandatory");
         }
-        if (dto.getTrainingDuration() == null || dto.getTrainingDuration() <= 0) {
-            throw new IllegalArgumentException("Training duration must be a positive number");
-        }
-        if (dto.getTrainingTypeId() == null) {
-            throw new IllegalArgumentException("Training type  is mandatory");
+        if (training.getTrainingDuration() == null || training.getTrainingDuration() <= 0) {
+            throw new ValidationException("Training duration must be a positive number");
         }
     }
 }

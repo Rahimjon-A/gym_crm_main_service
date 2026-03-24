@@ -35,7 +35,7 @@ public class TrainingTypeDaoImpl implements TrainingTypeDAO {
         if (name == null) return Optional.empty();
         log.debug("Finding TrainingType by name: {}", name);
         return entityManager.createQuery(FIND_BY_NAME_QUERY, TrainingType.class)
-                .setParameter(PARAM_NAME, name.toLowerCase())
+                .setParameter(PARAM_NAME, name)
                 .getResultStream()
                 .findFirst();
     }

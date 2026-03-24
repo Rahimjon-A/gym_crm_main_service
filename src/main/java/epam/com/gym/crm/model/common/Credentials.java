@@ -1,12 +1,15 @@
 package epam.com.gym.crm.model.common;
 
-public record Credentials(String username, String password) {
-    public Credentials {
-        if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("Username cannot be empty");
-        }
-        if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Password cannot be empty");
-        }
-    }
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Credentials {
+    private String username;
+    private String password;
 }

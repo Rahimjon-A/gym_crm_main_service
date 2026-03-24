@@ -28,7 +28,7 @@ class TrainerDaoImplTest {
     private static final String FIRST_NAME = "John";
     private static final String PARAM_USERNAME = "username";
     private static final String EXPECTED_FIND_BY_USERNAME_FRAGMENT = "WHERE e.username = :username";
-    private static final String EXPECTED_UNASSIGNED_FRAGMENT = "WHERE NOT EXISTS";
+    private static final String EXPECTED_UNASSIGNED_FRAGMENT = "AND NOT EXISTS";
     private static final Long TRAINER_ID = 10L;
 
     @Mock

@@ -1,20 +1,28 @@
 package epam.com.gym.crm.facade.impl;
 
-import epam.com.gym.crm.aspect.RequireAuth;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.*;
+import epam.com.gym.crm.dto.request.PasswordChangeRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.facade.GymFacade;
+import epam.com.gym.crm.mapper.TraineeMapper;
+import epam.com.gym.crm.mapper.TrainerMapper;
+import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -23,78 +31,103 @@ public class GymFacadeImpl implements GymFacade {
     private final TrainerService trainerService;
     private final TraineeService traineeService;
     private final TrainingService trainingService;
+    private final TrainingTypeService trainingTypeService;
     private final UserService userService;
+    private final AuthService authService;
+    private final TraineeMapper traineeMapper;
+    private final TrainerMapper trainerMapper;
+    private final TrainingMapper trainingMapper;
 
     public GymFacadeImpl(TrainerService trainerService,
                          TraineeService traineeService,
                          TrainingService trainingService,
-                         UserService userService) {
+                         TrainingTypeService trainingTypeService,
+                         UserService userService,
+                         AuthService authService,
+                         TraineeMapper traineeMapper,
+                         TrainerMapper trainerMapper,
+                         TrainingMapper trainingMapper) {
         this.trainerService = trainerService;
         this.traineeService = traineeService;
         this.trainingService = trainingService;
+        this.trainingTypeService = trainingTypeService;
         this.userService = userService;
+        this.authService = authService;
+        this.traineeMapper = traineeMapper;
+        this.trainerMapper = trainerMapper;
+        this.trainingMapper = trainingMapper;
+    }
+
+    /* ================= AUTH ================= */
+
+    @Override
+    public void login(Credentials credentials) {
+        log.info("Facade: Login into profile {}", credentials.getUsername());
+
+        authService.authenticate(credentials);
+    }
+
+    /* ================= USER ================= */
+    @Override
+    public void activateUser(String username) {
+        log.info("Facade: Activating user username={}", username);
+        userService.activateUser(username);
+    }
+
+    @Override
+    public void deactivateUser(String username) {
+        log.info("Facade: Deactivating user username={}", username);
+        userService.deactivateUser(username);
+    }
+
+    @Override
+    public void changePassword(PasswordChangeRequest passwordChangeRequest) {
+        log.info("Facade: Updating password profile {}", passwordChangeRequest.username());
+
+        userService.changePassword(
+                passwordChangeRequest.username(),
+                passwordChangeRequest.oldPassword(),
+                passwordChangeRequest.newPassword());
     }
 
     /* ================= TRAINER ================= */
 
     @Override
-    public Trainer createTrainer(TrainerDTO dto) {
+    public Trainer createTrainer(TrainerCreateRequest dto) {
         log.info("Facade: Creating trainer {} {}", dto.getFirstName(), dto.getLastName());
-        return trainerService.create(dto);
+
+        Trainer newTrainer = trainerMapper.toEntity(dto);
+        return trainerService.create(newTrainer);
     }
 
     @Override
-    @RequireAuth
-    public Trainer updateTrainer(Credentials credentials, Long trainerId, TrainerDTO dto) {
-        log.info("Facade: Updating trainer id={}", trainerId);
-        return trainerService.update(trainerId, dto);
+    public Trainer updateTrainer(String username, TrainerUpdateRequest dto) {
+        log.info("Facade: Updating trainer username={}", username);
+
+        Trainer trainerUpdates = trainerMapper.toEntity(dto);
+        return trainerService.update(username, trainerUpdates);
     }
 
     @Override
-    @RequireAuth
-    public List<Trainer> getUnassignedTrainersOfTrainee(Credentials credentials) {
-        log.info("Facade: Fetching unassigned trainers for username={}", credentials.username());
-        return trainerService.getUnassignedTrainers(credentials.username());
+    public List<Trainer> getUnassignedTrainersOfTrainee(String username) {
+        log.info("Facade: Fetching unassigned trainers for username={}", username);
+        return trainerService.getUnassignedTrainers(username);
     }
 
     @Override
-    @RequireAuth
-    public void activateTrainer(Credentials credentials) {
-        log.info("Facade: Activating trainer username={}", credentials.username());
-        userService.activateUser(credentials.username());
-    }
-
-    @Override
-    @RequireAuth
-    public void deactivateTrainer(Credentials credentials) {
-        log.info("Facade: Deactivating trainer username={}", credentials.username());
-        userService.deactivateUser(credentials.username());
-    }
-
-    @Override
-    @RequireAuth
-    public void changeTrainerPassword(Credentials credentials, String newPassword) {
-        log.info("Facade: Changing password for trainer username={}", credentials.username());
-        userService.changePassword(credentials.username(), credentials.password(), newPassword);
-    }
-
-    @Override
-    @RequireAuth
-    public Trainer getTrainerById(Credentials credentials, Long trainerId) {
+    public Trainer getTrainerById(Long trainerId) {
         log.info("Facade: Fetching trainer by id={}", trainerId);
         return trainerService.findById(trainerId);
     }
 
     @Override
-    @RequireAuth
-    public Trainer getTrainerByUserName(Credentials credentials) {
-        log.info("Facade: Fetching trainer by username={}", credentials.username());
-        return trainerService.findByUsername(credentials.username());
+    public Trainer getTrainerByUserName(String username) {
+        log.info("Facade: Fetching trainer by username={}", username);
+        return trainerService.findByUsername(username);
     }
 
     @Override
-    @RequireAuth
-    public List<Trainer> getAllTrainers(Credentials credentials) {
+    public List<Trainer> getAllTrainers() {
         log.info("Facade: Fetching all trainers");
         return trainerService.findAll();
     }
@@ -102,109 +135,93 @@ public class GymFacadeImpl implements GymFacade {
     /* ================= TRAINEE ================= */
 
     @Override
-    public Trainee createTrainee(TraineeDTO dto) {
+    public Trainee createTrainee(TraineeCreateRequest dto) {
         log.info("Facade: Creating trainee {} {}", dto.getFirstName(), dto.getLastName());
-        return traineeService.create(dto);
+        Trainee newTrainee = traineeMapper.toEntity(dto);
+
+        return traineeService.create(newTrainee);
     }
 
     @Override
-    @RequireAuth
-    public Trainee updateTrainee(Credentials credentials, Long traineeId, TraineeDTO dto) {
-        log.info("Facade: Updating trainee id={}", traineeId);
-        return traineeService.update(traineeId, dto);
+    public Trainee updateTrainee(String username, TraineeUpdateRequest dto) {
+        log.info("Facade: Updating trainee username={}", username);
+
+        Trainee traineeUpdates = traineeMapper.toEntity(dto);
+
+        return traineeService.update(username, traineeUpdates);
     }
 
     @Override
-    @RequireAuth
-    public void activateTrainee(Credentials credentials) {
-        log.info("Facade: Activating trainee username={}", credentials.username());
-        userService.activateUser(credentials.username());
-    }
-
-    @Override
-    @RequireAuth
-    public void deactivateTrainee(Credentials credentials) {
-        log.info("Facade: Deactivating trainee username={}", credentials.username());
-        userService.deactivateUser(credentials.username());
-    }
-
-    @Override
-    @RequireAuth
-    public void changeTraineePassword(Credentials credentials, String newPassword) {
-        log.info("Facade: Changing password for trainee username={}", credentials.username());
-        userService.changePassword(credentials.username(), credentials.password(), newPassword);
-    }
-
-    @Override
-    @RequireAuth
-    public Trainee getTraineeById(Credentials credentials, Long traineeId) {
+    public Trainee getTraineeById(Long traineeId) {
         log.info("Facade: Fetching trainee by id={}", traineeId);
         return traineeService.findById(traineeId);
     }
 
     @Override
-    @RequireAuth
-    public Trainee getTraineeByUsername(Credentials credentials) {
-        log.info("Facade: Fetching trainee by username={}", credentials.username());
-        return traineeService.findByUsername(credentials.username());
+    public Trainee getTraineeByUsername(String username) {
+        log.info("Facade: Fetching trainee by username={}", username);
+        return traineeService.findByUsername(username);
     }
 
     @Override
-    @RequireAuth
-    public List<Trainee> getAllTrainees(Credentials credentials) {
+    public List<Trainee> getAllTrainees() {
         log.info("Facade: Fetching all trainees");
         return traineeService.findAll();
     }
 
     @Override
-    @RequireAuth
-    public void deleteTrainee(Credentials credentials) {
-        log.info("Facade: Hard deleting trainee username={}", credentials.username());
-        traineeService.deleteByUsername(credentials.username());
+    public void deleteTrainee(String username) {
+        log.info("Facade: Hard deleting trainee username={}", username);
+        traineeService.deleteByUsername(username);
     }
 
     /* ================= TRAINING ================= */
 
     @Override
-    @RequireAuth
-    public Training createTraining(Credentials credentials, TrainingDTO dto) {
+    public Training createTraining(TrainingCreateRequest dto) {
         log.info("Facade: Creating training '{}' trainee={} trainer={}",
-                dto.getTrainingName(), dto.getTraineeId(), dto.getTrainerId());
-        return trainingService.create(dto);
+                dto.getTrainingName(), dto.getTraineeUsername(), dto.getTrainerUsername());
+
+        Training newTraining = trainingMapper.toEntity(dto);
+        return trainingService.create(newTraining);
     }
 
     @Override
-    @RequireAuth
-    public List<Training> getTraineeTrainingsByCriteria(Credentials credentials, TraineeTrainingFilter filter) {
+    public List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter) {
         log.info("Facade: Fetching trainee trainings by criteria");
         return trainingService.getTraineeTrainingsByCriteria(filter);
     }
 
     @Override
-    @RequireAuth
-    public List<Training> getTrainerTrainingsByCriteria(Credentials credentials, TrainerTrainingFilter filter) {
+    public List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter) {
         log.info("Facade: Fetching trainer trainings by criteria");
         return trainingService.getTrainerTrainingsByCriteria(filter);
     }
 
     @Override
-    @RequireAuth
-    public List<Training> updateTraineeTrainings(Credentials credentials, Long traineeId, Map<Long, Long> trainingAndTrainerIds) {
-        log.info("Facade: Updating trainee trainings for traineeId={}", traineeId);
-        return trainingService.updateTraineeTrainings(traineeId, trainingAndTrainerIds);
+    public List<Training> updateTraineeTrainings(String username, List<TrainerAssignmentRequest> requests) {
+        log.info("Facade: Updating trainee trainings for username={}", username);
+
+        List<Training> domainAssignments = trainingMapper.toTrainingEntityList(requests);
+        return trainingService.updateTraineeTrainings(username, domainAssignments);
     }
 
     @Override
-    @RequireAuth
-    public Training getTrainingById(Credentials credentials, Long id) {
+    public Training getTrainingById(Long id) {
         log.info("Facade: Fetching training by id={}", id);
         return trainingService.findById(id);
     }
 
     @Override
-    @RequireAuth
-    public List<Training> getAllTrainings(Credentials credentials) {
+    public List<Training> getAllTrainings() {
         log.info("Facade: Fetching all trainings");
         return trainingService.findAll();
     }
+
+    /* ================= TRAINING TYPES ================= */
+    @Override
+    public List<TrainingType> getAllTrainingTypes() {
+        return trainingTypeService.findAll();
+    }
+
 }

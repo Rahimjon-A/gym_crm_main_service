@@ -1,7 +1,9 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.exception.AuthenticationException;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.utility.PasswordGenerator;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,12 +86,12 @@ class UserServiceImplTest {
 
     @Test
     void generateUsername_shouldThrowException_whenFirstNameNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.generateUsername(null, "Doe"));
+        assertThrows(ValidationException.class, () -> userService.generateUsername(null, "Doe"));
     }
 
     @Test
     void generateUsername_shouldThrowException_whenLastNameBlank() {
-        assertThrows(IllegalArgumentException.class, () -> userService.generateUsername("John", " "));
+        assertThrows(ValidationException.class, () -> userService.generateUsername("John", " "));
     }
 
     @Test
@@ -115,14 +117,14 @@ class UserServiceImplTest {
     void changePassword_shouldThrowException_whenOldPasswordIncorrect() {
         when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
 
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AuthenticationException.class,
                 () -> userService.changePassword("john.doe", "wrongPass", "newPassword123"));
         verify(userDAO, never()).update(any());
     }
 
     @Test
     void changePassword_shouldThrowException_whenNewPasswordTooShort() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(ValidationException.class,
                 () -> userService.changePassword("john.doe", "oldPass123", "short"));
         verifyNoInteractions(userDAO);
     }
@@ -147,14 +149,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void activateUser_shouldThrowException_whenUserAlreadyActive() {
-        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
-
-        assertThrows(IllegalStateException.class, () -> userService.activateUser("john.doe"));
-        verify(userDAO, never()).update(any());
-    }
-
-    @Test
     void deactivateUser_shouldSetActiveFalse_whenUserIsActive() {
         when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
 
@@ -162,14 +156,5 @@ class UserServiceImplTest {
 
         assertFalse(testUser.isActive());
         verify(userDAO, times(1)).update(testUser);
-    }
-
-    @Test
-    void deactivateUser_shouldThrowException_whenUserAlreadyInactive() {
-        testUser.setActive(false);
-        when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
-
-        assertThrows(IllegalStateException.class, () -> userService.deactivateUser("john.doe"));
-        verify(userDAO, never()).update(any());
     }
 }

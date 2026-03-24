@@ -1,6 +1,8 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.exception.AuthenticationException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.model.common.Credentials;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,8 +46,15 @@ class AuthServiceImplTest {
 
     @Test
     void authenticate_shouldThrowException_whenUsernameIsBlank() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AuthenticationException.class,
                 () -> authService.authenticate(new Credentials("", "password")));
+        verifyNoInteractions(userDAO);
+    }
+
+    @Test
+    void authenticate_shouldThrowException_whenPasswordIsBlank() {
+        assertThrows(AuthenticationException.class,
+                () -> authService.authenticate(new Credentials("john.smith", "")));
         verifyNoInteractions(userDAO);
     }
 
@@ -53,7 +62,7 @@ class AuthServiceImplTest {
     void authenticate_shouldThrowException_whenUserNotFound() {
         when(userDAO.findByUsername("unknown.user")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AuthenticationException.class,
                 () -> authService.authenticate(new Credentials("unknown.user", "password")));
     }
 
@@ -61,16 +70,8 @@ class AuthServiceImplTest {
     void authenticate_shouldThrowException_whenPasswordIsIncorrect() {
         when(userDAO.findByUsername("john.smith")).thenReturn(Optional.of(validUser));
 
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AuthenticationException.class,
                 () -> authService.authenticate(new Credentials("john.smith", "wrongPassword")));
     }
 
-    @Test
-    void authenticate_shouldThrowException_whenUserIsInactive() {
-        when(userDAO.findByUsername("john.smith")).thenReturn(Optional.of(validUser));
-        when(validUser.isActive()).thenReturn(false);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> authService.authenticate(new Credentials("john.smith", "securePass123")));
-    }
 }

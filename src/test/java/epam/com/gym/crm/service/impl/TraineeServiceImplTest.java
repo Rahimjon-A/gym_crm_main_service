@@ -1,12 +1,10 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.dto.TraineeDTO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.UserService;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceUnitUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +29,7 @@ class TraineeServiceImplTest {
     @InjectMocks
     private TraineeServiceImpl traineeService;
 
-    private TraineeDTO validDto;
+    private Trainee validInputTrainee;
     private Trainee validTrainee;
     private Date pastDate;
 
@@ -39,12 +37,12 @@ class TraineeServiceImplTest {
     void setUp() {
         pastDate = new Date(System.currentTimeMillis() - 10000000L);
 
-        validDto = new TraineeDTO();
-        validDto.setFirstName("John");
-        validDto.setLastName("Doe");
-        validDto.setDateOfBirth(pastDate);
-        validDto.setAddress("123 Main St");
-        validDto.setIsActive(true);
+        validInputTrainee = new Trainee();
+        validInputTrainee.setFirstName("John");
+        validInputTrainee.setLastName("Doe");
+        validInputTrainee.setDateOfBirth(pastDate);
+        validInputTrainee.setAddress("123 Main St");
+        validInputTrainee.setActive(true);
 
         validTrainee = new Trainee();
         validTrainee.setUsername("john.doe");
@@ -52,19 +50,18 @@ class TraineeServiceImplTest {
         validTrainee.setActive(true);
         validTrainee.setFirstName("John");
         validTrainee.setLastName("Doe");
-
         validTrainee.setId(1L);
         validTrainee.setDateOfBirth(pastDate);
         validTrainee.setAddress("123 Main St");
     }
 
     @Test
-    void create_shouldSaveTrainee_whenDtoIsValid() {
+    void create_shouldSaveTrainee_whenInputIsValid() {
         when(userService.generateUsername("John", "Doe")).thenReturn("john.doe");
         when(userService.generatePassword()).thenReturn("abc1234567");
         when(traineeDao.create(any(Trainee.class))).thenAnswer(i -> i.getArgument(0));
 
-        Trainee result = traineeService.create(validDto);
+        Trainee result = traineeService.create(validInputTrainee);
 
         assertNotNull(result);
         assertEquals("john.doe", result.getUsername());
@@ -74,35 +71,35 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void create_shouldThrowException_whenDtoIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> traineeService.create(null));
+    void create_shouldThrowException_whenInputIsNull() {
+        assertThrows(ValidationException.class, () -> traineeService.create(null));
         verifyNoInteractions(traineeDao);
     }
 
     @Test
     void create_shouldThrowException_whenFirstNameIsBlank() {
-        validDto.setFirstName("   ");
-        assertThrows(IllegalArgumentException.class, () -> traineeService.create(validDto));
+        validInputTrainee.setFirstName("   ");
+        assertThrows(ValidationException.class, () -> traineeService.create(validInputTrainee));
     }
 
     @Test
     void create_shouldThrowException_whenDateOfBirthIsInFuture() {
-        validDto.setDateOfBirth(new Date(System.currentTimeMillis() + 10000000L));
-        assertThrows(IllegalArgumentException.class, () -> traineeService.create(validDto));
+        validInputTrainee.setDateOfBirth(new Date(System.currentTimeMillis() + 10000000L));
+        assertThrows(ValidationException.class, () -> traineeService.create(validInputTrainee));
     }
 
     @Test
     void update_shouldUpdateFields_whenValid() {
-        when(traineeDao.findById(1L)).thenReturn(Optional.of(validTrainee));
+        when(traineeDao.findByUsername("john.doe")).thenReturn(Optional.of(validTrainee));
         when(traineeDao.update(any(Trainee.class))).thenAnswer(i -> i.getArgument(0));
 
-        TraineeDTO updateDto = new TraineeDTO();
-        updateDto.setFirstName("Jane");
-        updateDto.setLastName("Smith");
-        updateDto.setAddress("456 New Ave");
-        updateDto.setIsActive(true);
+        Trainee updateInput = new Trainee();
+        updateInput.setFirstName("Jane");
+        updateInput.setLastName("Smith");
+        updateInput.setAddress("456 New Ave");
+        updateInput.setActive(true);
 
-        Trainee result = traineeService.update(1L, updateDto);
+        Trainee result = traineeService.update("john.doe", updateInput);
 
         assertEquals("Jane", result.getFirstName());
         assertEquals("Smith", result.getLastName());
@@ -112,14 +109,21 @@ class TraineeServiceImplTest {
 
     @Test
     void update_shouldThrowException_whenTraineeNotFound() {
-        when(traineeDao.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> traineeService.update(99L, validDto));
+        when(traineeDao.findByUsername("unknown.user")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> traineeService.update("unknown.user", validInputTrainee));
     }
 
     @Test
     void findByUsername_shouldReturnTrainee() {
         when(traineeDao.findByUsername("john.doe")).thenReturn(Optional.of(validTrainee));
         assertEquals(validTrainee, traineeService.findByUsername("john.doe"));
+    }
+
+    @Test
+    void findById_shouldReturnTrainee() {
+        when(traineeDao.findById(1L)).thenReturn(Optional.of(validTrainee));
+        assertEquals(validTrainee, traineeService.findById(1L));
     }
 
     @Test

@@ -7,10 +7,6 @@ public final class PasswordGenerator {
     private static final String CHAR_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private PasswordGenerator() {
-        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
-    }
-
     public static String generate() {
         StringBuilder password = new StringBuilder();
 

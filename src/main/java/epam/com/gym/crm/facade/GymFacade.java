@@ -2,65 +2,71 @@ package epam.com.gym.crm.facade;
 
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.*;
+import epam.com.gym.crm.dto.request.PasswordChangeRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.model.common.Credentials;
 
 import java.util.List;
-import java.util.Map;
 
 public interface GymFacade {
 
+    /* ================= AUTH ================= */
+    void login(Credentials credentials);
+
+    void activateUser(String username);
+
+    void deactivateUser(String username);
+
+    void changePassword(PasswordChangeRequest passwordChangeRequest);
+
     /* ================= TRAINER ================= */
-    Trainer createTrainer(TrainerDTO dto);
+    Trainer createTrainer(TrainerCreateRequest dto);
 
-    Trainer updateTrainer(Credentials credentials, Long trainerId, TrainerDTO dto);
+    Trainer updateTrainer(String username, TrainerUpdateRequest dto);
 
-    List<Trainer> getUnassignedTrainersOfTrainee(Credentials credentials);
+    List<Trainer> getUnassignedTrainersOfTrainee(String username);
 
-    void activateTrainer(Credentials credentials);
+    Trainer getTrainerById(Long trainerId);
 
-    void deactivateTrainer(Credentials credentials);
+    Trainer getTrainerByUserName(String username);
 
-    void changeTrainerPassword(Credentials credentials, String newPassword);
-
-    Trainer getTrainerById(Credentials credentials, Long trainerId);
-
-    Trainer getTrainerByUserName(Credentials credentials);
-
-    List<Trainer> getAllTrainers(Credentials credentials);
+    List<Trainer> getAllTrainers();
 
     /* ================= TRAINEE ================= */
-    Trainee createTrainee(TraineeDTO dto);
+    Trainee createTrainee(TraineeCreateRequest dto);
 
-    Trainee updateTrainee(Credentials credentials, Long traineeId, TraineeDTO dto);
+    Trainee updateTrainee(String username, TraineeUpdateRequest dto);
 
-    void activateTrainee(Credentials credentials);
+    Trainee getTraineeById(Long traineeId);
 
-    void deactivateTrainee(Credentials credentials);
+    Trainee getTraineeByUsername(String username);
 
-    void changeTraineePassword(Credentials credentials, String newPassword);
+    List<Trainee> getAllTrainees();
 
-    Trainee getTraineeById(Credentials credentials, Long traineeId);
-
-    Trainee getTraineeByUsername(Credentials credentials);
-
-    List<Trainee> getAllTrainees(Credentials credentials);
-
-    void deleteTrainee(Credentials credentials);
+    void deleteTrainee(String username);
 
     /* ================= TRAINING ================= */
-    Training createTraining(Credentials credentials, TrainingDTO dto);
+    Training createTraining(TrainingCreateRequest dto);
 
-    List<Training> getTraineeTrainingsByCriteria(Credentials credentials, TraineeTrainingFilter filter);
+    List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter);
 
-    List<Training> getTrainerTrainingsByCriteria(Credentials credentials, TrainerTrainingFilter filter);
+    List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter);
 
-    List<Training> updateTraineeTrainings(Credentials credentials, Long traineeId, Map<Long, Long> trainingAndTrainerIds);
+    List<Training> updateTraineeTrainings(String traineeUsername, List<TrainerAssignmentRequest> assignments);
 
-    Training getTrainingById(Credentials credentials, Long id);
+    Training getTrainingById(Long id);
 
-    List<Training> getAllTrainings(Credentials credentials);
+    List<Training> getAllTrainings();
+
+    /* ================= TRAINING TYPES ================= */
+    List<TrainingType> getAllTrainingTypes();
 }
