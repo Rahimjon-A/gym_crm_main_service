@@ -11,10 +11,16 @@ import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TraineeMapper;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,6 +37,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TraineeController.class)
+@Import(TraineeControllerTest.MetricsConfig.class)
 class TraineeControllerTest {
     private static final String BASE_URL = "/api/v1/trainees";
     private static final String URL_PROFILE = BASE_URL + "/{username}";
@@ -185,5 +192,13 @@ class TraineeControllerTest {
                 .andExpect(jsonPath(JSON_PATH_ROOT_ARRAY).isArray());
 
         verify(gymFacade, times(1)).getUnassignedTrainersOfTrainee(USERNAME);
+    }
+
+    @TestConfiguration
+    static class MetricsConfig {
+        @Bean
+        public MeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
+        }
     }
 }

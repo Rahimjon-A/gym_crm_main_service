@@ -12,6 +12,8 @@ import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.common.Credentials;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,8 +31,12 @@ import java.util.List;
 @Tag(name = "Trainee API", description = "Endpoints for managing Gym Trainees")
 public class TraineeController {
 
+    private static final String METRIC_TRAINEE_TIMER = "gym.trainee.creation.time";
+    private static final String METRIC_TIMER_DESC = "Time taken to save a new trainee profile";
+
     private GymFacade gymFacade;
     private TraineeMapper traineeMapper;
+    private MeterRegistry meterRegistry;
 
     @Autowired
     public void setGymFacade(GymFacade gymFacade) {
@@ -42,14 +48,25 @@ public class TraineeController {
         this.traineeMapper = traineeMapper;
     }
 
+    @Autowired
+    public void setMeterRegistry(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
     @PostMapping
     @Operation(summary = "Register a new Trainee profile", description = "Generates and returns username and password")
     public ResponseEntity<Credentials> registerTrainee(@Valid @RequestBody TraineeCreateRequest request) {
+        Timer timer = Timer.builder(METRIC_TRAINEE_TIMER)
+                .description(METRIC_TIMER_DESC)
+                .register(meterRegistry);
+
         log.info("REST: Registering new Trainee profile for {} {}", request.getFirstName(), request.getLastName());
         request.setIsActive(true);
-        Trainee trainee = gymFacade.createTrainee(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new Credentials(trainee.getUsername(), trainee.getPassword()));
+        return timer.record(() -> {
+            Trainee trainee = gymFacade.createTrainee(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new Credentials(trainee.getUsername(), trainee.getPassword()));
+        });
     }
 
     @GetMapping("/{username}")

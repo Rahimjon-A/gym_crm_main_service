@@ -3,6 +3,7 @@ package epam.com.gym.crm.filter;
 import epam.com.gym.crm.exception.AuthenticationException;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     private static final String HEADER_AUTHORIZATION = "Authorization";
     private static final String PREFIX_BASIC = "Basic ";
     private static final String REGEX_SEPARATOR = ":";
+
+    private static final String METRIC_AUTH_SUCCESS = "gym.auth.success.total";
+    private static final String METRIC_AUTH_FAILURE = "gym.auth.failure.total";
     
     private static final String ERROR_MISSING_HEADER = "Missing Authorization header";
     private static final String ERROR_INVALID_FORMAT = "Invalid Basic Auth format";
@@ -34,9 +38,12 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     private static final String URL_LOGIN = "/api/v1/auth";
     private static final String URL_SWAGGER_UI = "/swagger-ui";
     private static final String URL_API_DOCS = "/v3/api-docs";
+    private static final String URL_ACTUATOR = "/actuator";
+    private static final String URL_FAVICON = "/favicon.ico";
 
     private AuthService authService;
     private HandlerExceptionResolver exceptionResolver;
+    private MeterRegistry meterRegistry;
 
     @Autowired
     public void setAuthService(AuthService authService) {
@@ -46,6 +53,11 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     public void setExceptionResolver(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
         this.exceptionResolver = exceptionResolver;
+    }
+
+    @Autowired
+    public void setMeterRegistry(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -76,14 +88,20 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             log.debug("Filter: Authenticating user: {}", username);
             authService.authenticate(new Credentials(username, password));
 
+            meterRegistry.counter(METRIC_AUTH_SUCCESS).increment();
+
             filterChain.doFilter(request, response);
 
         } catch (IllegalArgumentException e) {
             log.error("Filter Authentication failed: {}", ERROR_INVALID_FORMAT, e);
-            
+
+            meterRegistry.counter(METRIC_AUTH_FAILURE).increment();
+
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_INVALID_FORMAT));
         } catch (AuthenticationException e) {
             log.error("Filter Authentication failed: {}", ERROR_MISSING_HEADER, e);
+
+            meterRegistry.counter(METRIC_AUTH_FAILURE).increment();
 
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_MISSING_HEADER));
         }
@@ -100,6 +118,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        return path.startsWith(URL_SWAGGER_UI) || path.startsWith(URL_API_DOCS);
+        return path.startsWith(URL_SWAGGER_UI) ||
+                path.startsWith(URL_API_DOCS) ||
+                path.startsWith(URL_ACTUATOR) ||
+                path.startsWith(URL_FAVICON);
     }
 }

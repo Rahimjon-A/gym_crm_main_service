@@ -8,6 +8,8 @@ import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TrainerMapper;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.common.Credentials;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,8 +24,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/trainers")
 @Tag(name = "Trainer API", description = "Endpoints for managing Gym Trainers")
 public class TrainerController {
+
+    private static final String METRIC_TRAINER_TIMER = "gym.trainer.creation.time";
+    private static final String METRIC_TIMER_DESC = "Time taken to save a new trainer profile";
+
     private GymFacade gymFacade;
     private TrainerMapper trainerMapper;
+    private MeterRegistry meterRegistry;
 
     @Autowired
     public void setGymFacade(GymFacade gymFacade) {
@@ -35,21 +42,33 @@ public class TrainerController {
         this.trainerMapper = trainerMapper;
     }
 
+    @Autowired
+    public void setMeterRegistry(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
     @PostMapping
     @Operation(summary = "Register a new Trainer profile", description = "Generates and returns username and password")
     public ResponseEntity<Credentials> registerTrainer(@Valid @RequestBody TrainerCreateRequest request) {
+        Timer timer = Timer.builder(METRIC_TRAINER_TIMER)
+                .description(METRIC_TIMER_DESC)
+                .register(meterRegistry);
+
         log.info("REST: Registering new Trainer profile for {} {}", request.getFirstName(), request.getLastName());
+
         request.setIsActive(true);
-        Trainer trainer = gymFacade.createTrainer(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new Credentials(trainer.getUsername(), trainer.getPassword()));
+        return timer.record(() -> {
+            Trainer trainer = gymFacade.createTrainer(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new Credentials(trainer.getUsername(), trainer.getPassword()));
+        });
     }
 
     @GetMapping("/{username}")
     @Operation(summary = "Get Trainer Profile", description = "Returns trainer details and their assigned trainees")
     public ResponseEntity<TrainerResponse> getTrainerProfile(@PathVariable String username) {
         log.info("REST: Fetching profile for trainer: {}", username);
-        
+
         Trainer trainer = gymFacade.getTrainerByUserName(username);
         TrainerResponse response = trainerMapper.toProfileResponse(trainer);
 
@@ -62,7 +81,7 @@ public class TrainerController {
             @PathVariable String username,
             @Valid @RequestBody TrainerUpdateRequest updateRequest) {
         log.info("REST: Updating profile for trainer: {}", username);
-        
+
         Trainer updatedTrainer = gymFacade.updateTrainer(username, updateRequest);
         TrainerUpdateResponse response = trainerMapper.toUpdateResponse(updatedTrainer);
 

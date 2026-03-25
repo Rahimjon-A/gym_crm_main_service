@@ -9,10 +9,16 @@ import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TrainingController.class)
+@Import(TrainingControllerTest.MetricsConfig.class)
 class TrainingControllerTest {
     private static final String BASE_URL = "/api/v1/trainings";
     private static final String URL_TRAINEE_TRAININGS = BASE_URL + "/trainee/{username}";
@@ -147,5 +154,13 @@ class TrainingControllerTest {
                 .andExpect(jsonPath(JSON_PATH_TRAINING_NAME).value(TRAINING_NAME));
 
         verify(gymFacade, times(1)).getTrainerTrainingsByCriteria(any(TrainerTrainingFilter.class));
+    }
+
+    @TestConfiguration
+    static class MetricsConfig {
+        @Bean
+        public MeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
+        }
     }
 }
