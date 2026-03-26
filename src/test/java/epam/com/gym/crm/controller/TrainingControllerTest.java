@@ -34,7 +34,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(TrainingController.class)
+@WebMvcTest(
+        controllers = TrainingController.class,
+        properties = {"gym.metrics.training.timer=test.training.timer.metric"}
+)
 @Import(TrainingControllerTest.MetricsConfig.class)
 class TrainingControllerTest {
     private static final String BASE_URL = "/api/v1/trainings";

@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -26,8 +27,8 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     private static final String PREFIX_BASIC = "Basic ";
     private static final String REGEX_SEPARATOR = ":";
 
-    private static final String METRIC_AUTH_SUCCESS = "gym.auth.success.total";
-    private static final String METRIC_AUTH_FAILURE = "gym.auth.failure.total";
+    private String metricAuthSuccess;
+    private String metricAuthFailure;
     
     private static final String ERROR_MISSING_HEADER = "Missing Authorization header";
     private static final String ERROR_INVALID_FORMAT = "Invalid Basic Auth format";
@@ -60,6 +61,16 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         this.meterRegistry = meterRegistry;
     }
 
+    @Value("${gym.metrics.auth.success}")
+    public void setMetricAuthSuccess(String metricAuthSuccess) {
+        this.metricAuthSuccess = metricAuthSuccess;
+    }
+
+    @Value("${gym.metrics.auth.failure}")
+    public void setMetricAuthFailure(String metricAuthFailure) {
+        this.metricAuthFailure = metricAuthFailure;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
                                     HttpServletResponse response, 
@@ -88,20 +99,20 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             log.debug("Filter: Authenticating user: {}", username);
             authService.authenticate(new Credentials(username, password));
 
-            meterRegistry.counter(METRIC_AUTH_SUCCESS).increment();
+            meterRegistry.counter(metricAuthSuccess).increment();
 
             filterChain.doFilter(request, response);
 
         } catch (IllegalArgumentException e) {
             log.error("Filter Authentication failed: {}", ERROR_INVALID_FORMAT, e);
 
-            meterRegistry.counter(METRIC_AUTH_FAILURE).increment();
+            meterRegistry.counter(metricAuthFailure).increment();
 
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_INVALID_FORMAT));
         } catch (AuthenticationException e) {
             log.error("Filter Authentication failed: {}", ERROR_MISSING_HEADER, e);
 
-            meterRegistry.counter(METRIC_AUTH_FAILURE).increment();
+            meterRegistry.counter(metricAuthFailure).increment();
 
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_MISSING_HEADER));
         }

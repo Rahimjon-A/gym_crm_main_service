@@ -24,7 +24,7 @@ public class TrainingTypeReferenceDataHealthIndicator implements HealthIndicator
 
     @Override
     public Health health() {
-        int trainingTypeCount = trainingTypeService.findAll().size();
+        long trainingTypeCount = trainingTypeService.count();
 
         if (trainingTypeCount > 0) {
             return Health.up()

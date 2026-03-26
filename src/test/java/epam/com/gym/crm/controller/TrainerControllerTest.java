@@ -34,7 +34,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(TrainerController.class)
+@WebMvcTest(
+        controllers = TrainerController.class,
+        properties = {"gym.metrics.trainer.timer=test.trainer.timer.metric"}
+)
 @Import(TrainerControllerTest.MetricsConfig.class)
 class TrainerControllerTest {
     private static final String BASE_URL = "/api/v1/trainers";

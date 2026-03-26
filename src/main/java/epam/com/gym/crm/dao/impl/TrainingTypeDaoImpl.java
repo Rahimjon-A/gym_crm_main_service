@@ -15,6 +15,7 @@ import java.util.Optional;
 public class TrainingTypeDaoImpl implements TrainingTypeDAO {
     private static final String FIND_BY_NAME_QUERY = "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name";
     private static final String FIND_ALL_QUERY = "FROM TrainingType";
+    private static final String COUNT_QUERY = "SELECT count(t) FROM TrainingType t";
     private static final String PARAM_NAME = "name";
 
     private EntityManager entityManager;
@@ -45,5 +46,12 @@ public class TrainingTypeDaoImpl implements TrainingTypeDAO {
         log.debug("Fetching all {} records", TrainingType.class.getName());
         return entityManager.createQuery(FIND_ALL_QUERY, TrainingType.class)
                 .getResultList();
+    }
+
+    @Override
+    public Long count() {
+        log.debug("Fetching total count of TrainingType records.");
+        return entityManager.createQuery(COUNT_QUERY, Long.class)
+                .getSingleResult();
     }
 }

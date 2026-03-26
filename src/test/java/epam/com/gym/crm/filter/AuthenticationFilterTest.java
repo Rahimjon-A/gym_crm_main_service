@@ -53,6 +53,9 @@ class AuthenticationFilterTest {
     private static final String URL_ACTUATOR = "/actuator/health";
     private static final String URL_FAVICON = "/favicon.ico";
 
+    private static final String TEST_METRIC_SUCCESS = "test.auth.success.metric";
+    private static final String TEST_METRIC_FAILURE = "test.auth.failure.metric";
+
     @Mock
     private AuthService authService;
 
@@ -79,6 +82,9 @@ class AuthenticationFilterTest {
         filterChain = new MockFilterChain();
 
         lenient().when(meterRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        authenticationFilter.setMetricAuthSuccess(TEST_METRIC_SUCCESS);
+        authenticationFilter.setMetricAuthFailure(TEST_METRIC_FAILURE);
     }
 
     @Test

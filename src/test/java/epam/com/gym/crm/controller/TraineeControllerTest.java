@@ -15,7 +15,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -36,7 +35,9 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(TraineeController.class)
+@WebMvcTest(
+        controllers = TraineeController.class,
+        properties = {"gym.metrics.trainee.timer=test.trainee.timer.metric"})
 @Import(TraineeControllerTest.MetricsConfig.class)
 class TraineeControllerTest {
     private static final String BASE_URL = "/api/v1/trainees";

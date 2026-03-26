@@ -1,6 +1,5 @@
 package epam.com.gym.crm.actuator;
 
-import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.service.TrainingTypeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,9 +8,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -33,25 +29,25 @@ class TrainingTypeReferenceDataHealthIndicatorTest {
 
     @Test
     void health_shouldReturnUp_whenDataExists() {
-        when(trainingTypeService.findAll()).thenReturn(List.of(new TrainingType()));
+        when(trainingTypeService.count()).thenReturn(1L);
 
         Health result = healthIndicator.health();
 
         assert result != null;
         assertEquals(Status.UP, result.getStatus());
-        assertEquals(1, result.getDetails().get(KEY_TRAINING_TYPES_COUNT));
+        assertEquals(1L, result.getDetails().get(KEY_TRAINING_TYPES_COUNT));
         assertEquals(MSG_DATA_OK, result.getDetails().get(KEY_MESSAGE));
     }
 
     @Test
     void health_shouldReturnDown_whenDataEmpty() {
-        when(trainingTypeService.findAll()).thenReturn(Collections.emptyList());
+        when(trainingTypeService.count()).thenReturn(0L);
 
         Health result = healthIndicator.health();
 
         assert result != null;
         assertEquals(Status.DOWN, result.getStatus());
-        assertEquals(0, result.getDetails().get(KEY_TRAINING_TYPES_COUNT));
+        assertEquals(0L, result.getDetails().get(KEY_TRAINING_TYPES_COUNT));
         assertEquals(MSG_DATA_MISSING, result.getDetails().get(KEY_MESSAGE));
     }
 }

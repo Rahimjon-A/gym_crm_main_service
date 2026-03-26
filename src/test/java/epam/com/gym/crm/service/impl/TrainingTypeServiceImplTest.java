@@ -50,4 +50,16 @@ public class TrainingTypeServiceImplTest {
 
         verify(trainingTypeDAO, times(1)).findAll();
     }
+
+    @Test
+    void count_shouldDelegateToDaoAndReturnTotal() {
+        Long expectedCount = 12L;
+        when(trainingTypeDAO.count()).thenReturn(expectedCount);
+
+        Long result = trainingTypeService.count();
+
+        assertNotNull(result);
+        assertEquals(expectedCount, result);
+        verify(trainingTypeDAO, times(1)).count();
+    }
 }

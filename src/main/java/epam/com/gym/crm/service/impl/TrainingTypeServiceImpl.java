@@ -18,4 +18,9 @@ public class TrainingTypeServiceImpl implements TrainingTypeService {
     public List<TrainingType> findAll() {
         return trainingTypeDAO.findAll();
     }
+
+    @Override
+    public Long count() {
+        return  trainingTypeDAO.count();
+    }
 }

@@ -12,9 +12,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +27,14 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Trainer API", description = "Endpoints for managing Gym Trainers")
 public class TrainerController {
 
-    private static final String METRIC_TRAINER_TIMER = "gym.trainer.creation.time";
     private static final String METRIC_TIMER_DESC = "Time taken to save a new trainer profile";
 
     private GymFacade gymFacade;
     private TrainerMapper trainerMapper;
+
     private MeterRegistry meterRegistry;
+    private String metricTrainerTimer;
+    private Timer timer;
 
     @Autowired
     public void setGymFacade(GymFacade gymFacade) {
@@ -47,16 +51,24 @@ public class TrainerController {
         this.meterRegistry = meterRegistry;
     }
 
+    @Value("${gym.metrics.trainer.timer}")
+    public void setMetricTrainerTimer(String metricTrainerTimer) {
+        this.metricTrainerTimer = metricTrainerTimer;
+    }
+
+    @PostConstruct
+    public void initMetrics() {
+        this.timer = Timer.builder(metricTrainerTimer)
+                .description(METRIC_TIMER_DESC)
+                .register(meterRegistry);
+    }
+
     @PostMapping
     @Operation(summary = "Register a new Trainer profile", description = "Generates and returns username and password")
     public ResponseEntity<Credentials> registerTrainer(@Valid @RequestBody TrainerCreateRequest request) {
-        Timer timer = Timer.builder(METRIC_TRAINER_TIMER)
-                .description(METRIC_TIMER_DESC)
-                .register(meterRegistry);
-
         log.info("REST: Registering new Trainer profile for {} {}", request.getFirstName(), request.getLastName());
-
         request.setIsActive(true);
+
         return timer.record(() -> {
             Trainer trainer = gymFacade.createTrainer(request);
             return ResponseEntity.status(HttpStatus.CREATED)

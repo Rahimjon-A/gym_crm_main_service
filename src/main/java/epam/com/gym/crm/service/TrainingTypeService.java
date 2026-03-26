@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface TrainingTypeService {
     List<TrainingType> findAll();
+    Long count();
 }

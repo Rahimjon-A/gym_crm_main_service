@@ -24,12 +24,16 @@ class TrainingTypeDaoImplTest {
     private static final String PARAM_NAME = "name";
     private static final String FIND_BY_NAME_QUERY = "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name";
     private static final String FIND_ALL_QUERY = "FROM TrainingType";
+    private static final String COUNT_QUERY = "SELECT count(t) FROM TrainingType t";
 
     @Mock
     private EntityManager entityManager;
 
     @Mock
     private TypedQuery<TrainingType> typedQuery;
+
+    @Mock
+    private TypedQuery<Long> countQuery;
 
     @InjectMocks
     private TrainingTypeDaoImpl trainingTypeDao;
@@ -118,5 +122,21 @@ class TrainingTypeDaoImplTest {
 
         verify(entityManager).createQuery(FIND_ALL_QUERY, TrainingType.class);
         verify(typedQuery).getResultList();
+    }
+
+    @Test
+    void count_shouldReturnTotalRecords() {
+        Long expectedCount = 5L;
+
+        when(entityManager.createQuery(COUNT_QUERY, Long.class)).thenReturn(countQuery);
+        when(countQuery.getSingleResult()).thenReturn(expectedCount);
+
+        Long result = trainingTypeDao.count();
+
+        assertNotNull(result);
+        assertEquals(expectedCount, result);
+
+        verify(entityManager).createQuery(COUNT_QUERY, Long.class);
+        verify(countQuery).getSingleResult();
     }
 }
