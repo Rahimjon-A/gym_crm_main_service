@@ -34,6 +34,7 @@ class GymFacadeImplTest {
     private static final String AUTH_USER = "auth.user";
     private static final String AUTH_PASS = "authPass123";
     private static final String NEW_PASS = "newPass123";
+    private static final String TOKEN = "mock.jwt.token";
 
     @Mock
     private TrainerService trainerService;
@@ -83,6 +84,12 @@ class GymFacadeImplTest {
     void login_shouldDelegateToAuthService() {
         facade.login(credentials);
         verify(authService, times(1)).authenticate(credentials);
+    }
+
+    @Test
+    void logout_shouldDelegateToAuthService() {
+        facade.logout(TOKEN);
+        verify(authService, times(1)).logout(TOKEN);
     }
 
     @Test

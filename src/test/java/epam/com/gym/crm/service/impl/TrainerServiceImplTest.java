@@ -6,12 +6,14 @@ import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.TrainingType;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +31,10 @@ class TrainerServiceImplTest {
     private TrainingTypeDAO trainingTypeDAO;
     @Mock
     private UserServiceImpl credentialService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private TrainerServiceImpl trainerService;
@@ -60,6 +66,8 @@ class TrainerServiceImplTest {
         validTrainer.setLastName("Smith");
         validTrainer.setId(1L);
         validTrainer.setSpecialization(validTrainingType);
+
+        lenient().when(passwordEncoder.encode(anyString())).thenReturn("hashed_dummy_password");
     }
 
     @Test

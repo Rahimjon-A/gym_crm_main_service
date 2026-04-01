@@ -1,42 +1,58 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
-import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.TraineeService;
 import epam.com.gym.crm.service.UserService;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.List;
 
 @Service
 @Slf4j
 public class TraineeServiceImpl implements TraineeService {
+
     @Autowired
     private UserDAO<Trainee> traineeDao;
+    @Autowired
+    private EntityManager entityManager;
+
     private UserService userService;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Override
     @Transactional
     public Trainee create(Trainee trainee) {
-         validate(trainee);
+        validate(trainee);
         log.info("Creating profile for: {} {}", trainee.getFirstName(), trainee.getLastName());
 
         trainee.setUsername(userService.generateUsername(trainee.getFirstName(), trainee.getLastName()));
-        trainee.setPassword(userService.generatePassword());
+        String rawPassword = userService.generatePassword();
 
-        return traineeDao.create(trainee);
+        trainee.setPassword(passwordEncoder.encode(rawPassword));
+        Trainee saved = traineeDao.create(trainee);
+
+        entityManager.detach(saved);
+        saved.setPassword(rawPassword);
+
+        return  saved;
     }
 
     @Override

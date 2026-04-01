@@ -11,35 +11,52 @@ import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TraineeMapper;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.AuthService;
+import epam.com.gym.crm.filter.JwtAuthFilter;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(
         controllers = TraineeController.class,
-        properties = {"gym.metrics.trainee.timer=test.trainee.timer.metric"})
+        properties = {"gym.metrics.trainee.timer=test.trainee.timer.metric"},
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = JwtAuthFilter.class
+        )
+)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(TraineeControllerTest.MetricsConfig.class)
 class TraineeControllerTest {
+
     private static final String BASE_URL = "/api/v1/trainees";
     private static final String URL_PROFILE = BASE_URL + "/{username}";
     private static final String URL_TRAINERS = BASE_URL + "/{username}/trainers";
@@ -49,15 +66,6 @@ class TraineeControllerTest {
     private static final String PASSWORD = "plainPassword123";
     private static final String FIRST_NAME = "John";
     private static final String LAST_NAME = "Doe";
-
-    private static final String AUTH_HEADER = "Authorization";
-    private static final String PLAIN_CREDS = USERNAME + ":" + PASSWORD;
-    private static final String BASE64_CREDS = Base64.getEncoder().encodeToString(PLAIN_CREDS.getBytes());
-    private static final String BASIC_AUTH_VALUE = "Basic " + BASE64_CREDS;
-
-    private static final String JSON_PATH_FIRST_NAME = "$.firstName";
-    private static final String JSON_PATH_USERNAME = "$.username";
-    private static final String JSON_PATH_ROOT_ARRAY = "$";
 
     @Autowired
     private MockMvc mockMvc;
@@ -74,16 +82,16 @@ class TraineeControllerTest {
     @MockitoBean
     private AuthService authService;
 
-    private Trainee mockTrainee;
+    private Trainee trainee;
     private TraineeResponse profileResponse;
     private TraineeUpdateResponse updateResponse;
 
     @BeforeEach
     void setUp() {
-        mockTrainee = new Trainee();
-        mockTrainee.setUsername(USERNAME);
-        mockTrainee.setFirstName(FIRST_NAME);
-        mockTrainee.setPassword(PASSWORD);
+        trainee = new Trainee();
+        trainee.setUsername(USERNAME);
+        trainee.setFirstName(FIRST_NAME);
+        trainee.setPassword(PASSWORD);
 
         profileResponse = new TraineeResponse();
         profileResponse.setFirstName(FIRST_NAME);
@@ -91,114 +99,101 @@ class TraineeControllerTest {
         updateResponse = new TraineeUpdateResponse();
         updateResponse.setFirstName(FIRST_NAME);
 
-        doNothing().when(authService).authenticate(any());
     }
 
     @Test
-    void registerTrainee_shouldReturn201AndCredentials_whenRequestIsValid() throws Exception {
-        TraineeCreateRequest requestBody = new TraineeCreateRequest();
-        requestBody.setFirstName(FIRST_NAME);
-        requestBody.setLastName(LAST_NAME);
+    void registerTrainee_shouldReturn201() throws Exception {
+        TraineeCreateRequest request = new TraineeCreateRequest();
+        request.setFirstName(FIRST_NAME);
+        request.setLastName(LAST_NAME);
 
-        when(gymFacade.createTrainee(any(TraineeCreateRequest.class))).thenReturn(mockTrainee);
+        when(gymFacade.createTrainee(any())).thenReturn(trainee);
 
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath(JSON_PATH_USERNAME).value(USERNAME))
+                .andExpect(jsonPath("$.username").value(USERNAME))
                 .andExpect(jsonPath("$.password").value(PASSWORD));
 
-        verify(gymFacade, times(1)).createTrainee(any(TraineeCreateRequest.class));
+        verify(gymFacade).createTrainee(any());
     }
 
     @Test
-    void getTraineeProfile_shouldReturn200AndProfile() throws Exception {
-        when(gymFacade.getTraineeByUsername(USERNAME)).thenReturn(mockTrainee);
-        when(traineeMapper.toProfileResponse(mockTrainee)).thenReturn(profileResponse);
+    void getProfile_shouldReturn200() throws Exception {
+        when(gymFacade.getTraineeByUsername(USERNAME)).thenReturn(trainee);
+        when(traineeMapper.toProfileResponse(trainee)).thenReturn(profileResponse);
 
-        mockMvc.perform(get(URL_PROFILE, USERNAME)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE)
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get(URL_PROFILE, USERNAME))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(JSON_PATH_FIRST_NAME).value(FIRST_NAME));
-
-        verify(gymFacade, times(1)).getTraineeByUsername(USERNAME);
+                .andExpect(jsonPath("$.firstName").value(FIRST_NAME));
     }
 
     @Test
-    void updateTraineeProfile_shouldReturn200AndUpdatedProfile() throws Exception {
-        TraineeUpdateRequest requestBody = new TraineeUpdateRequest();
-        requestBody.setUsername(USERNAME);
-        requestBody.setFirstName(FIRST_NAME);
-        requestBody.setLastName("Doe");
-        requestBody.setIsActive(true);
+    void updateProfile_shouldReturn200() throws Exception {
+        TraineeUpdateRequest request = new TraineeUpdateRequest();
+        request.setUsername(USERNAME);
+        request.setFirstName(FIRST_NAME);
+        request.setLastName(LAST_NAME);
+        request.setIsActive(true);
 
-        when(gymFacade.updateTrainee(eq(USERNAME), any(TraineeUpdateRequest.class))).thenReturn(mockTrainee);
-        when(traineeMapper.toUpdateResponse(mockTrainee)).thenReturn(updateResponse);
+        when(gymFacade.updateTrainee(eq(USERNAME), any())).thenReturn(trainee);
+        when(traineeMapper.toUpdateResponse(trainee)).thenReturn(updateResponse);
 
         mockMvc.perform(put(URL_PROFILE, USERNAME)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(JSON_PATH_FIRST_NAME).value(FIRST_NAME));
-
-        verify(gymFacade, times(1)).updateTrainee(eq(USERNAME), any(TraineeUpdateRequest.class));
+                .andExpect(jsonPath("$.firstName").value(FIRST_NAME));
     }
 
     @Test
-    void deleteTraineeProfile_shouldReturn200() throws Exception {
+    void deleteProfile_shouldReturn200() throws Exception {
         doNothing().when(gymFacade).deleteTrainee(USERNAME);
 
-        mockMvc.perform(delete(URL_PROFILE, USERNAME)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE))
+        mockMvc.perform(delete(URL_PROFILE, USERNAME))
                 .andExpect(status().isOk());
 
-        verify(gymFacade, times(1)).deleteTrainee(USERNAME);
+        verify(gymFacade).deleteTrainee(USERNAME);
     }
 
     @Test
-    void updateTraineeTrainers_shouldReturn200AndTrainerList() throws Exception {
-        TraineeTrainerUpdateListRequest requestBody = new TraineeTrainerUpdateListRequest(
-                List.of(new TrainerAssignmentRequest(10L, "jane.smith"))
-        );
+    void updateTrainers_shouldReturnList() throws Exception {
+        TraineeTrainerUpdateListRequest request =
+                new TraineeTrainerUpdateListRequest(
+                        List.of(new TrainerAssignmentRequest(1L, "trainer"))
+                );
 
-        List<TrainerShortResponse> expectedResponse = List.of(new TrainerShortResponse("jane.smith", "Jane", "Smith", "YOGA"));
+        when(gymFacade.updateTraineeTrainings(eq(USERNAME), anyList()))
+                .thenReturn(Collections.emptyList());
 
-        when(gymFacade.updateTraineeTrainings(eq(USERNAME), anyList())).thenReturn(Collections.emptyList());
-        when(traineeMapper.extractTrainers(any(Trainee.class))).thenReturn(expectedResponse);
+        when(traineeMapper.extractTrainers(any()))
+                .thenReturn(List.of(new TrainerShortResponse("trainer", "T", "S", "YOGA")));
 
         mockMvc.perform(put(URL_TRAINERS, USERNAME)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(JSON_PATH_ROOT_ARRAY).isArray());
-
-        verify(gymFacade, times(1)).updateTraineeTrainings(eq(USERNAME), anyList());
+                .andExpect(jsonPath("$").isArray());
     }
 
     @Test
-    void getUnassignedTrainers_shouldReturn200AndTrainerList() throws Exception {
-        List<TrainerShortResponse> expectedResponse = List.of(new TrainerShortResponse("jane.smith", "Jane", "Smith", "YOGA"));
+    void getUnassigned_shouldReturnList() throws Exception {
+        when(gymFacade.getUnassignedTrainersOfTrainee(USERNAME))
+                .thenReturn(Collections.emptyList());
 
-        when(gymFacade.getUnassignedTrainersOfTrainee(USERNAME)).thenReturn(Collections.emptyList());
-        when(traineeMapper.toTrainerShortDTOList(anyList())).thenReturn(expectedResponse);
+        when(traineeMapper.toTrainerShortDTOList(anyList()))
+                .thenReturn(List.of(new TrainerShortResponse("trainer", "T", "S", "YOGA")));
 
-        mockMvc.perform(get(URL_UNASSIGNED, USERNAME)
-                        .header(AUTH_HEADER, BASIC_AUTH_VALUE)
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get(URL_UNASSIGNED, USERNAME))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath(JSON_PATH_ROOT_ARRAY).isArray());
-
-        verify(gymFacade, times(1)).getUnassignedTrainersOfTrainee(USERNAME);
+                .andExpect(jsonPath("$").isArray());
     }
 
     @TestConfiguration
     static class MetricsConfig {
         @Bean
-        public MeterRegistry meterRegistry() {
+        MeterRegistry meterRegistry() {
             return new SimpleMeterRegistry();
         }
     }

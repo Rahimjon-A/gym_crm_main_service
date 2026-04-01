@@ -9,6 +9,7 @@ import epam.com.gym.crm.service.UserService;
 import epam.com.gym.crm.utility.PasswordGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserDAO<User> userDAO;
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public String generatePassword() {
@@ -57,7 +64,8 @@ public class UserServiceImpl implements UserService {
         User user = userDAO.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        if (!user.getPassword().equals(oldPassword)) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            log.warn("Password change failed — incorrect old password for user: {}", username);
             throw new AuthenticationException("Password is incorrect");
         }
 
@@ -65,8 +73,9 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("New Password is too short, at least 10 characters");
         }
 
-        user.setPassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
         userDAO.update(user);
+        log.info("Password changed successfully for user: {}", username);
     }
 
     @Override

@@ -11,13 +11,15 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OpenApiConfig {
-    public static final String SCHEME_NAME = "basicAuth";
+
+    public static final String SCHEME_NAME = "bearerAuth";
     private static final String NAME = "Rakhimjon Abdurakhimov";
     private static final String EMAIL = "rakhimjon_abdurakhimov@epam.com";
     private static final String TITLE = "Gym CRM API";
     private static final String VERSION = "1.0";
     private static final String DESC = "REST API documentation for the EPAM Gym CRM project.";
-    private static final String SCHEME = "basic";
+    private static final String SCHEME = "bearer";
+    private static final String BEARER_FORMAT = "JWT";
 
     @Bean
     public OpenAPI customOpenAPI() {
@@ -34,6 +36,7 @@ public class OpenApiConfig {
                         .addSecuritySchemes(SCHEME_NAME, new SecurityScheme()
                                 .name(SCHEME_NAME)
                                 .type(SecurityScheme.Type.HTTP)
-                                .scheme(SCHEME)));
+                                .scheme(SCHEME)
+                                .bearerFormat(BEARER_FORMAT)));
     }
 }
