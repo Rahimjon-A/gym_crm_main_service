@@ -3,8 +3,10 @@ package epam.com.gym.crm.controller;
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -49,6 +51,9 @@ class UserControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
+    private MeterRegistry meterRegistry;
 
     private PasswordChangeRequest passwordChangeRequest;
 

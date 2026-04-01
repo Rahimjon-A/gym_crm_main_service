@@ -8,11 +8,15 @@ import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Training;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +30,14 @@ import java.util.List;
 @Tag(name = "Training API", description = "Endpoints for managing Gym Trainings")
 public class TrainingController {
 
+    private static final String METRIC_TIMER_DESC = "Time taken to save a new training session";
+
     private GymFacade gymFacade;
     private TrainingMapper trainingMapper;
+
+    private MeterRegistry meterRegistry;
+    private String metricTrainingTimer;
+    private Timer timer;
 
     @Autowired
     public void setGymFacade(GymFacade gymFacade) {
@@ -39,13 +49,30 @@ public class TrainingController {
         this.trainingMapper = trainingMapper;
     }
 
+    @Autowired
+    public void setMeterRegistry(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    @Value("${gym.metrics.training.timer}")
+    public void setMetricTrainingTimer(String metricTrainingTimer) {
+        this.metricTrainingTimer = metricTrainingTimer;
+    }
+
+    @PostConstruct
+    public void initMetrics() {
+        this.timer = Timer.builder(metricTrainingTimer)
+                .description(METRIC_TIMER_DESC)
+                .register(meterRegistry);
+    }
+
     @PostMapping
     @Operation(summary = "Add Training", description = "Records a new training session between a trainee and trainer")
     public ResponseEntity<Void> addTraining(@Valid @RequestBody TrainingCreateRequest request) {
-        log.info("REST: Adding training '{}' for Trainee: {} and Trainer: {}", 
+        log.info("REST: Adding training '{}' for Trainee: {} and Trainer: {}",
                 request.getTrainingName(), request.getTraineeUsername(), request.getTrainerUsername());
 
-        gymFacade.createTraining(request);
+        timer.record(() -> gymFacade.createTraining(request));
         return ResponseEntity.ok().build();
     }
 

@@ -3,6 +3,8 @@ package epam.com.gym.crm.filter;
 import epam.com.gym.crm.exception.AuthenticationException;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +23,9 @@ import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,13 +48,25 @@ class AuthenticationFilterTest {
     private static final String URL_SECURED = "/api/v1/trainings";
     private static final String URL_TRAINEE_REG = "/api/v1/trainees";
     private static final String URL_TRAINER_REG = "/api/v1/trainers";
+    private static final String URL_LOGIN = "/api/v1/auth";
     private static final String URL_SWAGGER = "/swagger-ui/index.html";
+    private static final String URL_ACTUATOR = "/actuator/health";
+    private static final String URL_FAVICON = "/favicon.ico";
+
+    private static final String TEST_METRIC_SUCCESS = "test.auth.success.metric";
+    private static final String TEST_METRIC_FAILURE = "test.auth.failure.metric";
 
     @Mock
     private AuthService authService;
 
     @Mock
     private HandlerExceptionResolver exceptionResolver;
+
+    @Mock
+    private MeterRegistry meterRegistry;
+
+    @Mock
+    private Counter mockCounter;
 
     @InjectMocks
     private AuthenticationFilter authenticationFilter;
@@ -64,6 +80,11 @@ class AuthenticationFilterTest {
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
         filterChain = new MockFilterChain();
+
+        lenient().when(meterRegistry.counter(anyString())).thenReturn(mockCounter);
+
+        authenticationFilter.setMetricAuthSuccess(TEST_METRIC_SUCCESS);
+        authenticationFilter.setMetricAuthFailure(TEST_METRIC_FAILURE);
     }
 
     @Test
@@ -77,9 +98,11 @@ class AuthenticationFilterTest {
 
         ArgumentCaptor<Credentials> credentialsCaptor = ArgumentCaptor.forClass(Credentials.class);
         verify(authService, times(1)).authenticate(credentialsCaptor.capture());
-        
+
         assertEquals(USERNAME, credentialsCaptor.getValue().getUsername());
         assertEquals(PASSWORD, credentialsCaptor.getValue().getPassword());
+
+        verify(mockCounter, times(1)).increment();
     }
 
     @Test
@@ -90,6 +113,7 @@ class AuthenticationFilterTest {
 
         verify(exceptionResolver, times(1)).resolveException(eq(request), eq(response), isNull(), any(AuthenticationException.class));
         verify(authService, never()).authenticate(any(Credentials.class));
+        verify(mockCounter, times(1)).increment();
     }
 
     @Test
@@ -101,6 +125,7 @@ class AuthenticationFilterTest {
 
         verify(exceptionResolver, times(1)).resolveException(eq(request), eq(response), isNull(), any(AuthenticationException.class));
         verify(authService, never()).authenticate(any(Credentials.class));
+        verify(mockCounter, times(1)).increment();
     }
 
     @Test
@@ -112,6 +137,7 @@ class AuthenticationFilterTest {
 
         verify(exceptionResolver, times(1)).resolveException(eq(request), eq(response), isNull(), any(AuthenticationException.class));
         verify(authService, never()).authenticate(any(Credentials.class));
+        verify(mockCounter, times(1)).increment();
     }
 
     @Test
@@ -123,24 +149,34 @@ class AuthenticationFilterTest {
 
         verify(exceptionResolver, times(1)).resolveException(eq(request), eq(response), isNull(), any(AuthenticationException.class));
         verify(authService, never()).authenticate(any(Credentials.class));
+        verify(mockCounter, times(1)).increment();
     }
 
     @Test
-    void shouldNotFilter_shouldReturnTrue_forRegistrationEndpoints() {
+    void shouldNotFilter_shouldReturnTrue_forRegistrationAndLoginEndpoints() {
         request.setMethod(METHOD_POST);
-        
+
         request.setRequestURI(URL_TRAINEE_REG);
         assertTrue(authenticationFilter.shouldNotFilter(request));
 
         request.setRequestURI(URL_TRAINER_REG);
         assertTrue(authenticationFilter.shouldNotFilter(request));
+
+        request.setRequestURI(URL_LOGIN);
+        assertTrue(authenticationFilter.shouldNotFilter(request));
     }
 
     @Test
-    void shouldNotFilter_shouldReturnTrue_forSwaggerEndpoints() {
+    void shouldNotFilter_shouldReturnTrue_forPublicEndpoints() {
         request.setMethod(METHOD_GET);
+
         request.setRequestURI(URL_SWAGGER);
-        
+        assertTrue(authenticationFilter.shouldNotFilter(request));
+
+        request.setRequestURI(URL_ACTUATOR);
+        assertTrue(authenticationFilter.shouldNotFilter(request));
+
+        request.setRequestURI(URL_FAVICON);
         assertTrue(authenticationFilter.shouldNotFilter(request));
     }
 
@@ -148,7 +184,7 @@ class AuthenticationFilterTest {
     void shouldNotFilter_shouldReturnFalse_forSecuredEndpoints() {
         request.setMethod(METHOD_GET);
         request.setRequestURI(URL_SECURED);
-        
+
         assertFalse(authenticationFilter.shouldNotFilter(request));
     }
 }

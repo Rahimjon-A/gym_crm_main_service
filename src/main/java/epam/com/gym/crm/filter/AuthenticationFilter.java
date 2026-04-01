@@ -3,6 +3,7 @@ package epam.com.gym.crm.filter;
 import epam.com.gym.crm.exception.AuthenticationException;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -24,6 +26,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     private static final String HEADER_AUTHORIZATION = "Authorization";
     private static final String PREFIX_BASIC = "Basic ";
     private static final String REGEX_SEPARATOR = ":";
+
+    private String metricAuthSuccess;
+    private String metricAuthFailure;
     
     private static final String ERROR_MISSING_HEADER = "Missing Authorization header";
     private static final String ERROR_INVALID_FORMAT = "Invalid Basic Auth format";
@@ -34,9 +39,12 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     private static final String URL_LOGIN = "/api/v1/auth";
     private static final String URL_SWAGGER_UI = "/swagger-ui";
     private static final String URL_API_DOCS = "/v3/api-docs";
+    private static final String URL_ACTUATOR = "/actuator";
+    private static final String URL_FAVICON = "/favicon.ico";
 
     private AuthService authService;
     private HandlerExceptionResolver exceptionResolver;
+    private MeterRegistry meterRegistry;
 
     @Autowired
     public void setAuthService(AuthService authService) {
@@ -46,6 +54,21 @@ public class AuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     public void setExceptionResolver(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
         this.exceptionResolver = exceptionResolver;
+    }
+
+    @Autowired
+    public void setMeterRegistry(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    @Value("${gym.metrics.auth.success}")
+    public void setMetricAuthSuccess(String metricAuthSuccess) {
+        this.metricAuthSuccess = metricAuthSuccess;
+    }
+
+    @Value("${gym.metrics.auth.failure}")
+    public void setMetricAuthFailure(String metricAuthFailure) {
+        this.metricAuthFailure = metricAuthFailure;
     }
 
     @Override
@@ -76,14 +99,20 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             log.debug("Filter: Authenticating user: {}", username);
             authService.authenticate(new Credentials(username, password));
 
+            meterRegistry.counter(metricAuthSuccess).increment();
+
             filterChain.doFilter(request, response);
 
         } catch (IllegalArgumentException e) {
             log.error("Filter Authentication failed: {}", ERROR_INVALID_FORMAT, e);
-            
+
+            meterRegistry.counter(metricAuthFailure).increment();
+
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_INVALID_FORMAT));
         } catch (AuthenticationException e) {
             log.error("Filter Authentication failed: {}", ERROR_MISSING_HEADER, e);
+
+            meterRegistry.counter(metricAuthFailure).increment();
 
             exceptionResolver.resolveException(request, response, null, new AuthenticationException(ERROR_MISSING_HEADER));
         }
@@ -100,6 +129,9 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        return path.startsWith(URL_SWAGGER_UI) || path.startsWith(URL_API_DOCS);
+        return path.startsWith(URL_SWAGGER_UI) ||
+                path.startsWith(URL_API_DOCS) ||
+                path.startsWith(URL_ACTUATOR) ||
+                path.startsWith(URL_FAVICON);
     }
 }

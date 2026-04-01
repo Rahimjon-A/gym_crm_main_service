@@ -9,4 +9,5 @@ public interface TrainingTypeDAO {
     Optional<TrainingType> findById(Long id);
     Optional<TrainingType> findByName(String name);
     List<TrainingType> findAll();
+    Long count();
 }

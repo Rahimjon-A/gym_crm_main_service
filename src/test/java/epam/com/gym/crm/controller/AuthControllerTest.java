@@ -3,6 +3,7 @@ package epam.com.gym.crm.controller;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.AuthService;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private MeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
