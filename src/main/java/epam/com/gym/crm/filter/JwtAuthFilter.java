@@ -46,56 +46,70 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        log.debug("JwtAuthFilter processing: {} {}", request.getMethod(), request.getRequestURI());
 
-        String path = request.getRequestURI();
-        String authHeader = request.getHeader(HEADER_AUTHORIZATION);
+        String jwt = extractToken(request);
 
-        log.debug("JwtAuthFilter processing: {} {}", request.getMethod(), path);
-
-        if (authHeader == null || !authHeader.startsWith(PREFIX_BEARER)) {
-            log.debug("No Bearer token found for path: {}", path);
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(PREFIX_BEARER.length());
-
         try {
-            if (tokenBlacklistService.isBlacklisted(jwt)) {
-                log.warn("Rejected blacklisted token for path: {}", path);
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                return;
-            }
-
-            String username = jwtService.extractUsername(jwt);
-            log.debug("JWT token found for username: {}", username);
-
-            if (username != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                    log.info("JWT authentication successful for user: {}", username);
-                } else {
-                    log.warn("JWT token invalid or expired for user: {}", username);
-                }
-            }
+            if (isTokenBlacklisted(jwt, request, response)) return;
+            authenticateIfRequired(jwt, request);
         } catch (Exception e) {
-            log.error("JWT processing failed for path: {} — {}", path, e.getMessage(), e);
+            log.error("JWT processing failed for path: {} — {}", request.getRequestURI(), e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String authHeader = request.getHeader(HEADER_AUTHORIZATION);
+
+        if (authHeader == null || !authHeader.startsWith(PREFIX_BEARER)) {
+            log.error("No Bearer token found for path: {}", request.getRequestURI());
+            return null;
+        }
+
+        return authHeader.substring(PREFIX_BEARER.length());
+    }
+
+    private boolean isTokenBlacklisted(String jwt, HttpServletRequest request, HttpServletResponse response) {
+        if (tokenBlacklistService.isBlacklisted(jwt)) {
+            log.warn("Rejected blacklisted token for path: {}", request.getRequestURI());
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return true;
+        }
+
+        return false;
+    }
+
+    private void authenticateIfRequired(String jwt, HttpServletRequest request) {
+        String username = jwtService.extractUsername(jwt);
+        log.debug("JWT token found for username: {}", username);
+
+        if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+            return;
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        if (jwtService.isTokenValid(jwt, userDetails)) {
+            setAuthentication(userDetails, request);
+            log.debug("JWT authentication successful for user: {}", username);
+        } else {
+            log.warn("JWT token invalid or expired for user: {}", username);
+        }
+    }
+
+    private void setAuthentication(UserDetails userDetails, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 }

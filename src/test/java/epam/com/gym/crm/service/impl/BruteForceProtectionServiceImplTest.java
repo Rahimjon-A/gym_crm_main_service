@@ -1,13 +1,14 @@
 package epam.com.gym.crm.service.impl;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,10 +23,19 @@ class BruteForceProtectionServiceImplTest {
     @BeforeEach
     void setUp() {
         bruteForceProtectionService = new BruteForceProtectionServiceImpl();
+        bruteForceProtectionService.init();
     }
 
     @Test
     void isBlocked_shouldReturnFalse_whenUserHasNoFailedAttempts() {
+        assertFalse(bruteForceProtectionService.isBlocked(USERNAME));
+    }
+
+    @Test
+    void loginFailed_shouldNotBlockUser_beforeMaxAttempts() {
+        bruteForceProtectionService.loginFailed(USERNAME);
+        bruteForceProtectionService.loginFailed(USERNAME);
+
         assertFalse(bruteForceProtectionService.isBlocked(USERNAME));
     }
 
@@ -39,15 +49,7 @@ class BruteForceProtectionServiceImplTest {
     }
 
     @Test
-    void loginFailed_shouldNotBlockUser_beforeMaxAttempts() {
-        bruteForceProtectionService.loginFailed(USERNAME);
-        bruteForceProtectionService.loginFailed(USERNAME);
-
-        assertFalse(bruteForceProtectionService.isBlocked(USERNAME));
-    }
-
-    @Test
-    void loginSucceeded_shouldClearBlock_afterPreviousFailures() {
+    void loginSucceeded_shouldClearBlock() {
         bruteForceProtectionService.loginFailed(USERNAME);
         bruteForceProtectionService.loginFailed(USERNAME);
         bruteForceProtectionService.loginFailed(USERNAME);
@@ -58,20 +60,27 @@ class BruteForceProtectionServiceImplTest {
     }
 
     @Test
-    void isBlocked_shouldReturnFalse_whenBlockExpired() throws Exception {
-        bruteForceProtectionService.loginFailed(USERNAME);
-        bruteForceProtectionService.loginFailed(USERNAME);
-        bruteForceProtectionService.loginFailed(USERNAME);
+    void isBlocked_shouldReturnFalse_afterTtlExpires() throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+        BruteForceProtectionServiceImpl shortTtlService =
+                new BruteForceProtectionServiceImpl();
 
-        Field blockCacheField = BruteForceProtectionServiceImpl.class
-                .getDeclaredField("blockCache");
-        blockCacheField.setAccessible(true);
+        Cache<String, Integer> shortCache = Caffeine.newBuilder()
+                .expireAfterWrite(100, TimeUnit.MILLISECONDS)
+                .build();
 
-        Map<String, LocalDateTime> blockCache =
-                (Map<String, LocalDateTime>) blockCacheField.get(bruteForceProtectionService);
+        Field cacheField = BruteForceProtectionServiceImpl.class
+                .getDeclaredField("attemptCache");
+        cacheField.setAccessible(true);
+        cacheField.set(shortTtlService, shortCache);
 
-        blockCache.put(USERNAME, LocalDateTime.now().minusMinutes(10));
+        shortTtlService.loginFailed(USERNAME);
+        shortTtlService.loginFailed(USERNAME);
+        shortTtlService.loginFailed(USERNAME);
 
-        assertFalse(bruteForceProtectionService.isBlocked(USERNAME));
+        assertTrue(shortTtlService.isBlocked(USERNAME));
+
+        Thread.sleep(200);
+
+        assertFalse(shortTtlService.isBlocked(USERNAME));
     }
 }

@@ -5,6 +5,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
 
@@ -43,6 +45,7 @@ public class JwtServiceImpl implements JwtService {
             final String username = extractUsername(token);
             return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (ExpiredJwtException | SignatureException | MalformedJwtException | IllegalArgumentException e) {
+            log.error("Token validation failed for user {}", userDetails.getUsername() , e);
             return false;
         }
     }

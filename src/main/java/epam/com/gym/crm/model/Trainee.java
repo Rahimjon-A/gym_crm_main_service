@@ -15,8 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 public class Trainee extends User {
 
-
-
     @Temporal(TemporalType.DATE)
     @Column(name = "date_of_birth")
     private Date dateOfBirth;

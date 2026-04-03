@@ -3,6 +3,7 @@ package epam.com.gym.crm.handler;
 import epam.com.gym.crm.dto.response.ApiErrorResponse;
 import epam.com.gym.crm.exception.AuthenticationException;
 import epam.com.gym.crm.exception.EntityNotFoundException;
+import epam.com.gym.crm.exception.TemporarilyBlockException;
 import epam.com.gym.crm.exception.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +26,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final String MSG_AUTH_FAILED = "Invalid username or password.";
     private static final String MSG_INTERNAL_ERROR = "An unexpected internal server error occurred. Please try again later.";
     private static final String MSG_VALIDATION_FAILED = "Validation failed. Please check your input.";
+    private static final String MSG_TEMPORARILY_BLOCK = "Account temporarily blocked. Please try again in 5 minutes.";
     private static final String KEY_MESSAGE = "message";
     private static final String KEY_ERRORS = "errors";
 
@@ -38,6 +40,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleAuthentication(AuthenticationException ex) {
         log.error("Authentication failed: ", ex);
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, MSG_AUTH_FAILED);
+    }
+
+    @ExceptionHandler(TemporarilyBlockException.class)
+    public ResponseEntity<ApiErrorResponse> handleTemporarilyBlock(TemporarilyBlockException ex) {
+        log.error("Authentication failed: ", ex);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, MSG_TEMPORARILY_BLOCK);
     }
 
     @ExceptionHandler(ValidationException.class)

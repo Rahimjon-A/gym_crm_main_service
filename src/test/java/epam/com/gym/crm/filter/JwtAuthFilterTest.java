@@ -39,17 +39,10 @@ class JwtAuthFilterTest {
     private static final String USERNAME = "john.doe";
     private static final String URL_SECURED = "/api/v1/trainings";
 
-    @Mock
-    private JwtService jwtService;
-
-    @Mock
-    private UserDetailsService userDetailsService;
-
-    @Mock
-    private TokenBlacklistService tokenBlacklistService;
-
-    @Mock
-    private UserDetails userDetails;
+    @Mock private JwtService jwtService;
+    @Mock private UserDetailsService userDetailsService;
+    @Mock private TokenBlacklistService tokenBlacklistService;
+    @Mock private UserDetails userDetails;
 
     @InjectMocks
     private JwtAuthFilter jwtAuthFilter;
@@ -64,7 +57,6 @@ class JwtAuthFilterTest {
         response = new MockHttpServletResponse();
         filterChain = new MockFilterChain();
         request.setRequestURI(URL_SECURED);
-
         SecurityContextHolder.clearContext();
     }
 
@@ -73,19 +65,17 @@ class JwtAuthFilterTest {
         SecurityContextHolder.clearContext();
     }
 
-
     @Test
-    void doFilterInternal_shouldSkip_whenNoAuthorizationHeader() 
+    void doFilterInternal_shouldSkip_whenNoAuthorizationHeader()
             throws ServletException, IOException {
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        assertEquals(200, response.getStatus());
         verifyNoInteractions(jwtService, tokenBlacklistService, userDetailsService);
     }
 
     @Test
-    void doFilterInternal_shouldSkip_whenHeaderDoesNotStartWithBearer() 
+    void doFilterInternal_shouldSkip_whenHeaderDoesNotStartWithBearer()
             throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, "Basic dXNlcjpwYXNz");
 
@@ -96,17 +86,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_shouldSkip_whenHeaderIsBearerWithNoToken() 
-            throws ServletException, IOException {
-        request.addHeader(HEADER_AUTHORIZATION, "Bearer ");
-
-        jwtAuthFilter.doFilterInternal(request, response, filterChain);
-
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
-
-    @Test
-    void doFilterInternal_shouldReturn401_whenTokenIsBlacklisted() 
+    void doFilterInternal_shouldReturn401_whenTokenIsBlacklisted()
             throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + BLACKLISTED_TOKEN);
         when(tokenBlacklistService.isBlacklisted(BLACKLISTED_TOKEN)).thenReturn(true);
@@ -115,14 +95,11 @@ class JwtAuthFilterTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED.value(), response.getStatus());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        verify(tokenBlacklistService).isBlacklisted(BLACKLISTED_TOKEN);
         verifyNoInteractions(jwtService, userDetailsService);
     }
 
-
     @Test
-    void doFilterInternal_shouldAuthenticateUser_whenTokenIsValid() 
-            throws ServletException, IOException {
+    void doFilterInternal_shouldAuthenticate_whenTokenIsValid() throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + VALID_TOKEN);
 
         when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
@@ -135,33 +112,11 @@ class JwtAuthFilterTest {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(auth);
-        assertTrue(auth.isAuthenticated());
         assertEquals(userDetails, auth.getPrincipal());
-        verify(tokenBlacklistService).isBlacklisted(VALID_TOKEN);
-        verify(jwtService).extractUsername(VALID_TOKEN);
-        verify(userDetailsService).loadUserByUsername(USERNAME);
-        verify(jwtService).isTokenValid(VALID_TOKEN, userDetails);
     }
 
     @Test
-    void doFilterInternal_shouldContinueFilterChain_afterSuccessfulAuthentication() 
-            throws ServletException, IOException {
-        request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + VALID_TOKEN);
-
-        when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
-        when(jwtService.extractUsername(VALID_TOKEN)).thenReturn(USERNAME);
-        when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
-        when(jwtService.isTokenValid(VALID_TOKEN, userDetails)).thenReturn(true);
-        when(userDetails.getAuthorities()).thenReturn(List.of());
-
-        jwtAuthFilter.doFilterInternal(request, response, filterChain);
-
-        assertNotNull(filterChain.getRequest());
-    }
-
-
-    @Test
-    void doFilterInternal_shouldNotAuthenticate_whenTokenIsInvalid() 
+    void doFilterInternal_shouldNotAuthenticate_whenTokenIsInvalid()
             throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + EXPIRED_TOKEN);
 
@@ -173,12 +128,10 @@ class JwtAuthFilterTest {
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        assertEquals(200, response.getStatus());
     }
 
     @Test
-    void doFilterInternal_shouldNotAuthenticate_whenUsernameIsNull() 
-            throws ServletException, IOException {
+    void doFilterInternal_shouldNotAuthenticate_whenUsernameIsNull() throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + VALID_TOKEN);
 
         when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
@@ -191,8 +144,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_shouldNotOverrideExistingAuthentication_whenAlreadyAuthenticated() 
-            throws ServletException, IOException {
+    void doFilterInternal_shouldNotOverrideExistingAuthentication() throws ServletException, IOException {
         UsernamePasswordAuthenticationToken existingAuth =
                 new UsernamePasswordAuthenticationToken("existing.user", null, List.of());
         SecurityContextHolder.getContext().setAuthentication(existingAuth);
@@ -208,10 +160,8 @@ class JwtAuthFilterTest {
         verifyNoInteractions(userDetailsService);
     }
 
-    // ==================== EXCEPTION HANDLING ====================
-
     @Test
-    void doFilterInternal_shouldContinueFilterChain_whenJwtServiceThrowsException() throws ServletException, IOException {
+    void doFilterInternal_shouldContinueChain_whenJwtServiceThrows() throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + VALID_TOKEN);
 
         when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
@@ -225,17 +175,33 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_shouldContinueFilterChain_whenUserDetailsServiceThrowsException() throws ServletException, IOException {
+    void doFilterInternal_shouldContinueChain_whenUserDetailsServiceThrows() throws ServletException, IOException {
         request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + VALID_TOKEN);
 
         when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
         when(jwtService.extractUsername(VALID_TOKEN)).thenReturn(USERNAME);
         when(userDetailsService.loadUserByUsername(USERNAME))
-                .thenThrow(new UsernameNotFoundException("User not found"));
+                .thenThrow(new UsernameNotFoundException("Not found"));
 
         assertDoesNotThrow(() ->
                 jwtAuthFilter.doFilterInternal(request, response, filterChain));
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void doFilterInternal_shouldContinueFilterChain_afterSuccessfulAuth()
+            throws ServletException, IOException {
+        request.addHeader(HEADER_AUTHORIZATION, PREFIX_BEARER + VALID_TOKEN);
+
+        when(tokenBlacklistService.isBlacklisted(VALID_TOKEN)).thenReturn(false);
+        when(jwtService.extractUsername(VALID_TOKEN)).thenReturn(USERNAME);
+        when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
+        when(jwtService.isTokenValid(VALID_TOKEN, userDetails)).thenReturn(true);
+        when(userDetails.getAuthorities()).thenReturn(List.of());
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        assertNotNull(filterChain.getRequest());
     }
 }

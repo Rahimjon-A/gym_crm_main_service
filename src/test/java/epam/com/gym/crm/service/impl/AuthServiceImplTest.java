@@ -2,6 +2,7 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.exception.AuthenticationException;
+import epam.com.gym.crm.exception.TemporarilyBlockException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.User;
 import epam.com.gym.crm.model.common.Credentials;
@@ -71,7 +72,7 @@ class AuthServiceImplTest {
         Credentials creds = new Credentials(USERNAME, PASSWORD);
         when(bruteForceProtectionService.isBlocked(USERNAME)).thenReturn(true);
 
-        assertThrows(AuthenticationException.class, () -> authService.authenticate(creds));
+        assertThrows(TemporarilyBlockException.class, () -> authService.authenticate(creds));
 
         verifyNoInteractions(userDAO);
         verifyNoInteractions(passwordEncoder);

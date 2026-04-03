@@ -33,6 +33,9 @@ public abstract class User extends BaseEntity implements UserDetails {
     @Column(name = "is_active")
     private boolean isActive;
 
+    @Transient
+    private boolean accountNonLocked = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
@@ -42,7 +45,7 @@ public abstract class User extends BaseEntity implements UserDetails {
     public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() { return accountNonLocked; }
 
     @Override
     public boolean isCredentialsNonExpired() { return true; }
