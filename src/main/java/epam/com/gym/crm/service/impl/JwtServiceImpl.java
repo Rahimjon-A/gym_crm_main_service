@@ -1,5 +1,6 @@
 package epam.com.gym.crm.service.impl;
 
+import epam.com.gym.crm.exception.AuthenticationException;
 import epam.com.gym.crm.service.JwtService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -55,12 +56,17 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claimsResolver.apply(claims);
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSignKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claimsResolver.apply(claims);
+        } catch (MalformedJwtException e) {
+            log.error("Invalid Jwt token: {}", token, e);
+            throw new AuthenticationException("Invalid JWT token provided!");
+        }
     }
 
     private Key getSignKey() {
