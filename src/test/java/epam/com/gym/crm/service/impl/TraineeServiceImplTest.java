@@ -5,12 +5,14 @@ import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.service.UserService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
 
@@ -25,6 +27,10 @@ class TraineeServiceImplTest {
     private UserDAO<Trainee> traineeDao;
     @Mock
     private UserService userService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
@@ -53,6 +59,8 @@ class TraineeServiceImplTest {
         validTrainee.setId(1L);
         validTrainee.setDateOfBirth(pastDate);
         validTrainee.setAddress("123 Main St");
+
+        lenient().when(passwordEncoder.encode(anyString())).thenReturn("hashed_dummy_password");
     }
 
     @Test

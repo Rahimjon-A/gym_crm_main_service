@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -25,6 +26,8 @@ class UserServiceImplTest {
 
     @Mock
     private UserDAO<User> userDAO;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -39,6 +42,8 @@ class UserServiceImplTest {
         testUser.setUsername("john.doe");
         testUser.setPassword("securePass123");
         testUser.setActive(true);
+
+        lenient().when(passwordEncoder.encode(anyString())).thenReturn("hashed_dummy_password");
     }
 
     @Test
@@ -106,10 +111,12 @@ class UserServiceImplTest {
     @Test
     void changePassword_shouldUpdatePassword_whenValid() {
         when(userDAO.findByUsername("john.doe")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("securePass123", "securePass123")).thenReturn(true);
+        when(passwordEncoder.encode("newPassword123")).thenReturn("hashed_new_password");
 
         userService.changePassword("john.doe", "securePass123", "newPassword123");
 
-        assertEquals("newPassword123", testUser.getPassword());
+        assertEquals("hashed_new_password", testUser.getPassword());
         verify(userDAO, times(1)).update(testUser);
     }
 

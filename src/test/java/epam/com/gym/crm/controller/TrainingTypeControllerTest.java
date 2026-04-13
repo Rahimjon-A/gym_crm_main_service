@@ -1,6 +1,7 @@
 package epam.com.gym.crm.controller;
 
 import epam.com.gym.crm.facade.GymFacade;
+import epam.com.gym.crm.filter.JwtAuthFilter;
 import epam.com.gym.crm.model.TrainingType;
 import epam.com.gym.crm.service.AuthService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -8,7 +9,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,7 +24,14 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(TrainingTypeController.class)
+@WebMvcTest(
+        controllers = TrainingTypeController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = JwtAuthFilter.class
+        )
+)
+@AutoConfigureMockMvc(addFilters = false)
 class TrainingTypeControllerTest {
     private static final String BASE_URL = "/api/v1/training-types";
     private static final Long TYPE_ID = 1L;
@@ -55,7 +66,6 @@ class TrainingTypeControllerTest {
         validTrainingType.setId(TYPE_ID);
         validTrainingType.setTrainingTypeName(TYPE_NAME);
 
-        doNothing().when(authService).authenticate(any());
     }
 
     @Test

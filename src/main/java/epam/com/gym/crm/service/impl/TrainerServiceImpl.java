@@ -2,15 +2,17 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingTypeDAO;
-import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.TrainingType;
+import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.TrainerService;
 import epam.com.gym.crm.service.UserService;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +26,20 @@ public class TrainerServiceImpl implements TrainerService {
     private TrainerDAO trainerDao;
     @Autowired
     private TrainingTypeDAO trainingTypeDAO;
+    @Autowired
+    private EntityManager entityManager;
+
+    private PasswordEncoder passwordEncoder;
     private UserService userService;
 
     @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -38,7 +49,8 @@ public class TrainerServiceImpl implements TrainerService {
         log.info("Creating trainer profile for: {} {}", trainer.getFirstName(), trainer.getLastName());
 
         trainer.setUsername(userService.generateUsername(trainer.getFirstName(), trainer.getLastName()));
-        trainer.setPassword(userService.generatePassword());
+        String rawPassword = userService.generatePassword();
+        trainer.setPassword(passwordEncoder.encode(rawPassword));
 
         Long specId = trainer.getSpecialization().getId();
         TrainingType tt = trainingTypeDAO.findById(specId)
@@ -47,6 +59,9 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer saved = trainerDao.create(trainer);
         log.info("Trainer created with username: {}", saved.getUsername());
+
+        entityManager.detach(saved);
+        saved.setPassword(rawPassword);
         return saved;
     }
 

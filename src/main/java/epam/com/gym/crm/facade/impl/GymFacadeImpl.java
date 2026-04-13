@@ -61,10 +61,16 @@ public class GymFacadeImpl implements GymFacade {
     /* ================= AUTH ================= */
 
     @Override
-    public void login(Credentials credentials) {
+    public String login(Credentials credentials) {
         log.info("Facade: Login into profile {}", credentials.getUsername());
 
-        authService.authenticate(credentials);
+       return authService.authenticate(credentials);
+    }
+
+    @Override
+    public void logout(String token) {
+        log.info("Facade: Logging out token");
+        authService.logout(token);
     }
 
     /* ================= USER ================= */

@@ -20,7 +20,9 @@ import java.util.List;
 public interface GymFacade {
 
     /* ================= AUTH ================= */
-    void login(Credentials credentials);
+    String login(Credentials credentials);
+
+    void logout(String token);
 
     void activateUser(String username);
 

@@ -2,13 +2,17 @@ package epam.com.gym.crm.controller;
 
 import epam.com.gym.crm.dto.request.PasswordChangeRequest;
 import epam.com.gym.crm.facade.GymFacade;
+import epam.com.gym.crm.filter.JwtAuthFilter;
 import epam.com.gym.crm.service.AuthService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,7 +27,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(
+        controllers = UserController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = JwtAuthFilter.class
+        )
+)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
     private static final String BASE_URL = "/api/v1/users";
     private static final String URL_PASSWORD = BASE_URL + "/{username}/password";
@@ -60,8 +71,7 @@ class UserControllerTest {
     @BeforeEach
     void setUp() {
         passwordChangeRequest = new PasswordChangeRequest(USERNAME, OLD_PASSWORD, NEW_PASSWORD);
-        
-        doNothing().when(authService).authenticate(any());
+
     }
 
     @Test
