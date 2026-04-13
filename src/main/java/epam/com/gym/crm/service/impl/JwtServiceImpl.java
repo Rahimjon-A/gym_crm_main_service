@@ -64,7 +64,7 @@ public class JwtServiceImpl implements JwtService {
                     .getBody();
             return claimsResolver.apply(claims);
         } catch (MalformedJwtException e) {
-            log.error("Invalid Jwt token: {}", token, e);
+            log.error("Invalid JWT token: {}", token, e);
             throw new AuthenticationException("Invalid JWT token provided!");
         }
     }
