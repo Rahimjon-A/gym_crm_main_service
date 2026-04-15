@@ -1,5 +1,7 @@
 package epam.com.gym.crm.mapper;
 
+import epam.com.gym.crm.dto.request.trainer.TrainerCreateRequest;
+import epam.com.gym.crm.dto.request.trainer.TrainerUpdateRequest;
 import epam.com.gym.crm.dto.response.trainer.TrainerResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerShortResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerUpdateResponse;
@@ -20,6 +22,7 @@ class TrainerMapperTest {
     private static final String LAST_NAME = "Smith";
     private static final String TRAINING_TYPE_NAME = "ZUMBA";
     private static final String TRAINEE_USER = "john.doe";
+    private static final Long SPECIALIZATION_ID = 5L;
 
     private TrainerMapper trainerMapper;
     private Trainer trainer;
@@ -87,5 +90,71 @@ class TrainerMapperTest {
         assertEquals(FIRST_NAME, result.get(0).getFirstName());
         assertEquals(LAST_NAME, result.get(0).getLastName());
         assertEquals(TRAINING_TYPE_NAME, result.get(0).getSpecialization());
+    }
+
+    @Test
+    void toEntity_fromCreateRequest_shouldMapFieldsAndTrimNames() {
+        TrainerCreateRequest request = new TrainerCreateRequest();
+        request.setFirstName("   " + FIRST_NAME + "  ");
+        request.setLastName(" " + LAST_NAME + " ");
+        request.setIsActive(true);
+        request.setSpecializationId(SPECIALIZATION_ID);
+
+        Trainer result = trainerMapper.toEntity(request);
+
+        assertNotNull(result);
+        assertEquals(FIRST_NAME, result.getFirstName());
+        assertEquals(LAST_NAME, result.getLastName());
+        assertTrue(result.isActive());
+
+        assertNotNull(result.getSpecialization());
+        assertEquals(SPECIALIZATION_ID, result.getSpecialization().getId());
+    }
+
+    @Test
+    void toEntity_fromCreateRequest_shouldHandleNullFields() {
+        TrainerCreateRequest request = new TrainerCreateRequest();
+        request.setIsActive(false);
+
+        Trainer result = trainerMapper.toEntity(request);
+
+        assertNotNull(result);
+        assertNull(result.getFirstName());
+        assertNull(result.getLastName());
+        assertFalse(result.isActive());
+        assertNull(result.getSpecialization());
+    }
+
+    @Test
+    void toEntity_fromUpdateRequest_shouldMapFieldsAndTrimNames() {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setFirstName(FIRST_NAME + "   ");
+        request.setLastName("   " + LAST_NAME);
+        request.setIsActive(false);
+        request.setSpecializationId(SPECIALIZATION_ID);
+
+        Trainer result = trainerMapper.toEntity(request);
+
+        assertNotNull(result);
+        assertEquals(FIRST_NAME, result.getFirstName());
+        assertEquals(LAST_NAME, result.getLastName());
+        assertFalse(result.isActive());
+
+        assertNotNull(result.getSpecialization());
+        assertEquals(SPECIALIZATION_ID, result.getSpecialization().getId());
+    }
+
+    @Test
+    void toEntity_fromUpdateRequest_shouldHandleNullFields() {
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        request.setIsActive(true);
+
+        Trainer result = trainerMapper.toEntity(request);
+
+        assertNotNull(result);
+        assertNull(result.getFirstName());
+        assertNull(result.getLastName());
+        assertTrue(result.isActive());
+        assertNull(result.getSpecialization());
     }
 }

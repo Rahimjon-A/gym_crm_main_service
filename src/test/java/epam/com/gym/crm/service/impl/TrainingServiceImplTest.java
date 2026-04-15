@@ -1,16 +1,20 @@
 package epam.com.gym.crm.service.impl;
 
+import epam.com.gym.crm.client.TrainerWorkloadClient;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
+import epam.com.gym.crm.dto.request.trainer.TrainerWorkloadRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.TrainingType;
+import epam.com.gym.crm.utility.JwtTokenExtractor;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,10 +32,17 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceImplTest {
+
     private static final String BLANK_STRING = "   ";
     private static final String UNKNOWN_USER = "unknown.user";
     private static final String WRONG_USER = "wrong.user";
-    private static final Long UNKNOWN_ID = 99L;
+    private static final Long   UNKNOWN_ID = 99L;
+    private static final String TRAINEE_USERNAME = "john.doe";
+    private static final String TRAINER_USERNAME = "jane.smith";
+    private static final String TRAINING_NAME = "Morning Cardio";
+    private static final Double TRAINING_DURATION= 60.0;
+    private static final Long   TRAINING_ID = 10L;
+    private static final String BEARER_TOKEN = "Bearer test.jwt.token";
 
     @Mock
     private TrainingDAO trainingDao;
@@ -39,24 +50,29 @@ class TrainingServiceImplTest {
     private UserDAO<Trainee> traineeDao;
     @Mock
     private TrainerDAO trainerDao;
+    @Mock
+    private TrainerWorkloadClient workloadClient;
+    @Mock
+    private JwtTokenExtractor jwtTokenExtractor;
+    @Mock
+    private HttpServletRequest httpServletRequest;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
-    private Training validInputTraining;
-    private Trainee validTrainee;
-    private Trainer validTrainer;
+    private Training    validInputTraining;
+    private Trainee     validTrainee;
+    private Trainer     validTrainer;
     private TrainingType validTrainingType;
-    private Training validTraining;
-    private Date now;
+    private Training    validTraining;
 
     @BeforeEach
     void setUp() {
-        now = new Date();
+        Date now = new Date();
 
         validTrainee = new Trainee();
         validTrainee.setId(1L);
-        validTrainee.setUsername("john.doe");
+        validTrainee.setUsername(TRAINEE_USERNAME);
 
         validTrainingType = new TrainingType();
         validTrainingType.setId(3L);
@@ -64,238 +80,245 @@ class TrainingServiceImplTest {
 
         validTrainer = new Trainer();
         validTrainer.setId(2L);
-        validTrainer.setUsername("jane.smith");
+        validTrainer.setUsername(TRAINER_USERNAME);
         validTrainer.setSpecialization(validTrainingType);
 
         Trainee dummyTrainee = new Trainee();
-        dummyTrainee.setUsername(validTrainee.getUsername());
+        dummyTrainee.setUsername(TRAINEE_USERNAME);
+
         Trainer dummyTrainer = new Trainer();
-        dummyTrainer.setUsername(validTrainer.getUsername());
+        dummyTrainer.setUsername(TRAINER_USERNAME);
 
         validInputTraining = new Training();
         validInputTraining.setTrainee(dummyTrainee);
         validInputTraining.setTrainer(dummyTrainer);
-        validInputTraining.setTrainingName("Morning Cardio");
+        validInputTraining.setTrainingName(TRAINING_NAME);
         validInputTraining.setTrainingDate(now);
-        validInputTraining.setTrainingDuration(60.0);
+        validInputTraining.setTrainingDuration(TRAINING_DURATION);
 
         validTraining = new Training();
-        validTraining.setId(10L);
+        validTraining.setId(TRAINING_ID);
         validTraining.setTrainee(validTrainee);
         validTraining.setTrainer(validTrainer);
         validTraining.setTrainingType(validTrainingType);
+        validTraining.setTrainingDate(now);
+        validTraining.setTrainingDuration(TRAINING_DURATION);
     }
 
     @Test
-    void create_shouldSaveTraining_whenInputIsValid() {
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
-        when(trainerDao.findByUsername(validTrainer.getUsername())).thenReturn(Optional.of(validTrainer));
+    void create_shouldSaveTrainingAndNotifyWorkload_whenInputIsValid() {
+        when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
+        when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
+        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
 
         Training result = trainingService.create(validInputTraining);
 
         assertNotNull(result);
-        assertEquals(validInputTraining.getTrainingName(), result.getTrainingName());
+        assertEquals(TRAINING_NAME, result.getTrainingName());
         assertEquals(validTrainee, result.getTrainee());
         assertEquals(validTrainer, result.getTrainer());
         assertEquals(validTrainingType, result.getTrainingType());
-        assertEquals(now, result.getTrainingDate());
-        assertEquals(validInputTraining.getTrainingDuration(), result.getTrainingDuration());
 
-        verify(trainingDao, times(1)).create(any(Training.class));
+        verify(trainingDao).create(any(Training.class));
+        verify(workloadClient).addTraining(eq(BEARER_TOKEN), any(TrainerWorkloadRequest.class));
     }
 
     @Test
-    void create_shouldThrowException_whenTraineeNotFound() {
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.empty());
+    void create_shouldStillSaveTraining_whenWorkloadClientFails() {
+        when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
+        when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
+        when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
+        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
+        doThrow(new RuntimeException("Workload service down"))
+                .when(workloadClient).addTraining(any(), any());
 
-        assertThrows(EntityNotFoundException.class, () -> trainingService.create(validInputTraining));
+        Training result = trainingService.create(validInputTraining);
+
+        assertNotNull(result);
+        verify(trainingDao).create(any(Training.class));
+    }
+
+    @Test
+    void create_shouldThrowEntityNotFoundException_whenTraineeNotFound() {
+        when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> trainingService.create(validInputTraining));
 
         verify(trainerDao, never()).findByUsername(any());
         verify(trainingDao, never()).create(any());
     }
 
     @Test
-    void create_shouldThrowException_whenTrainerNotFound() {
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
-        when(trainerDao.findByUsername(validTrainer.getUsername())).thenReturn(Optional.empty());
+    void create_shouldThrowEntityNotFoundException_whenTrainerNotFound() {
+        when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
+        when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> trainingService.create(validInputTraining));
+        assertThrows(EntityNotFoundException.class,
+                () -> trainingService.create(validInputTraining));
 
         verify(trainingDao, never()).create(any());
     }
 
     @Test
-    void create_shouldThrowException_whenInputIsNull() {
+    void create_shouldThrowValidationException_whenTrainingIsNull() {
         assertThrows(ValidationException.class, () -> trainingService.create(null));
+    }
+
+    @Test
+    void deleteByTrainingId_shouldDeleteAndNotifyWorkload_whenTrainingExists() {
+        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
+        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
+
+        trainingService.deleteByTrainingId(TRAINING_ID);
+
+        verify(trainingDao).delete(TRAINING_ID);
+        verify(workloadClient).deleteTraining(eq(BEARER_TOKEN), any(TrainerWorkloadRequest.class));
+    }
+
+    @Test
+    void deleteByTrainingId_shouldStillDelete_whenWorkloadClientFails() {
+        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
+        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
+        doThrow(new RuntimeException("Workload service down"))
+                .when(workloadClient).deleteTraining(any(), any());
+
+        assertDoesNotThrow(() -> trainingService.deleteByTrainingId(TRAINING_ID));
+        verify(trainingDao).delete(TRAINING_ID);
+    }
+
+    @Test
+    void deleteByTrainingId_shouldThrowEntityNotFoundException_whenTrainingNotFound() {
+        when(trainingDao.findById(UNKNOWN_ID)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> trainingService.deleteByTrainingId(UNKNOWN_ID));
+
+        verify(trainingDao, never()).delete(any());
+        verifyNoInteractions(workloadClient);
     }
 
     @Test
     void getTraineeTrainingsByCriteria_shouldReturnList_whenFilterIsValid() {
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
-        filter.setUsername(validTrainee.getUsername());
+        filter.setUsername(TRAINEE_USERNAME);
 
-        List<Training> expectedList = List.of(validTraining);
-        when(trainingDao.findTraineeTrainingsByCriteria(filter)).thenReturn(expectedList);
+        List<Training> expected = List.of(validTraining);
+        when(trainingDao.findTraineeTrainingsByCriteria(filter)).thenReturn(expected);
 
-        List<Training> result = trainingService.getTraineeTrainingsByCriteria(filter);
-
-        assertEquals(expectedList, result);
-        verify(trainingDao, times(1)).findTraineeTrainingsByCriteria(filter);
+        assertEquals(expected, trainingService.getTraineeTrainingsByCriteria(filter));
+        verify(trainingDao).findTraineeTrainingsByCriteria(filter);
     }
 
     @Test
-    void getTraineeTrainingsByCriteria_shouldThrowException_whenUsernameIsMissing() {
+    void getTraineeTrainingsByCriteria_shouldThrowValidationException_whenUsernameIsBlank() {
         TraineeTrainingFilter filter = new TraineeTrainingFilter();
         filter.setUsername(BLANK_STRING);
 
-        assertThrows(ValidationException.class, () -> trainingService.getTraineeTrainingsByCriteria(filter));
+        assertThrows(ValidationException.class,
+                () -> trainingService.getTraineeTrainingsByCriteria(filter));
         verifyNoInteractions(trainingDao);
     }
 
     @Test
     void getTrainerTrainingsByCriteria_shouldReturnList_whenFilterIsValid() {
         TrainerTrainingFilter filter = new TrainerTrainingFilter();
-        filter.setUsername(validTrainer.getUsername());
+        filter.setUsername(TRAINER_USERNAME);
 
-        List<Training> expectedList = List.of(validTraining);
-        when(trainingDao.findTrainerTrainingsByCriteria(filter)).thenReturn(expectedList);
+        List<Training> expected = List.of(validTraining);
+        when(trainingDao.findTrainerTrainingsByCriteria(filter)).thenReturn(expected);
 
-        List<Training> result = trainingService.getTrainerTrainingsByCriteria(filter);
-
-        assertEquals(expectedList, result);
-        verify(trainingDao, times(1)).findTrainerTrainingsByCriteria(filter);
+        assertEquals(expected, trainingService.getTrainerTrainingsByCriteria(filter));
+        verify(trainingDao).findTrainerTrainingsByCriteria(filter);
     }
 
     @Test
-    void getTrainerTrainingsByCriteria_shouldThrowException_whenUsernameIsMissing() {
-        assertThrows(ValidationException.class, () -> trainingService.getTrainerTrainingsByCriteria(null));
+    void getTrainerTrainingsByCriteria_shouldThrowValidationException_whenFilterIsNull() {
+        assertThrows(ValidationException.class,
+                () -> trainingService.getTrainerTrainingsByCriteria(null));
         verifyNoInteractions(trainingDao);
     }
 
     @Test
     void updateTraineeTrainings_shouldUpdateSuccessfully_whenInputsAreValid() {
-        Training assignmentDummy = new Training();
-        assignmentDummy.setId(validTraining.getId());
         Trainer dummyTrainer = new Trainer();
-        dummyTrainer.setUsername(validTrainer.getUsername());
-        assignmentDummy.setTrainer(dummyTrainer);
+        dummyTrainer.setUsername(TRAINER_USERNAME);
 
-        List<Training> assignments = List.of(assignmentDummy);
+        Training assignment = new Training();
+        assignment.setId(TRAINING_ID);
+        assignment.setTrainer(dummyTrainer);
 
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
-        when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));
-        when(trainerDao.findByUsername(validTrainer.getUsername())).thenReturn(Optional.of(validTrainer));
+        when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
+        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
+        when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
+        when(trainingDao.update(any())).thenAnswer(i -> i.getArgument(0));
 
-        when(trainingDao.update(any(Training.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        List<Training> result = trainingService.updateTraineeTrainings(validTrainee.getUsername(), assignments);
+        List<Training> result = trainingService.updateTraineeTrainings(
+                TRAINEE_USERNAME, List.of(assignment));
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(validTrainer, result.get(0).getTrainer());
-
-        verify(trainingDao, times(1)).update(validTraining);
+        verify(trainingDao).update(validTraining);
     }
 
     @Test
-    void updateTraineeTrainings_shouldThrowException_whenTraineeNotFound() {
-        Training assignmentDummy = new Training();
-        assignmentDummy.setId(validTraining.getId());
+    void updateTraineeTrainings_shouldThrowEntityNotFoundException_whenTraineeNotFound() {
         Trainer dummyTrainer = new Trainer();
-        dummyTrainer.setUsername(validTrainer.getUsername());
-        assignmentDummy.setTrainer(dummyTrainer);
+        dummyTrainer.setUsername(TRAINER_USERNAME);
 
-        List<Training> assignments = List.of(assignmentDummy);
+        Training assignment = new Training();
+        assignment.setId(TRAINING_ID);
+        assignment.setTrainer(dummyTrainer);
 
         when(traineeDao.findByUsername(UNKNOWN_USER)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
-                () -> trainingService.updateTraineeTrainings(UNKNOWN_USER, assignments));
-
-        verify(trainingDao, never()).update(any());
-    }
-
-    @Test
-    void updateTraineeTrainings_shouldThrowException_whenTrainingNotFound() {
-        Training assignmentDummy = new Training();
-        assignmentDummy.setId(UNKNOWN_ID);
-        Trainer dummyTrainer = new Trainer();
-        dummyTrainer.setUsername(validTrainer.getUsername());
-        assignmentDummy.setTrainer(dummyTrainer);
-
-        List<Training> assignments = List.of(assignmentDummy);
-
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
-        when(trainingDao.findById(UNKNOWN_ID)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class,
-                () -> trainingService.updateTraineeTrainings(validTrainee.getUsername(), assignments));
-
-        verify(trainingDao, never()).update(any());
-    }
-
-    @Test
-    void updateTraineeTrainings_shouldThrowException_whenTrainerNotFound() {
-        Training assignmentDummy = new Training();
-        assignmentDummy.setId(validTraining.getId());
-        Trainer dummyTrainer = new Trainer();
-        dummyTrainer.setUsername(UNKNOWN_USER);
-        assignmentDummy.setTrainer(dummyTrainer);
-
-        List<Training> assignments = List.of(assignmentDummy);
-
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
-        when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));
-        when(trainerDao.findByUsername(UNKNOWN_USER)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class,
-                () -> trainingService.updateTraineeTrainings(validTrainee.getUsername(), assignments));
-
+                () -> trainingService.updateTraineeTrainings(UNKNOWN_USER, List.of(assignment)));
         verify(trainingDao, never()).update(any());
     }
 
     @Test
     void updateTraineeTrainings_shouldThrowValidationException_whenTrainingBelongsToDifferentTrainee() {
-        Trainee ownerTrainee = new Trainee();
-        ownerTrainee.setUsername(WRONG_USER);
-        validTraining.setTrainee(ownerTrainee);
+        Trainee otherTrainee = new Trainee();
+        otherTrainee.setUsername(WRONG_USER);
+        validTraining.setTrainee(otherTrainee);
 
-        Training assignmentDummy = new Training();
-        assignmentDummy.setId(validTraining.getId());
         Trainer dummyTrainer = new Trainer();
-        dummyTrainer.setUsername(validTrainer.getUsername());
-        assignmentDummy.setTrainer(dummyTrainer);
+        dummyTrainer.setUsername(TRAINER_USERNAME);
 
-        List<Training> assignments = List.of(assignmentDummy);
+        Training assignment = new Training();
+        assignment.setId(TRAINING_ID);
+        assignment.setTrainer(dummyTrainer);
 
-        when(traineeDao.findByUsername(validTrainee.getUsername())).thenReturn(Optional.of(validTrainee));
-        when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));
+        when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
+        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
 
         assertThrows(ValidationException.class,
-                () -> trainingService.updateTraineeTrainings(validTrainee.getUsername(), assignments));
-
+                () -> trainingService.updateTraineeTrainings(TRAINEE_USERNAME, List.of(assignment)));
         verify(trainingDao, never()).update(any());
     }
 
     @Test
-    void findById_shouldReturnTraining() {
-        when(trainingDao.findById(validTraining.getId())).thenReturn(Optional.of(validTraining));
-        assertEquals(validTraining, trainingService.findById(validTraining.getId()));
+    void findById_shouldReturnTraining_whenExists() {
+        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
+        assertEquals(validTraining, trainingService.findById(TRAINING_ID));
     }
 
     @Test
-    void findById_shouldThrowException_whenNotFound() {
+    void findById_shouldThrowEntityNotFoundException_whenNotFound() {
         when(trainingDao.findById(UNKNOWN_ID)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> trainingService.findById(UNKNOWN_ID));
+        assertThrows(EntityNotFoundException.class,
+                () -> trainingService.findById(UNKNOWN_ID));
     }
 
     @Test
     void findAll_shouldDelegateToDao() {
-        List<Training> expectedList = List.of(validTraining);
-        when(trainingDao.findAll()).thenReturn(expectedList);
+        List<Training> expected = List.of(validTraining);
+        when(trainingDao.findAll()).thenReturn(expected);
 
-        assertEquals(expectedList, trainingService.findAll());
-        verify(trainingDao, times(1)).findAll();
+        assertEquals(expected, trainingService.findAll());
+        verify(trainingDao).findAll();
     }
 }

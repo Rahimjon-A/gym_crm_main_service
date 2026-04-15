@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 URL_TRAINEE_REGISTRATION,
                                 URL_TRAINER_REGISTRATION,
                                 URL_LOGIN).permitAll()
+                        .requestMatchers("/api/v1/sync/**").permitAll()
                         .requestMatchers(
                                 URL_SWAGGER_UI,
                                 URL_API_DOCS,

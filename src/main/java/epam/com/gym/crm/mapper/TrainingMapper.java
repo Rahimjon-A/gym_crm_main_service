@@ -4,12 +4,14 @@ import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
+import epam.com.gym.crm.dto.response.training.TrainingResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class TrainingMapper {
@@ -74,5 +76,18 @@ public class TrainingMapper {
 
             return training;
         }).toList();
+    }
+
+    public List<TrainingResponse> toTrainingResponse(List<Training> trainings) {
+        return trainings.stream()
+                .map(training -> TrainingResponse.builder()
+                        .trainerUsername(training.getTrainer().getUsername())
+                        .trainerFirstName(training.getTrainer().getFirstName())
+                        .trainerLastName(training.getTrainer().getLastName())
+                        .trainerIsActive(training.getTrainer().isActive())
+                        .trainingDate(training.getTrainingDate())
+                        .trainingDuration(training.getTrainingDuration())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

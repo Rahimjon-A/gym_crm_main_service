@@ -1,7 +1,10 @@
 package epam.com.gym.crm.mapper;
 
+import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
+import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
+import epam.com.gym.crm.dto.response.training.TrainingResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -12,8 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TrainingMapperTest {
 
@@ -22,6 +24,10 @@ class TrainingMapperTest {
     private static final Double DURATION = 90.0;
     private static final String TRAINEE_FIRST_NAME = "Alice";
     private static final String TRAINER_FIRST_NAME = "Bob";
+    private static final String TRAINEE_USERNAME = "alice.smith";
+    private static final String TRAINER_USERNAME = "bob.jones";
+    private static final String TRAINER_LAST_NAME = "Jones";
+    private static final Long TRAINING_ID = 1L;
 
     private TrainingMapper trainingMapper;
     private Training training;
@@ -80,5 +86,83 @@ class TrainingMapperTest {
         assertEquals(DURATION, dto.getTrainingDuration());
         
         assertEquals(TRAINER_FIRST_NAME, dto.getTrainerName());
+    }
+
+    @Test
+    void toEntity_shouldMapAllFieldsAndTrimName() {
+        TrainingCreateRequest request = new TrainingCreateRequest();
+        request.setTrainingName("   " + TRAINING_NAME + "   ");
+        request.setTrainingDate(now);
+        request.setTrainingDuration(DURATION);
+        request.setTraineeUsername(TRAINEE_USERNAME);
+        request.setTrainerUsername(TRAINER_USERNAME);
+
+        Training result = trainingMapper.toEntity(request);
+
+        assertEquals(TRAINING_NAME, result.getTrainingName());
+        assertEquals(now, result.getTrainingDate());
+        assertEquals(DURATION, result.getTrainingDuration());
+
+        assertNotNull(result.getTrainee());
+        assertEquals(TRAINEE_USERNAME, result.getTrainee().getUsername());
+
+        assertNotNull(result.getTrainer());
+        assertEquals(TRAINER_USERNAME, result.getTrainer().getUsername());
+    }
+
+    @Test
+    void toEntity_shouldHandleNullUsernamesAndName() {
+        epam.com.gym.crm.dto.request.training.TrainingCreateRequest request = new epam.com.gym.crm.dto.request.training.TrainingCreateRequest();
+        request.setTrainingDate(now);
+        request.setTrainingDuration(DURATION);
+
+        Training result = trainingMapper.toEntity(request);
+
+        assertNull(result.getTrainingName());
+        assertNull(result.getTrainee());
+        assertNull(result.getTrainer());
+    }
+
+    @Test
+    void toTrainingEntityList_shouldMapRequestsToEntities() {
+        TrainerAssignmentRequest req = new TrainerAssignmentRequest();
+        req.setTrainingId(TRAINING_ID);
+        req.setNewTrainerUsername(TRAINER_USERNAME);
+
+        List<Training> result = trainingMapper.toTrainingEntityList(List.of(req));
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(TRAINING_ID, result.get(0).getId());
+        assertNotNull(result.get(0).getTrainer());
+        assertEquals(TRAINER_USERNAME, result.get(0).getTrainer().getUsername());
+    }
+
+    @Test
+    void toTrainingEntityList_shouldReturnEmptyList_whenInputIsNull() {
+        List<Training> result = trainingMapper.toTrainingEntityList(null);
+
+        assertNotNull(result);
+        org.junit.jupiter.api.Assertions.assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void toTrainingResponse_shouldMapTrainerAndTrainingFields() {
+        training.getTrainer().setUsername(TRAINER_USERNAME);
+        training.getTrainer().setLastName(TRAINER_LAST_NAME);
+        training.getTrainer().setActive(true);
+
+        List<TrainingResponse> result = trainingMapper.toTrainingResponse(List.of(training));
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+
+        TrainingResponse response = result.get(0);
+        assertEquals(TRAINER_USERNAME, response.getTrainerUsername());
+        assertEquals(TRAINER_FIRST_NAME, response.getTrainerFirstName());
+        assertEquals(TRAINER_LAST_NAME, response.getTrainerLastName());
+        org.junit.jupiter.api.Assertions.assertTrue(response.isTrainerIsActive());
+        assertEquals(now, response.getTrainingDate());
+        assertEquals(DURATION, response.getTrainingDuration());
     }
 }
