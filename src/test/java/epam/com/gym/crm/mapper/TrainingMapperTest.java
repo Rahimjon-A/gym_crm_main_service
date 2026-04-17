@@ -4,7 +4,7 @@ import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
-import epam.com.gym.crm.dto.response.training.TrainingResponse;
+import epam.com.gym.crm.dto.response.training.TrainingWorkloadResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -152,12 +152,12 @@ class TrainingMapperTest {
         training.getTrainer().setLastName(TRAINER_LAST_NAME);
         training.getTrainer().setActive(true);
 
-        List<TrainingResponse> result = trainingMapper.toTrainingResponse(List.of(training));
+        List<TrainingWorkloadResponse> result = trainingMapper.toTrainingResponse(List.of(training));
 
         assertNotNull(result);
         assertEquals(1, result.size());
 
-        TrainingResponse response = result.get(0);
+        TrainingWorkloadResponse response = result.get(0);
         assertEquals(TRAINER_USERNAME, response.getTrainerUsername());
         assertEquals(TRAINER_FIRST_NAME, response.getTrainerFirstName());
         assertEquals(TRAINER_LAST_NAME, response.getTrainerLastName());

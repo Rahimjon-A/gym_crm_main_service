@@ -4,7 +4,7 @@ import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
-import epam.com.gym.crm.dto.response.training.TrainingResponse;
+import epam.com.gym.crm.dto.response.training.TrainingWorkloadResponse;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
@@ -78,9 +78,9 @@ public class TrainingMapper {
         }).toList();
     }
 
-    public List<TrainingResponse> toTrainingResponse(List<Training> trainings) {
+    public List<TrainingWorkloadResponse> toTrainingResponse(List<Training> trainings) {
         return trainings.stream()
-                .map(training -> TrainingResponse.builder()
+                .map(training -> TrainingWorkloadResponse.builder()
                         .trainerUsername(training.getTrainer().getUsername())
                         .trainerFirstName(training.getTrainer().getFirstName())
                         .trainerLastName(training.getTrainer().getLastName())

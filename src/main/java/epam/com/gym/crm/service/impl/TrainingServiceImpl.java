@@ -16,6 +16,7 @@ import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.common.Credentials;
 import epam.com.gym.crm.service.TrainingService;
 import epam.com.gym.crm.utility.JwtTokenExtractor;
+import epam.com.gym.crm.utility.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     private TrainerWorkloadClient workloadClient;
     private JwtTokenExtractor jwtTokenExtractor;
-    private HttpServletRequest httpServletRequest;
+    private JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     public void setWorkloadClient(TrainerWorkloadClient workloadClient) {
@@ -51,8 +52,8 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Autowired
-    public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
-        this.httpServletRequest = httpServletRequest;
+    public void setJwtTokenProvider(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
@@ -131,19 +132,6 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
-    @Transactional
-    public void deleteByTrainingId(Long trainingId) {
-        Training training = trainingDao.findById(trainingId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Training not found id: " + trainingId));
-
-        log.info("Deleting training id: {}", trainingId);
-        trainingDao.delete(trainingId);
-
-        notifyWorkloadDelete(training.getTrainer(), training);
-    }
-
-    @Override
     public Training findById(Long id) {
         return trainingDao.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Training not found id: " + id));
@@ -206,7 +194,7 @@ public class TrainingServiceImpl implements TrainingService {
         try {
             log.info("Notifying workload service: ADD for trainer: {}", trainer.getUsername());
             workloadClient.addTraining(
-                    jwtTokenExtractor.extractBearerToken(httpServletRequest),
+                    jwtTokenProvider.generateServiceToken(),
                     buildWorkloadRequest(trainer, training));
         } catch (Exception e) {
             log.error("Failed to notify workload service for ADD — trainer: {} — {}",
@@ -218,7 +206,7 @@ public class TrainingServiceImpl implements TrainingService {
         try {
             log.info("Notifying workload service: DELETE for trainer: {}", trainer.getUsername());
             workloadClient.deleteTraining(
-                    jwtTokenExtractor.extractBearerToken(httpServletRequest),
+                    jwtTokenProvider.generateServiceToken(),
                     buildWorkloadRequest(trainer, training));
         } catch (Exception e) {
             log.error("Failed to notify workload service for DELETE — trainer: {} — {}",

@@ -19,6 +19,8 @@ import java.util.function.Function;
 @Service
 public class JwtServiceImpl implements JwtService {
 
+    public static final String SERVICE_TOKEN_CLAIM = "isServiceToken";
+
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -47,6 +49,16 @@ public class JwtServiceImpl implements JwtService {
             return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (ExpiredJwtException | SignatureException | MalformedJwtException | IllegalArgumentException e) {
             log.error("Token validation failed for user {}", userDetails.getUsername() , e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isServiceToken(String token) {
+        try {
+            Boolean isService = extractClaim(token, claims -> claims.get(SERVICE_TOKEN_CLAIM, Boolean.class));
+            return isService != null && isService;
+        } catch (Exception e) {
             return false;
         }
     }

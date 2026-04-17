@@ -9,7 +9,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TrainingResponse {
+public class TrainingWorkloadResponse {
     private String trainerUsername;
     private String trainerFirstName;
     private String trainerLastName;

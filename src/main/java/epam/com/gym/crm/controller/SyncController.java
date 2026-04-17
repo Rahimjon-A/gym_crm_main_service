@@ -1,8 +1,7 @@
 package epam.com.gym.crm.controller;
 
-import epam.com.gym.crm.dto.response.training.TrainingResponse;
+import epam.com.gym.crm.dto.response.training.TrainingWorkloadResponse;
 import epam.com.gym.crm.facade.GymFacade;
-import epam.com.gym.crm.facade.impl.GymFacadeImpl;
 import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Training;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +32,11 @@ public class SyncController {
     }
 
     @GetMapping("/trainings")
-    public ResponseEntity<List<TrainingResponse>> getAllTrainings() {
+    public ResponseEntity<List<TrainingWorkloadResponse>> getAllTrainings() {
         log.info("Sync request received — returning all trainings");
 
         List<Training> trainings = gymFacade.getAllTrainings();
-        List<TrainingResponse> response = trainingMapper.toTrainingResponse(trainings);
+        List<TrainingWorkloadResponse> response = trainingMapper.toTrainingResponse(trainings);
 
         log.debug("Sync returning {} training records", response.size());
         return ResponseEntity.ok(response);

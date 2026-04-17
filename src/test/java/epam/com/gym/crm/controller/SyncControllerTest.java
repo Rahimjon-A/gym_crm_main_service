@@ -1,6 +1,6 @@
 package epam.com.gym.crm.controller;
 
-import epam.com.gym.crm.dto.response.training.TrainingResponse;
+import epam.com.gym.crm.dto.response.training.TrainingWorkloadResponse;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Trainee;
@@ -38,7 +38,7 @@ class SyncControllerTest {
     private SyncController syncController;
 
     private Training training;
-    private TrainingResponse trainingResponse;
+    private TrainingWorkloadResponse trainingWorkloadResponse;
 
     @BeforeEach
     void setUp() {
@@ -55,20 +55,20 @@ class SyncControllerTest {
         training.setTrainingDuration(TRAINING_DURATION);
         training.setTrainingDate(new Date());
 
-        trainingResponse = new TrainingResponse();
-        trainingResponse.setTrainerUsername(TRAINER_USERNAME);
-        trainingResponse.setTrainingDuration(TRAINING_DURATION);
+        trainingWorkloadResponse = new TrainingWorkloadResponse();
+        trainingWorkloadResponse.setTrainerUsername(TRAINER_USERNAME);
+        trainingWorkloadResponse.setTrainingDuration(TRAINING_DURATION);
     }
 
     @Test
     void getAllTrainings_shouldReturnMappedList_whenTrainingsExist() {
         List<Training> trainings = List.of(training);
-        List<TrainingResponse> responses = List.of(trainingResponse);
+        List<TrainingWorkloadResponse> responses = List.of(trainingWorkloadResponse);
 
         when(gymFacade.getAllTrainings()).thenReturn(trainings);
         when(trainingMapper.toTrainingResponse(trainings)).thenReturn(responses);
 
-        ResponseEntity<List<TrainingResponse>> result = syncController.getAllTrainings();
+        ResponseEntity<List<TrainingWorkloadResponse>> result = syncController.getAllTrainings();
 
         assertEquals(HttpStatus.OK, result.getStatusCode());
         assertEquals(1, result.getBody().size());
@@ -83,7 +83,7 @@ class SyncControllerTest {
         when(gymFacade.getAllTrainings()).thenReturn(List.of());
         when(trainingMapper.toTrainingResponse(List.of())).thenReturn(List.of());
 
-        ResponseEntity<List<TrainingResponse>> result = syncController.getAllTrainings();
+        ResponseEntity<List<TrainingWorkloadResponse>> result = syncController.getAllTrainings();
 
         assertEquals(HttpStatus.OK, result.getStatusCode());
         assertTrue(result.getBody().isEmpty());

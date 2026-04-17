@@ -12,5 +12,4 @@ public interface TrainingService extends BaseService<Training> {
     List<Training> getTraineeTrainingsByCriteria(TraineeTrainingFilter filter);
     List<Training> getTrainerTrainingsByCriteria(TrainerTrainingFilter filter);
     List<Training> updateTraineeTrainings(String traineeUsername, List<Training> assignments);
-    void deleteByTrainingId(Long trainingId);
 }

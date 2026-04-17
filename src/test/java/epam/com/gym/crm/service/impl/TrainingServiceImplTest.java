@@ -13,8 +13,7 @@ import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.TrainingType;
-import epam.com.gym.crm.utility.JwtTokenExtractor;
-import jakarta.servlet.http.HttpServletRequest;
+import epam.com.gym.crm.utility.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,12 +35,12 @@ class TrainingServiceImplTest {
     private static final String BLANK_STRING = "   ";
     private static final String UNKNOWN_USER = "unknown.user";
     private static final String WRONG_USER = "wrong.user";
-    private static final Long   UNKNOWN_ID = 99L;
+    private static final Long UNKNOWN_ID = 99L;
     private static final String TRAINEE_USERNAME = "john.doe";
     private static final String TRAINER_USERNAME = "jane.smith";
     private static final String TRAINING_NAME = "Morning Cardio";
     private static final Double TRAINING_DURATION= 60.0;
-    private static final Long   TRAINING_ID = 10L;
+    private static final Long TRAINING_ID = 10L;
     private static final String BEARER_TOKEN = "Bearer test.jwt.token";
 
     @Mock
@@ -52,19 +51,18 @@ class TrainingServiceImplTest {
     private TrainerDAO trainerDao;
     @Mock
     private TrainerWorkloadClient workloadClient;
+
     @Mock
-    private JwtTokenExtractor jwtTokenExtractor;
-    @Mock
-    private HttpServletRequest httpServletRequest;
+    private JwtTokenProvider jwtTokenProvider;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
-    private Training    validInputTraining;
-    private Trainee     validTrainee;
-    private Trainer     validTrainer;
+    private Training validInputTraining;
+    private Trainee validTrainee;
+    private Trainer validTrainer;
     private TrainingType validTrainingType;
-    private Training    validTraining;
+    private Training validTraining;
 
     @BeforeEach
     void setUp() {
@@ -110,7 +108,8 @@ class TrainingServiceImplTest {
         when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
         when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
-        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
+
+        when(jwtTokenProvider.generateServiceToken()).thenReturn(BEARER_TOKEN);
 
         Training result = trainingService.create(validInputTraining);
 
@@ -129,7 +128,9 @@ class TrainingServiceImplTest {
         when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
         when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
-        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
+
+        when(jwtTokenProvider.generateServiceToken()).thenReturn(BEARER_TOKEN);
+
         doThrow(new RuntimeException("Workload service down"))
                 .when(workloadClient).addTraining(any(), any());
 
@@ -164,39 +165,6 @@ class TrainingServiceImplTest {
     @Test
     void create_shouldThrowValidationException_whenTrainingIsNull() {
         assertThrows(ValidationException.class, () -> trainingService.create(null));
-    }
-
-    @Test
-    void deleteByTrainingId_shouldDeleteAndNotifyWorkload_whenTrainingExists() {
-        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
-        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
-
-        trainingService.deleteByTrainingId(TRAINING_ID);
-
-        verify(trainingDao).delete(TRAINING_ID);
-        verify(workloadClient).deleteTraining(eq(BEARER_TOKEN), any(TrainerWorkloadRequest.class));
-    }
-
-    @Test
-    void deleteByTrainingId_shouldStillDelete_whenWorkloadClientFails() {
-        when(trainingDao.findById(TRAINING_ID)).thenReturn(Optional.of(validTraining));
-        when(jwtTokenExtractor.extractBearerToken(httpServletRequest)).thenReturn(BEARER_TOKEN);
-        doThrow(new RuntimeException("Workload service down"))
-                .when(workloadClient).deleteTraining(any(), any());
-
-        assertDoesNotThrow(() -> trainingService.deleteByTrainingId(TRAINING_ID));
-        verify(trainingDao).delete(TRAINING_ID);
-    }
-
-    @Test
-    void deleteByTrainingId_shouldThrowEntityNotFoundException_whenTrainingNotFound() {
-        when(trainingDao.findById(UNKNOWN_ID)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class,
-                () -> trainingService.deleteByTrainingId(UNKNOWN_ID));
-
-        verify(trainingDao, never()).delete(any());
-        verifyNoInteractions(workloadClient);
     }
 
     @Test
@@ -254,8 +222,7 @@ class TrainingServiceImplTest {
         when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.update(any())).thenAnswer(i -> i.getArgument(0));
 
-        List<Training> result = trainingService.updateTraineeTrainings(
-                TRAINEE_USERNAME, List.of(assignment));
+        List<Training> result = trainingService.updateTraineeTrainings(TRAINEE_USERNAME, List.of(assignment));
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -309,8 +276,7 @@ class TrainingServiceImplTest {
     @Test
     void findById_shouldThrowEntityNotFoundException_whenNotFound() {
         when(trainingDao.findById(UNKNOWN_ID)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class,
-                () -> trainingService.findById(UNKNOWN_ID));
+        assertThrows(EntityNotFoundException.class, () -> trainingService.findById(UNKNOWN_ID));
     }
 
     @Test
