@@ -61,7 +61,7 @@ class TrainingControllerTest {
     private static final String TRAINER_NAME = "jane.smith";
     private static final String TRAINING_NAME = "Morning Cardio";
     private static final String TRAINING_TYPE = "CARDIO";
-    private static final Double DURATION = 60.0;
+    private static final int DURATION = 60;
 
     private static final String PARAM_PERIOD_FROM = "periodFrom";
     private static final String PARAM_PERIOD_TO = "periodTo";

@@ -15,5 +15,5 @@ public class TrainerWorkloadRequest {
     private String lastName;
     private Boolean isActive;
     private Date trainingDate;
-    private Double trainingDuration;
+    private int trainingDuration;
 }

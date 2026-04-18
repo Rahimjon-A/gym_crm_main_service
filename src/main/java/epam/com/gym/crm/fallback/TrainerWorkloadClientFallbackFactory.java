@@ -16,14 +16,14 @@ public class TrainerWorkloadClientFallbackFactory implements FallbackFactory<Tra
         return new TrainerWorkloadClient() {
 
             @Override
-            public ResponseEntity<Void> addTraining(String authHeader, TrainerWorkloadRequest request) {
+            public ResponseEntity<Void> addTraining(TrainerWorkloadRequest request) {
                 log.error("Fallback: addTraining failed for trainer: {} — {}",
                         request.getUsername(), cause.getMessage(), cause);
                 return ResponseEntity.ok().build();
             }
 
             @Override
-            public ResponseEntity<Void> deleteTraining(String authHeader, TrainerWorkloadRequest request) {
+            public ResponseEntity<Void> deleteTraining(TrainerWorkloadRequest request) {
                 log.error("Fallback: deleteTraining failed for trainer: {} — {}",
                         request.getUsername(), cause.getMessage(), cause);
                 return ResponseEntity.ok().build();

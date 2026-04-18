@@ -1,19 +1,17 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.client.TrainerWorkloadClient;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
-import epam.com.gym.crm.dto.request.trainer.TrainerWorkloadRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.TrainingType;
-import epam.com.gym.crm.utility.JwtTokenProvider;
+import epam.com.gym.crm.service.TrainerWorkloadClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +37,7 @@ class TrainingServiceImplTest {
     private static final String TRAINEE_USERNAME = "john.doe";
     private static final String TRAINER_USERNAME = "jane.smith";
     private static final String TRAINING_NAME = "Morning Cardio";
-    private static final Double TRAINING_DURATION= 60.0;
+    private static final int TRAINING_DURATION= 60;
     private static final Long TRAINING_ID = 10L;
     private static final String BEARER_TOKEN = "Bearer test.jwt.token";
 
@@ -50,10 +48,7 @@ class TrainingServiceImplTest {
     @Mock
     private TrainerDAO trainerDao;
     @Mock
-    private TrainerWorkloadClient workloadClient;
-
-    @Mock
-    private JwtTokenProvider jwtTokenProvider;
+    private TrainerWorkloadClientService trainerWorkloadClientService;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
@@ -109,8 +104,6 @@ class TrainingServiceImplTest {
         when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
 
-        when(jwtTokenProvider.generateServiceToken()).thenReturn(BEARER_TOKEN);
-
         Training result = trainingService.create(validInputTraining);
 
         assertNotNull(result);
@@ -120,19 +113,16 @@ class TrainingServiceImplTest {
         assertEquals(validTrainingType, result.getTrainingType());
 
         verify(trainingDao).create(any(Training.class));
-        verify(workloadClient).addTraining(eq(BEARER_TOKEN), any(TrainerWorkloadRequest.class));
+        verify(trainerWorkloadClientService).notifyAdd(eq(validTrainer), any(Training.class));
     }
 
     @Test
-    void create_shouldStillSaveTraining_whenWorkloadClientFails() {
+    void create_shouldStillSaveTraining_whenWorkloadServiceFails() {
         when(traineeDao.findByUsername(TRAINEE_USERNAME)).thenReturn(Optional.of(validTrainee));
         when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
 
-        when(jwtTokenProvider.generateServiceToken()).thenReturn(BEARER_TOKEN);
-
-        doThrow(new RuntimeException("Workload service down"))
-                .when(workloadClient).addTraining(any(), any());
+        doNothing().when(trainerWorkloadClientService).notifyAdd(any(), any());
 
         Training result = trainingService.create(validInputTraining);
 

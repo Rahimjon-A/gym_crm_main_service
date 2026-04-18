@@ -1,23 +1,18 @@
 package epam.com.gym.crm.service.impl;
 
-import epam.com.gym.crm.client.TrainerWorkloadClient;
 import epam.com.gym.crm.dao.TrainerDAO;
 import epam.com.gym.crm.dao.TrainingDAO;
 import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.dao.filter.TraineeTrainingFilter;
 import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.request.trainer.TrainerAssignmentRequest;
-import epam.com.gym.crm.dto.request.trainer.TrainerWorkloadRequest;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
-import epam.com.gym.crm.model.common.Credentials;
+import epam.com.gym.crm.service.TrainerWorkloadClientService;
 import epam.com.gym.crm.service.TrainingService;
-import epam.com.gym.crm.utility.JwtTokenExtractor;
-import epam.com.gym.crm.utility.JwtTokenProvider;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,23 +32,11 @@ public class TrainingServiceImpl implements TrainingService {
     @Autowired
     private TrainerDAO trainerDao;
 
-    private TrainerWorkloadClient workloadClient;
-    private JwtTokenExtractor jwtTokenExtractor;
-    private JwtTokenProvider jwtTokenProvider;
+    private TrainerWorkloadClientService trainerWorkloadClientService;
 
     @Autowired
-    public void setWorkloadClient(TrainerWorkloadClient workloadClient) {
-        this.workloadClient = workloadClient;
-    }
-
-    @Autowired
-    public void setJwtTokenExtractor(JwtTokenExtractor jwtTokenExtractor) {
-        this.jwtTokenExtractor = jwtTokenExtractor;
-    }
-
-    @Autowired
-    public void setJwtTokenProvider(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
+    public void setTrainerWorkloadClientService(TrainerWorkloadClientService trainerWorkloadClientService) {
+        this.trainerWorkloadClientService = trainerWorkloadClientService;
     }
 
     @Override
@@ -80,7 +63,7 @@ public class TrainingServiceImpl implements TrainingService {
         Training saved = trainingDao.create(training);
         log.info("Training saved with id: {}", saved.getId());
 
-        notifyWorkloadAdd(realTrainer, saved);
+        trainerWorkloadClientService.notifyAdd(realTrainer, saved);
 
         return saved;
     }
@@ -185,43 +168,8 @@ public class TrainingServiceImpl implements TrainingService {
         if (training.getTrainingDate() == null) {
             throw new ValidationException("Training date is mandatory");
         }
-        if (training.getTrainingDuration() == null || training.getTrainingDuration() <= 0) {
+        if (training.getTrainingDuration() <= 0) {
             throw new ValidationException("Training duration must be a positive number");
         }
-    }
-
-    private void notifyWorkloadAdd(Trainer trainer, Training training) {
-        try {
-            log.info("Notifying workload service: ADD for trainer: {}", trainer.getUsername());
-            workloadClient.addTraining(
-                    jwtTokenProvider.generateServiceToken(),
-                    buildWorkloadRequest(trainer, training));
-        } catch (Exception e) {
-            log.error("Failed to notify workload service for ADD — trainer: {} — {}",
-                    trainer.getUsername(), e.getMessage(), e);
-        }
-    }
-
-    private void notifyWorkloadDelete(Trainer trainer, Training training) {
-        try {
-            log.info("Notifying workload service: DELETE for trainer: {}", trainer.getUsername());
-            workloadClient.deleteTraining(
-                    jwtTokenProvider.generateServiceToken(),
-                    buildWorkloadRequest(trainer, training));
-        } catch (Exception e) {
-            log.error("Failed to notify workload service for DELETE — trainer: {} — {}",
-                    trainer.getUsername(), e.getMessage(), e);
-        }
-    }
-
-    private TrainerWorkloadRequest buildWorkloadRequest(Trainer trainer, Training training) {
-        return TrainerWorkloadRequest.builder()
-                .username(trainer.getUsername())
-                .firstName(trainer.getFirstName())
-                .lastName(trainer.getLastName())
-                .isActive(trainer.isActive())
-                .trainingDate(training.getTrainingDate())
-                .trainingDuration(training.getTrainingDuration())
-                .build();
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableFeignClients
+@EnableFeignClients(basePackages = "epam.com.gym.crm.client")
 public class GymCRMApplication {
     public static void main(String[] args) {
         SpringApplication.run(GymCRMApplication.class, args);

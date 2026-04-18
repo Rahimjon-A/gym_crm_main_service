@@ -8,11 +8,13 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
 
 @Slf4j
@@ -20,6 +22,8 @@ import java.util.function.Function;
 public class JwtServiceImpl implements JwtService {
 
     public static final String SERVICE_TOKEN_CLAIM = "isServiceToken";
+    private static final String SERVICE_USERNAME = "gym-crm-main";
+    private static final String PREFIX_BEARER    = "Bearer ";
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -35,6 +39,20 @@ public class JwtServiceImpl implements JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    @Override
+    public String generateServiceToken() {
+        log.debug("Generating service token for inter-service call");
+
+        UserDetails serviceUser = User
+                .builder()
+                .username(SERVICE_USERNAME)
+                .password("")
+                .authorities(List.of())
+                .build();
+
+        return PREFIX_BEARER + this.generateToken(serviceUser);
     }
 
     @Override

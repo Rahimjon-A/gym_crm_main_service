@@ -13,7 +13,7 @@ import java.util.Date;
 public class TraineeTrainingResponse extends BaseTrainingResponse {
     private String trainerName;
 
-    public TraineeTrainingResponse(Long id, String trainingName, Date trainingDate, String trainingType, Double trainingDuration, String trainerName) {
+    public TraineeTrainingResponse(Long id, String trainingName, Date trainingDate, String trainingType, int trainingDuration, String trainerName) {
         super(id, trainingName, trainingDate, trainingType, trainingDuration);
         this.trainerName = trainerName;
     }

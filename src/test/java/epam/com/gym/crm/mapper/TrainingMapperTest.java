@@ -21,7 +21,7 @@ class TrainingMapperTest {
 
     private static final String TRAINING_NAME = "Afternoon Yoga";
     private static final String TRAINING_TYPE = "YOGA";
-    private static final Double DURATION = 90.0;
+    private static final int DURATION = 90;
     private static final String TRAINEE_FIRST_NAME = "Alice";
     private static final String TRAINER_FIRST_NAME = "Bob";
     private static final String TRAINEE_USERNAME = "alice.smith";
