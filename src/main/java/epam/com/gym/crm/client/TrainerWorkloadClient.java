@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 )
 public interface TrainerWorkloadClient {
 
-    @PostMapping("/api/v1/workload")
+    @PostMapping("/api/v1/trainers/workloads")
     ResponseEntity<Void> addTraining(@RequestBody TrainerWorkloadRequest request);
 
-    @DeleteMapping("/api/v1/workload")
+    @DeleteMapping("/api/v1/trainers/workloads")
     ResponseEntity<Void> deleteTraining(@RequestBody TrainerWorkloadRequest request);
 
 }

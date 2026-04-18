@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthFeignInterceptor implements RequestInterceptor {
     public static final String AUTHORIZATION = "Authorization";
+    private static final String PREFIX_BEARER = "Bearer ";
 
     private JwtService jwtService;
 
@@ -21,8 +22,8 @@ public class AuthFeignInterceptor implements RequestInterceptor {
 
     @Override
     public void apply(RequestTemplate template) {
-        String bearer_token = jwtService.generateServiceToken();
-        template.header(AUTHORIZATION, bearer_token);
+        String jwtToken = jwtService.generateServiceToken();
+        template.header(AUTHORIZATION, PREFIX_BEARER + jwtToken);
 
         log.info("Added Authorization header for Feign request");
     }

@@ -23,7 +23,6 @@ public class JwtServiceImpl implements JwtService {
 
     public static final String SERVICE_TOKEN_CLAIM = "isServiceToken";
     private static final String SERVICE_USERNAME = "gym-crm-main";
-    private static final String PREFIX_BEARER    = "Bearer ";
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -52,7 +51,7 @@ public class JwtServiceImpl implements JwtService {
                 .authorities(List.of())
                 .build();
 
-        return PREFIX_BEARER + this.generateToken(serviceUser);
+        return this.generateToken(serviceUser);
     }
 
     @Override
