@@ -2,10 +2,12 @@ package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.client.TrainerWorkloadClient;
 import epam.com.gym.crm.dto.request.trainer.TrainerWorkloadRequest;
+import epam.com.gym.crm.filter.TransactionLoggingFilter;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.service.TrainerWorkloadClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +23,11 @@ public class TrainerWorkloadClientServiceImpl implements TrainerWorkloadClientSe
 
     @Override
     public void notifyAdd(Trainer trainer, Training training) {
+        String transactionId = MDC.get(TransactionLoggingFilter.TRANSACTION_ID_KEY);
+
         try {
             log.info("Notifying workload service: ADD for trainer: {}", trainer.getUsername());
-            trainerWorkloadClient.addTraining(buildWorkloadRequest(trainer, training));
+            trainerWorkloadClient.addTraining(transactionId, buildWorkloadRequest(trainer, training));
         } catch (Exception e) {
             log.error("Failed to notify workload service for ADD — trainer: {} — {}",
                     trainer.getUsername(), e.getMessage(), e);
@@ -32,9 +36,11 @@ public class TrainerWorkloadClientServiceImpl implements TrainerWorkloadClientSe
 
     @Override
     public void notifyDelete(Trainer trainer, Training training) {
+        String transactionId = MDC.get(TransactionLoggingFilter.TRANSACTION_ID_KEY);
+
         try {
             log.info("Notifying workload service: DELETE for trainer: {}", trainer.getUsername());
-            trainerWorkloadClient.deleteTraining(buildWorkloadRequest(trainer, training));
+            trainerWorkloadClient.deleteTraining(transactionId, buildWorkloadRequest(trainer, training));
         } catch (Exception e) {
             log.error("Failed to notify workload service for DELETE — trainer: {} — {}",
                     trainer.getUsername(), e.getMessage(), e);

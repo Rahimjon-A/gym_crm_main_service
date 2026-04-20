@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "gym-trainer-workload",
         fallbackFactory = TrainerWorkloadClientFallbackFactory.class
@@ -14,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface TrainerWorkloadClient {
 
     @PostMapping("/api/v1/trainers/workloads")
-    ResponseEntity<Void> addTraining(@RequestBody TrainerWorkloadRequest request);
+    ResponseEntity<Void> addTraining(
+            @RequestHeader("X-Transaction-Id") String transactionId,
+            @RequestBody TrainerWorkloadRequest request);
 
     @DeleteMapping("/api/v1/trainers/workloads")
-    ResponseEntity<Void> deleteTraining(@RequestBody TrainerWorkloadRequest request);
-
+    ResponseEntity<Void> deleteTraining(
+            @RequestHeader("X-Transaction-Id") String transactionId,
+            @RequestBody TrainerWorkloadRequest request);
 }
