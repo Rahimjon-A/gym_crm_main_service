@@ -1,4 +1,4 @@
-package epam.com.gym.crm.dto.request.trainer;
+package epam.com.gym.crm.model.common;
 
 import lombok.*;
 
@@ -9,11 +9,16 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TrainerWorkloadRequest {
+public class TrainerWorkloadMessage {
     private String username;
     private String firstName;
     private String lastName;
     private Boolean isActive;
     private Date trainingDate;
     private int trainingDuration;
+    private ActionType actionType;
+
+    public enum ActionType {
+        ADD, DELETE
+    }
 }
