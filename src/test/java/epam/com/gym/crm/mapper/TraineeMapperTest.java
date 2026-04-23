@@ -1,5 +1,7 @@
 package epam.com.gym.crm.mapper;
 
+import epam.com.gym.crm.dto.request.trainee.TraineeCreateRequest;
+import epam.com.gym.crm.dto.request.trainee.TraineeUpdateRequest;
 import epam.com.gym.crm.dto.response.trainee.TraineeResponse;
 import epam.com.gym.crm.dto.response.trainee.TraineeUpdateResponse;
 import epam.com.gym.crm.model.Trainee;
@@ -96,5 +98,64 @@ class TraineeMapperTest {
         assertNotNull(response);
         assertNotNull(response.getTrainers());
         assertTrue(response.getTrainers().isEmpty());
+    }
+
+    @Test
+    void toEntity_fromCreateRequest_shouldMapFieldsAndTrimData() {
+        TraineeCreateRequest request = new TraineeCreateRequest();
+        request.setFirstName("  John  ");
+        request.setLastName("  Doe  ");
+        request.setAddress("  123 Main St  ");
+        request.setIsActive(false);
+        request.setDateOfBirth(new java.util.Date());
+
+        Trainee result = new TraineeMapper().toEntity(request);
+
+        assertNotNull(result);
+        assertEquals("John", result.getFirstName());
+        assertEquals("Doe", result.getLastName());
+        assertEquals("123 Main St", result.getAddress());
+        assertFalse(result.isActive());
+    }
+
+    @Test
+    void toEntity_fromCreateRequest_shouldHandleNullsAndDefaultActive() {
+        TraineeCreateRequest request = new TraineeCreateRequest();
+        request.setIsActive(null);
+
+        Trainee result = new TraineeMapper().toEntity(request);
+
+        assertNull(result.getFirstName());
+        assertNull(result.getAddress());
+        assertTrue(result.isActive());
+    }
+
+    @Test
+    void toEntity_fromUpdateRequest_shouldMapFieldsAndTrimData() {
+        TraineeUpdateRequest request = new TraineeUpdateRequest();
+        request.setFirstName("  Jane  ");
+        request.setLastName("  Smith  ");
+        request.setAddress("  456 Elm St  ");
+        request.setIsActive(true);
+
+        Trainee result = new TraineeMapper().toEntity(request);
+
+        assertNotNull(result);
+        assertEquals("Jane", result.getFirstName());
+        assertEquals("Smith", result.getLastName());
+        assertEquals("456 Elm St", result.getAddress());
+        assertTrue(result.isActive());
+    }
+
+    @Test
+    void toEntity_fromUpdateRequest_shouldHandleNullFields() {
+        TraineeUpdateRequest request = new TraineeUpdateRequest();
+        request.setIsActive(false);
+
+        Trainee result = new TraineeMapper().toEntity(request);
+
+        assertNull(result.getFirstName());
+        assertNull(result.getAddress());
+        assertFalse(result.isActive());
     }
 }

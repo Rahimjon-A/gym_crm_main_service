@@ -11,20 +11,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private static final String HEADER_AUTHORIZATION = "Authorization";
     private static final String PREFIX_BEARER = "Bearer ";
+    private static final String[] AUTH_WHITELIST = {
+            "/api/v1/auth",
+            "/api/v1/trainees",
+            "/api/v1/trainers",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/actuator/**",
+            "/favicon.ico",
+            "/api/v1/sync/**"
+    };
 
     private JwtService jwtService;
     private UserDetailsService userDetailsService;
@@ -43,6 +58,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     public void setTokenBlacklistService(TokenBlacklistService tokenBlacklistService) {
         this.tokenBlacklistService = tokenBlacklistService;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return Arrays.stream(AUTH_WHITELIST)
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     @Override
@@ -92,6 +115,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         log.debug("JWT token found for username: {}", username);
 
         if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+            return;
+        }
+
+        if (jwtService.isServiceToken(jwt)) {
+            UserDetails serviceDetails = User.builder()
+                    .username(username)
+                    .password("")
+                    .authorities(List.of())
+                    .build();
+
+            setAuthentication(serviceDetails, request);
+            log.debug("System Service authenticated: {}", username);
             return;
         }
 

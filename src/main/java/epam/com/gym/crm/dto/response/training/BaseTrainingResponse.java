@@ -16,5 +16,5 @@ public abstract class BaseTrainingResponse {
     private String trainingName;
     private Date trainingDate;
     private String trainingType;
-    private Double trainingDuration;
+    private int trainingDuration;
 }

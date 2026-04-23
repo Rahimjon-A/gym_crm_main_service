@@ -1,6 +1,8 @@
 package epam.com.gym.crm.exception;
 
-public class AuthenticationException extends RuntimeException {
+import org.springframework.security.authentication.BadCredentialsException;
+
+public class AuthenticationException extends BadCredentialsException {
     public AuthenticationException(String message) {
         super(message);
     }

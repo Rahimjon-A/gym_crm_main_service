@@ -27,5 +27,5 @@ public class TrainingCreateRequest {
 
     @NotNull(message = "Training duration is mandatory")
     @Positive(message = "Duration must be positive")
-    private Double trainingDuration;
+    private int trainingDuration;
 }

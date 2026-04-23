@@ -31,10 +31,10 @@ INSERT INTO trainers (id, specialization_id)
 VALUES (3, 1);
 
 INSERT INTO trainings (trainee_id, trainer_id, training_name, training_type_id, training_date, training_duration)
-VALUES (1, 2, 'Morning Fitness Routine', 2, '2026-03-01', 60.0);
+VALUES (1, 2, 'Morning Fitness Routine', 2, '2026-03-01', 60);
 
 INSERT INTO trainings (trainee_id, trainer_id, training_name, training_type_id, training_date, training_duration)
-VALUES (4, 3, 'Intro to Yoga', 1, '2026-04-10', 45.0);
+VALUES (4, 3, 'Intro to Yoga', 1, '2026-04-10', 45);
 
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 SELECT setval('trainings_id_seq', (SELECT MAX(id) FROM trainings));

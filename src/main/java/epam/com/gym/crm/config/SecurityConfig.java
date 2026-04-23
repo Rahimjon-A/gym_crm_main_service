@@ -1,6 +1,7 @@
 package epam.com.gym.crm.config;
 
 import epam.com.gym.crm.filter.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -42,6 +43,7 @@ public class SecurityConfig {
     private static final String ALLOWED_ORIGIN_ALL = "*";
     private static final String HEADER_AUTHORIZATION = "Authorization";
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
+    private static final String MSG_UNAUTHORIZED = "Unauthorized: Invalid or missing JWT";
 
     private JwtAuthFilter jwtAuthFilter;
     private UserDetailsService userDetailsService;
@@ -77,6 +79,12 @@ public class SecurityConfig {
                                 URL_FAVICON,
                                 URL_ERROR).permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write(MSG_UNAUTHORIZED);
+                        })
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

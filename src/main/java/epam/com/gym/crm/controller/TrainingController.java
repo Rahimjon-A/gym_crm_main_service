@@ -5,6 +5,7 @@ import epam.com.gym.crm.dao.filter.TrainerTrainingFilter;
 import epam.com.gym.crm.dto.response.trainee.TraineeTrainingResponse;
 import epam.com.gym.crm.dto.response.trainer.TrainerTrainingResponse;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
+import epam.com.gym.crm.dto.response.training.TrainingWorkloadResponse;
 import epam.com.gym.crm.facade.GymFacade;
 import epam.com.gym.crm.mapper.TrainingMapper;
 import epam.com.gym.crm.model.Training;
@@ -108,6 +109,17 @@ public class TrainingController {
         List<Training> trainings = gymFacade.getTrainerTrainingsByCriteria(filter);
         List<TrainerTrainingResponse> response = trainingMapper.mapTrainerTrainings(trainings);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TrainingWorkloadResponse>> getAllTrainings() {
+        log.info("Sync request received — returning all trainings");
+
+        List<Training> trainings = gymFacade.getAllTrainings();
+        List<TrainingWorkloadResponse> response = trainingMapper.toTrainingResponse(trainings);
+
+        log.debug("Sync returning {} training records", response.size());
         return ResponseEntity.ok(response);
     }
 }

@@ -8,16 +8,21 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
 
 @Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
+
+    public static final String SERVICE_TOKEN_CLAIM = "isServiceToken";
+    private static final String SERVICE_USERNAME = "gym-crm-main";
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -36,6 +41,20 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    public String generateServiceToken() {
+        log.debug("Generating service token for inter-service call");
+
+        UserDetails serviceUser = User
+                .builder()
+                .username(SERVICE_USERNAME)
+                .password("")
+                .authorities(List.of())
+                .build();
+
+        return this.generateToken(serviceUser);
+    }
+
+    @Override
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -47,6 +66,16 @@ public class JwtServiceImpl implements JwtService {
             return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (ExpiredJwtException | SignatureException | MalformedJwtException | IllegalArgumentException e) {
             log.error("Token validation failed for user {}", userDetails.getUsername() , e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isServiceToken(String token) {
+        try {
+            Boolean isService = extractClaim(token, claims -> claims.get(SERVICE_TOKEN_CLAIM, Boolean.class));
+            return isService != null && isService;
+        } catch (Exception e) {
             return false;
         }
     }
@@ -64,7 +93,7 @@ public class JwtServiceImpl implements JwtService {
                     .getBody();
             return claimsResolver.apply(claims);
         } catch (MalformedJwtException e) {
-            log.error("Invalid Jwt token: {}", token, e);
+            log.error("Invalid JWT token: {}", token, e);
             throw new AuthenticationException("Invalid JWT token provided!");
         }
     }

@@ -11,7 +11,7 @@ import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
-import epam.com.gym.crm.model.common.Credentials;
+import epam.com.gym.crm.service.TrainerWorkloadClientService;
 import epam.com.gym.crm.service.TrainingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +31,13 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Autowired
     private TrainerDAO trainerDao;
+
+    private TrainerWorkloadClientService trainerWorkloadClientService;
+
+    @Autowired
+    public void setTrainerWorkloadClientService(TrainerWorkloadClientService trainerWorkloadClientService) {
+        this.trainerWorkloadClientService = trainerWorkloadClientService;
+    }
 
     @Override
     @Transactional
@@ -53,7 +60,12 @@ public class TrainingServiceImpl implements TrainingService {
         training.setTrainer(realTrainer);
         training.setTrainingType(realTrainer.getSpecialization());
 
-        return trainingDao.create(training);
+        Training saved = trainingDao.create(training);
+        log.info("Training saved with id: {}", saved.getId());
+
+        trainerWorkloadClientService.notifyAdd(realTrainer, saved);
+
+        return saved;
     }
 
     @Override
@@ -156,7 +168,7 @@ public class TrainingServiceImpl implements TrainingService {
         if (training.getTrainingDate() == null) {
             throw new ValidationException("Training date is mandatory");
         }
-        if (training.getTrainingDuration() == null || training.getTrainingDuration() <= 0) {
+        if (training.getTrainingDuration() <= 0) {
             throw new ValidationException("Training duration must be a positive number");
         }
     }

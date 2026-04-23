@@ -4,7 +4,9 @@ import epam.com.gym.crm.dao.UserDAO;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
+import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.service.TraineeService;
+import epam.com.gym.crm.service.TrainerWorkloadClientService;
 import epam.com.gym.crm.service.UserService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     private UserService userService;
     private PasswordEncoder passwordEncoder;
+    private TrainerWorkloadClientService workloadClientService;
 
     @Autowired
     public void setUserService(UserService userService) {
@@ -35,6 +38,11 @@ public class TraineeServiceImpl implements TraineeService {
     @Autowired
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setWorkloadClientService(TrainerWorkloadClientService workloadClientService) {
+        this.workloadClientService = workloadClientService;
     }
 
     @Override
@@ -93,6 +101,15 @@ public class TraineeServiceImpl implements TraineeService {
     public void deleteByUsername(String username) {
         log.info("Hard deleting trainee: {}", username);
         Trainee trainee = findByUsername(username);
+        List<Training> trainings = trainee.getTrainings();
+
+        if (trainings != null && !trainings.isEmpty()) {
+            log.info("Found {} trainings to deduct from workload for trainee {}", trainings.size(), username);
+            for (Training training : trainings) {
+                workloadClientService.notifyDelete(training.getTrainer(), training);
+            }
+        }
+
         traineeDao.delete(trainee.getId());
     }
 
