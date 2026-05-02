@@ -1,12 +1,14 @@
 package epam.com.gym.crm.service.impl;
 
 import epam.com.gym.crm.dao.UserDAO;
+import epam.com.gym.crm.model.Trainer;
+import epam.com.gym.crm.model.Training;
+import epam.com.gym.crm.model.common.TrainerWorkloadMessage;
 import epam.com.gym.crm.exception.EntityNotFoundException;
 import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
-import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.service.TraineeService;
-import epam.com.gym.crm.service.TrainerWorkloadClientService;
+import epam.com.gym.crm.service.TrainerWorkloadService;
 import epam.com.gym.crm.service.UserService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -28,7 +31,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     private UserService userService;
     private PasswordEncoder passwordEncoder;
-    private TrainerWorkloadClientService workloadClientService;
+    private TrainerWorkloadService workloadClientService;
 
     @Autowired
     public void setUserService(UserService userService) {
@@ -41,7 +44,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Autowired
-    public void setWorkloadClientService(TrainerWorkloadClientService workloadClientService) {
+    public void setWorkloadClientService(TrainerWorkloadService workloadClientService) {
         this.workloadClientService = workloadClientService;
     }
 
@@ -101,16 +104,19 @@ public class TraineeServiceImpl implements TraineeService {
     public void deleteByUsername(String username) {
         log.info("Hard deleting trainee: {}", username);
         Trainee trainee = findByUsername(username);
-        List<Training> trainings = trainee.getTrainings();
-
-        if (trainings != null && !trainings.isEmpty()) {
-            log.info("Found {} trainings to deduct from workload for trainee {}", trainings.size(), username);
-            for (Training training : trainings) {
-                workloadClientService.notifyDelete(training.getTrainer(), training);
-            }
-        }
+        List<Map.Entry<Trainer, Training>> trainerTrainings = trainee.getTrainings()
+                .stream()
+                .map(training -> Map.entry(training.getTrainer(), training))
+                .toList();
 
         traineeDao.delete(trainee.getId());
+        log.info("Trainee {} deleted successfully", username);
+
+        if (!trainerTrainings.isEmpty()) {
+            log.info("Sending {} DELETE messages for trainee: {}", trainerTrainings.size(), username);
+            trainerTrainings.forEach(pair ->
+                    workloadClientService.notifyDelete(pair.getKey(), pair.getValue()));
+        }
     }
 
     @Override

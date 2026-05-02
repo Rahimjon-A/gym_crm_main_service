@@ -11,7 +11,7 @@ import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
 import epam.com.gym.crm.model.TrainingType;
-import epam.com.gym.crm.service.TrainerWorkloadClientService;
+import epam.com.gym.crm.service.TrainerWorkloadService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ class TrainingServiceImplTest {
     @Mock
     private TrainerDAO trainerDao;
     @Mock
-    private TrainerWorkloadClientService trainerWorkloadClientService;
+    private TrainerWorkloadService trainerWorkloadService;
 
     @InjectMocks
     private TrainingServiceImpl trainingService;
@@ -113,7 +113,7 @@ class TrainingServiceImplTest {
         assertEquals(validTrainingType, result.getTrainingType());
 
         verify(trainingDao).create(any(Training.class));
-        verify(trainerWorkloadClientService).notifyAdd(eq(validTrainer), any(Training.class));
+        verify(trainerWorkloadService).notifyAdd(eq(validTrainer), any(Training.class));
     }
 
     @Test
@@ -122,7 +122,7 @@ class TrainingServiceImplTest {
         when(trainerDao.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(validTrainer));
         when(trainingDao.create(any(Training.class))).thenAnswer(i -> i.getArgument(0));
 
-        doNothing().when(trainerWorkloadClientService).notifyAdd(any(), any());
+        doNothing().when(trainerWorkloadService).notifyAdd(any(), any());
 
         Training result = trainingService.create(validInputTraining);
 

@@ -11,7 +11,7 @@ import epam.com.gym.crm.exception.ValidationException;
 import epam.com.gym.crm.model.Trainee;
 import epam.com.gym.crm.model.Trainer;
 import epam.com.gym.crm.model.Training;
-import epam.com.gym.crm.service.TrainerWorkloadClientService;
+import epam.com.gym.crm.service.TrainerWorkloadService;
 import epam.com.gym.crm.service.TrainingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +32,11 @@ public class TrainingServiceImpl implements TrainingService {
     @Autowired
     private TrainerDAO trainerDao;
 
-    private TrainerWorkloadClientService trainerWorkloadClientService;
+    private TrainerWorkloadService trainerWorkloadService;
 
     @Autowired
-    public void setTrainerWorkloadClientService(TrainerWorkloadClientService trainerWorkloadClientService) {
-        this.trainerWorkloadClientService = trainerWorkloadClientService;
+    public void setTrainerWorkloadClientService(TrainerWorkloadService trainerWorkloadService) {
+        this.trainerWorkloadService = trainerWorkloadService;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class TrainingServiceImpl implements TrainingService {
         Training saved = trainingDao.create(training);
         log.info("Training saved with id: {}", saved.getId());
 
-        trainerWorkloadClientService.notifyAdd(realTrainer, saved);
+        trainerWorkloadService.notifyAdd(realTrainer, saved);
 
         return saved;
     }
