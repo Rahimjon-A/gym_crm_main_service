@@ -53,15 +53,6 @@ public class AuthSteps {
         request.setLastName(lastName);
         request.setIsActive(true);
 
-//        try {
-//            ResponseEntity<Credentials> response = restTemplate.postForEntity(
-//                    baseUrl(TRAINEE_URL), request, Credentials.class);
-//            assertNotNull(response.getBody(), "Registration should return credentials");
-//            sharedContext.setCredentials(response.getBody());
-//            sharedContext.setLastResponse(response);
-//        } catch (HttpClientErrorException e) {
-//            sharedContext.setLastResponse(ResponseEntity.status(e.getStatusCode()).build());
-//        }
         ResponseEntity<Credentials> response = restHelper.post(TRAINEE_URL, request, Credentials.class);
         assertNotNull(response.getBody(), "Registration should return credentials");
         sharedContext.setCredentials(response.getBody());
