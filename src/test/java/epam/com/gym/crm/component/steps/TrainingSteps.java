@@ -1,7 +1,10 @@
 package epam.com.gym.crm.component.steps;
 
+import epam.com.gym.crm.component.context.SharedTestContext;
+import epam.com.gym.crm.component.helper.RestHelper;
 import epam.com.gym.crm.dto.request.training.TrainingCreateRequest;
 import epam.com.gym.crm.model.common.Credentials;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +27,20 @@ import java.util.List;
 public class TrainingSteps {
 
     private static final String TRAINING_URL = "/api/v1/trainings";
-    private static final String PORT_PROPERTY = "local.server.port";
     private static final String DATE_FORMAT = "yyyy-MM-dd";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private RestHelper restHelper;
 
     @Autowired
     private SharedTestContext sharedContext;
 
     @Autowired
     private Environment environment;
+
+    @Before
+    public void setUp() {
+        restHelper = new RestHelper(environment);
+    }
 
     @When("the client creates a training with name {string} and duration {int} and date {string}")
     public void createTraining(String name, int duration, String dateStr) {
@@ -47,14 +54,11 @@ public class TrainingSteps {
                 parseDate(dateStr),
                 duration);
 
-        try {
-            ResponseEntity<Void> response = restTemplate.exchange(
-                    baseUrl(TRAINING_URL), HttpMethod.POST,
-                    new HttpEntity<>(request, authHeaders()), Void.class);
-            sharedContext.setLastResponse(response);
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            sharedContext.setLastResponse(ResponseEntity.status(e.getStatusCode()).build());
-        }
+        ResponseEntity<Void> response = restHelper.execute(
+                TRAINING_URL, HttpMethod.POST,
+                new HttpEntity<>(request, restHelper.authHeaders(sharedContext.getJwtToken())),
+                Void.class);
+        sharedContext.setLastResponse(response);
     }
 
     @And("a training exists with name {string} and duration {int} and date {string}")
@@ -65,27 +69,17 @@ public class TrainingSteps {
     @When("the client requests trainee trainings for the registered trainee")
     public void getTraineeTrainings() {
         String username = sharedContext.getCredentials().getUsername();
-        try {
-            ResponseEntity<List> response = restTemplate.exchange(
-                    baseUrl(TRAINING_URL + "/trainee/" + username),
-                    HttpMethod.GET, new HttpEntity<>(authHeaders()), List.class);
-            sharedContext.setLastResponse(response);
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            sharedContext.setLastResponse(ResponseEntity.status(e.getStatusCode()).build());
-        }
+        ResponseEntity<List> response = restHelper
+                .get(TRAINING_URL + "/trainee/" + username, sharedContext.getJwtToken(), List.class);
+        sharedContext.setLastResponse(response);
     }
 
     @When("the client requests trainer trainings for the registered trainer")
     public void getTrainerTrainings() {
         String username = sharedContext.getTrainerCredentials().getUsername();
-        try {
-            ResponseEntity<List> response = restTemplate.exchange(
-                    baseUrl(TRAINING_URL + "/trainer/" + username),
-                    HttpMethod.GET, new HttpEntity<>(authHeaders()), List.class);
-            sharedContext.setLastResponse(response);
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            sharedContext.setLastResponse(ResponseEntity.status(e.getStatusCode()).build());
-        }
+        ResponseEntity<List> response = restHelper
+                .get(TRAINING_URL + "/trainer/" + username, sharedContext.getJwtToken(), List.class);
+        sharedContext.setLastResponse(response);
     }
 
     @When("the client creates a training without auth")
@@ -100,14 +94,10 @@ public class TrainingSteps {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        try {
-            ResponseEntity<Void> response = restTemplate.exchange(
-                    baseUrl(TRAINING_URL), HttpMethod.POST,
-                    new HttpEntity<>(request, headers), Void.class);
-            sharedContext.setLastResponse(response);
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            sharedContext.setLastResponse(ResponseEntity.status(e.getStatusCode()).build());
-        }
+        ResponseEntity<Void> response = restHelper.execute(
+                TRAINING_URL, HttpMethod.POST,
+                new HttpEntity<>(request), Void.class);
+        sharedContext.setLastResponse(response);
     }
 
     private Date parseDate(String dateStr) {
@@ -116,16 +106,5 @@ public class TrainingSteps {
         } catch (ParseException e) {
             throw new IllegalArgumentException("Invalid date format: " + dateStr, e);
         }
-    }
-
-    private HttpHeaders authHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(sharedContext.getJwtToken());
-        return headers;
-    }
-
-    private String baseUrl(String path) {
-        return "http://localhost:" + environment.getProperty(PORT_PROPERTY) + path;
     }
 }

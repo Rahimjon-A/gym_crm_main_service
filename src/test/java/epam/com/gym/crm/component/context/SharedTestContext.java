@@ -1,4 +1,4 @@
-package epam.com.gym.crm.component.steps;
+package epam.com.gym.crm.component.context;
  
 import epam.com.gym.crm.model.common.Credentials;
 import io.cucumber.spring.ScenarioScope;
