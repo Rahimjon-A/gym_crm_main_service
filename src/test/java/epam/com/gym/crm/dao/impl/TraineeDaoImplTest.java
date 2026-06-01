@@ -64,7 +64,7 @@ class TraineeDaoImplTest {
     void findByUsername_shouldReturnTrainee_whenFound() {
         when(entityManager.createQuery(anyString(), eq(Trainee.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
-        when(typedQuery.getResultStream()).thenReturn(Stream.of(testTrainee));
+        when(typedQuery.getResultList()).thenReturn(List.of(testTrainee));
 
         Optional<Trainee> result = traineeDao.findByUsername(TARGET_USERNAME);
 

@@ -59,6 +59,7 @@ class TraineeServiceImplTest {
         validTrainee.setId(1L);
         validTrainee.setDateOfBirth(pastDate);
         validTrainee.setAddress("123 Main St");
+        validTrainee.setTrainings(new ArrayList<>());
 
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("hashed_dummy_password");
     }

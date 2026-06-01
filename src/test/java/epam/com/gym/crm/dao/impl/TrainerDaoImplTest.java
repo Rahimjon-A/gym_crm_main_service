@@ -66,7 +66,7 @@ class TrainerDaoImplTest {
     void findByUsername_shouldReturnTrainer_whenFound() {
         when(entityManager.createQuery(anyString(), eq(Trainer.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
-        when(typedQuery.getResultStream()).thenReturn(Stream.of(mockTrainer));
+        when(typedQuery.getResultList()).thenReturn(List.of(mockTrainer));
 
         Optional<Trainer> result = trainerDao.findByUsername(TARGET_USERNAME);
 
@@ -81,7 +81,7 @@ class TrainerDaoImplTest {
     void findByUsername_shouldReturnEmpty_whenNotFound() {
         when(entityManager.createQuery(anyString(), eq(Trainer.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter(anyString(), any())).thenReturn(typedQuery);
-        when(typedQuery.getResultStream()).thenReturn(Stream.empty());
+        when(typedQuery.getResultList()).thenReturn(List.of());
 
         Optional<Trainer> result = trainerDao.findByUsername(GHOST_USERNAME);
 
